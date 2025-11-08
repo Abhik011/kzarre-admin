@@ -101,7 +101,7 @@ const handleEditProduct = (product: any) => {
 };
 
 // ❌ Delete Product
-const handleDeleteProduct = async (id) => {
+const handleDeleteProduct = async (id: string | number) => {
   if (!confirm("Are you sure you want to delete this product?")) return;
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/products/${id}`, {
