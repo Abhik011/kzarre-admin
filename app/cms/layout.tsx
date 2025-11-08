@@ -1,6 +1,6 @@
 // ✅ CORRECT - With types
 import { ReactNode } from 'react';
-import Layout from '@/Components/layout/Layout';
+import Layout from '@/components/layout/Layout';
 
 export default function CmsLayout({ 
   children 
