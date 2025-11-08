@@ -90,7 +90,7 @@ const ECommerceSection = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [showProductModal, setShowProductModal] = useState(false);
 // 🛠 Edit Product
-const handleEditProduct = (product) => {
+const handleEditProduct = (product: any) => {
   setProductForm({
     ...product,
     tags: product.tags || [],
