@@ -109,7 +109,7 @@ const handleDeleteProduct = async (id) => {
     });
     const data = await res.json();
     if (data.success) {
-      setProducts(products.filter((p) => p._id !== id));
+      setProducts(products.filter((p) => p.id !== id));
       alert("Product deleted successfully");
     } else {
       alert(data.message || "Failed to delete product");
