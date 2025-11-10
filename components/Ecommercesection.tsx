@@ -39,7 +39,7 @@ const ECommerceSection = () => {
 
   // 🔹 Fetch products from backend
   const [error, setError] = useState<string | null>(null);
-  const [products, setProducts] = useState([]);
+const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
