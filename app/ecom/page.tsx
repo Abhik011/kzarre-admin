@@ -1,5 +1,6 @@
-import ECommerceSection from '@/components/Ecommercesection';
+
+import Ecom from '@/components/ecom';
 
 export default function UserManagementPage() {
-  return <ECommerceSection />;
+  return <Ecom />;
 }

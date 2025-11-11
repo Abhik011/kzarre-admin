@@ -3,18 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // ✅ React & build optimizations
   reactStrictMode: true,
-  swcMinify: true,
 
-  // ✅ Allow LAN and localhost access during development
-  experimental: {
-    allowedDevOrigins: [
-      "http://localhost:3000",      // Local dev
-      "http://192.168.0.215:3000",  // Your LAN IP
-      "http://192.168.0.110:3000",  // Optional alternate IP
-    ],
-  },
+  // ⚡️ SWC minify is now default, no need to set explicitly
+  // swcMinify: true,  ← removed (deprecated in Next.js 16)
 
-  // ✅ Ignore lint errors during build (optional)
+  // ✅ Ignore lint & type errors during build (optional)
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -22,18 +15,48 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // ✅ Allow optimized images from AWS or local
+  // ✅ Modern image configuration (replaces deprecated `domains`)
   images: {
-    domains: [
-      "kzarre-bucket.s3.amazonaws.com", // your AWS bucket
-      "localhost",
-      "192.168.0.215",
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "kzarre-bucket.s3.amazonaws.com",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "http",
+        hostname: "192.168.0.215",
+      },
     ],
   },
 
-  // ✅ NEW: Expose backend API URL to the browser
+  // ✅ Expose backend API URL to client
   env: {
-    BACKEND_API_URL: process.env.BACKEND_API_URL,
+    NEXT_PUBLIC_BACKEND_API_URL: process.env.BACKEND_API_URL,
+  },
+
+  // ✅ Experimental section cleaned (no invalid keys)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
+
+  // ✅ Optional headers for local CORS (replaces `allowedDevOrigins`)
+  async headers() {
+    return [
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS, PATCH" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+        ],
+      },
+    ];
   },
 };
 
