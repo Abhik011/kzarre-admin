@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@lottiefiles/dotlottie-react": "^0.17.5",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@vercel/speed-insights": "^1.2.0",
     "lucide-react": "^0.548.0",
     "next": "16.0.0",
@@ -32,5 +33,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhik011/kzarre-admin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhik011/kzarre-admin/issues"
+  },
+  "homepage": "https://github.com/Abhik011/kzarre-admin#readme"
 }

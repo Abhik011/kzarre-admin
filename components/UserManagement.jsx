@@ -1,477 +1,503 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { MoreVertical, Plus, X } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { MoreVertical, Plus, X, Shield } from "lucide-react";
+import ProtectedRoute from "@/components/ProtectedRoute";
+// ===== Constants =====
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/usersadmin`;
 
-const usersData = [
-  { id: 1, name: 'Abhijeet kulkarni', email: 'abhijeetkulkarni.work@outlook.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'PM' },
-  { id: 2, name: 'Harshit Jhawar', email: 'harshitjwr.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'Editor' },
-  { id: 3, name: 'Harshal Pawar', email: 'harshalpawar.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'Support' },
-  { id: 4, name: 'Rahul Jagdale', email: 'rahuljagdale.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'Admin' },
-  { id: 5, name: 'Chinmay Kambale', email: 'chinmayk.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'CE' },
-  { id: 6, name: 'Jeesi gems', email: 'jeesigms.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'AR' },
-  { id: 7, name: 'Jasmit k', email: 'jasmitk.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'ACSR' },
-  { id: 8, name: 'Rohit dere', email: 'rohitdere.work@gmail.com', status: 'Active', lastLogin: 'Jan 10, 2024', role: 'AMS' },
+const roleGroups = [
+  "sales_manager",
+  "inventory_manager",
+  "hr_manager",
+  "finance_manager",
 ];
 
-const activityData = [
-  { id: 1, timestamp: '2025-01-18 10:30:15', user: 'Abhijeet kulkarni', action: 'Edited Title', details: 'Old Title to New title page1', ip: '192.168.1.5' },
-  { id: 2, timestamp: '2025-01-18 10:30:15', user: 'Abhijeet kulkarni', action: 'Edited Title', details: 'Old Title to New title page1', ip: '192.168.1.5' },
-  { id: 3, timestamp: '2025-01-18 10:30:15', user: 'Abhijeet kulkarni', action: 'Edited Title', details: 'Old Title to New title page1', ip: '192.168.1.5' },
-  { id: 4, timestamp: '2025-01-18 10:30:15', user: 'Abhijeet kulkarni', action: 'Edited Title', details: 'Old Title to New title page1', ip: '192.168.1.5' },
-  { id: 5, timestamp: '2025-01-18 10:30:15', user: 'Abhijeet kulkarni', action: 'Edited Title', details: 'Old Title to New title page1', ip: '192.168.1.5' },
+const samplePermissions = [
+  "create_user",
+  "delete_user",
+  "update_user",
+  "view_reports",
+  "manage_inventory",
+  "view_dashboard",
 ];
 
-const rolesData = [
-  { id: 1, role: 'Admin', description: 'Full access to all models', assigned: 4 },
-  { id: 2, role: 'Editor', description: 'Can add/update content, no deletion', assigned: 12 },
-  { id: 3, role: 'Support', description: 'Can view / manage tickets & users', assigned: 7 },
-  { id: 4, role: 'Customer', description: 'End-user with restricted access', assigned: 240 },
-];
+// ===================================================
+// ✅ User List
+// ===================================================
+const UserList = ({ refreshKey, onEditPermissions }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-const permissions = ['Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1', 'Permission1'];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const token =
+          localStorage.getItem("superadmin_token") ||
+          localStorage.getItem("admin_token");
 
-const rolesList = ['Admin', 'Editor', 'Support', 'Customer', 'PM', 'CE', 'AR', 'ACSR', 'AMS'];
+        // ✅ Correct API path
+        const res = await fetch(`${API_BASE}/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-const UserList = () => (
-  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-    <h3 className="text-lg font-bold text-gray-900 mb-2">User List</h3>
-    <p className="text-sm text-gray-600 mb-4 sm:mb-6">Showing all users</p>
-    
-    {/* Mobile Card View */}
-    <div className="sm:hidden space-y-4">
-      {usersData.map((user) => (
-        <div key={user.id} className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-300 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">{user.name.charAt(0)}</div>
-              <div className="min-w-0">
-                <p className="font-medium text-gray-900 text-sm truncate">{user.name}</p>
-                <p className="text-xs text-gray-600 truncate">{user.email}</p>
-              </div>
-            </div>
-            <button className="text-gray-500 hover:text-gray-700 flex-shrink-0"><MoreVertical size={18} /></button>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status:</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold"><span className="w-1.5 h-1.5 bg-green-600 rounded-full inline-block mr-1"></span>{user.status}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Last Login:</span>
-              <span className="font-medium">{user.lastLogin}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Role:</span>
-              <span className="font-medium">{user.role}</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+        // ✅ Check for errors before parsing
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || `Error ${res.status}`);
+        }
 
-    {/* Table View */}
-    <div className="hidden sm:block overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200">
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">User</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 hidden md:table-cell">Email</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 hidden lg:table-cell">Last Login</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 hidden xl:table-cell">Role</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {usersData.map((user) => (
-            <tr key={user.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="px-4 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-300 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">{user.name.charAt(0)}</div>
-                  <span className="text-sm font-medium text-gray-900">{user.name}</span>
-                </div>
-              </td>
-              <td className="px-4 py-4 text-sm text-gray-600 hidden md:table-cell truncate">{user.email}</td>
-              <td className="px-4 py-4">
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold inline-flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-600 rounded-full"></span>{user.status}
-                </span>
-              </td>
-              <td className="px-4 py-4 text-sm text-gray-600 hidden lg:table-cell">{user.lastLogin}</td>
-              <td className="px-4 py-4 text-sm font-medium text-gray-900 hidden xl:table-cell">{user.role}</td>
-              <td className="px-4 py-4">
-                <button className="text-gray-500 hover:text-gray-700"><MoreVertical size={18} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+        const data = await res.json();
 
-const ActivityLog = () => (
-  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-    <h3 className="text-lg font-bold text-gray-900 mb-2">Activity Log</h3>
-    <p className="text-sm text-gray-600 mb-4 sm:mb-6">Showing all users</p>
-    
-    {/* Mobile Card View */}
-    <div className="sm:hidden space-y-4">
-      {activityData.map((activity) => (
-        <div key={activity.id} className="border border-gray-200 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-gray-900 mb-2">{activity.action}</p>
-          <div className="space-y-1 text-xs text-gray-600">
-            <div><span className="font-medium">Time:</span> {activity.timestamp}</div>
-            <div><span className="font-medium">User:</span> {activity.user}</div>
-            <div><span className="font-medium">Details:</span> {activity.details}</div>
-            <div><span className="font-medium">IP:</span> {activity.ip}</div>
-          </div>
-        </div>
-      ))}
-    </div>
+        // ✅ Validate array response
+        if (!Array.isArray(data)) {
+          console.warn("Unexpected response:", data);
+          setUsers([]);
+        } else {
+          setUsers(data);
+        }
+      } catch (err) {
+        console.error("Error fetching users:", err.message);
+        setUsers([]); // avoid crash if response invalid
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    {/* Table View */}
-    <div className="hidden sm:block overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200">
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">TimeStamp</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">User</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Action</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 hidden md:table-cell">Details</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900 hidden lg:table-cell">IP address</th>
-          </tr>
-        </thead>
-        <tbody>
-          {activityData.map((activity) => (
-            <tr key={activity.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="px-4 py-4 text-sm text-gray-600">{activity.timestamp}</td>
-              <td className="px-4 py-4 text-sm text-gray-900 font-medium">{activity.user}</td>
-              <td className="px-4 py-4 text-sm text-gray-900">{activity.action}</td>
-              <td className="px-4 py-4 text-sm text-gray-600 hidden md:table-cell">{activity.details}</td>
-              <td className="px-4 py-4 text-sm text-gray-600 hidden lg:table-cell">{activity.ip}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+    fetchUsers();
+  }, [refreshKey]);
 
-const RolesPermissions = ({ onAddRoleClick }) => (
-  <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">Roles & Permissions</h3>
-        <p className="text-sm text-gray-600">Manage user roles</p>
-      </div>
-      <button onClick={onAddRoleClick} className="w-full sm:w-auto px-4 py-2 bg-[#A0EDA8] text-black rounded-lg hover:bg-[#A0EDA8] hover:scale-105 hover:bg-green-500 flex items-center justify-center gap-2 font-medium text-sm">
-        <Plus size={18} />Add Role
-      </button>
-    </div>
+  const toggleActive = async (id) => {
+    try {
+      const token =
+        localStorage.getItem("superadmin_token") ||
+        localStorage.getItem("admin_token");
 
-    {/* Mobile Card View */}
-    <div className="sm:hidden space-y-4">
-      {rolesData.map((role) => (
-        <div key={role.id} className="border border-gray-200 rounded-lg p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="font-semibold text-gray-900">{role.role}</h4>
-            <button className="text-gray-500 hover:text-gray-700"><MoreVertical size={18} /></button>
-          </div>
-          <p className="text-sm text-gray-600 mb-2">{role.description}</p>
-          <p className="text-sm font-medium text-gray-900">Assigned: <span className="text-green-600">{role.assigned}</span></p>
-        </div>
-      ))}
-    </div>
-
-    {/* Table View */}
-    <div className="hidden sm:block overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200">
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Role</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Description</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">User Assigned</th>
-            <th className="px-4 py-3 text-left font-semibold text-gray-900">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rolesData.map((role) => (
-            <tr key={role.id} className="border-b border-gray-200 hover:bg-gray-50">
-              <td className="px-4 py-4 text-sm font-medium text-gray-900">{role.role}</td>
-              <td className="px-4 py-4 text-sm text-gray-600">{role.description}</td>
-              <td className="px-4 py-4 text-sm font-medium text-gray-900">{role.assigned}</td>
-              <td className="px-4 py-4">
-                <button className="text-gray-500 hover:text-gray-700"><MoreVertical size={18} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const AddUserModal = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    role: '',
-    status: 'Active',
-  });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+      const res = await fetch(`${API_BASE}/toggle-active/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      alert(data.message);
+    } catch (err) {
+      alert("Failed to toggle user status");
+    }
   };
 
-  const handleSubmit = (e) => {
+  return (
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-gray-900 mb-2">User List</h3>
+      <p className="text-sm text-gray-600 mb-4">Manage system users</p>
+
+      {loading ? (
+        <p className="text-gray-500 text-sm">Loading users...</p>
+      ) : users.length === 0 ? (
+        <p className="text-gray-500 text-sm">No users found.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-4 py-3 text-left font-semibold">Name</th>
+                <th className="px-4 py-3 text-left font-semibold">Email</th>
+                <th className="px-4 py-3 text-left font-semibold">Role</th>
+                <th className="px-4 py-3 text-left font-semibold">Group</th>
+                <th className="px-4 py-3 text-left font-semibold">Status</th>
+                <th className="px-4 py-3 text-left font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr
+                  key={u._id}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="px-4 py-3">{u.name}</td>
+                  <td className="px-4 py-3 text-gray-700">{u.email}</td>
+                  <td className="px-4 py-3 text-gray-700">{u.role}</td>
+                  <td className="px-4 py-3 text-gray-700">{u.group}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                        u.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {u.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 flex items-center gap-2">
+                    <button
+                      onClick={() => onEditPermissions(u)}
+                      className="text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1"
+                    >
+                      <Shield size={14} /> Edit
+                    </button>
+                    <button
+                      onClick={() => toggleActive(u._id)}
+                      className={`text-xs ${
+                        u.isActive
+                          ? "text-red-600 hover:text-red-800"
+                          : "text-green-600 hover:text-green-800"
+                      }`}
+                    >
+                      {u.isActive ? "Deactivate" : "Activate"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================================================
+// ✅ Add User Modal
+// ===================================================
+const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    group: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('New user data:', formData);
-    // Here you would typically send this data to your backend
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      role: '',
-      status: 'Active',
-    });
-    onClose();
+    const token =
+      localStorage.getItem("superadmin_token") ||
+      localStorage.getItem("admin_token");
+
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/create-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          role: "admin",
+          group: form.group,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      alert("✅ User created successfully");
+      onUserAdded();
+      onClose();
+    } catch (err) {
+      alert("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Add User</h2>
-              <p className="text-gray-600 text-sm mt-1">Create a new user account</p>
-            </div>
+      <div className="bg-white rounded-xl max-w-2xl w-full shadow-xl p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Add New User</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              placeholder="First name"
+              required
+              className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
+            <input
+              placeholder="Last name"
+              required
+              className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            />
+          </div>
+
+          <input
+            type="email"
+            placeholder="Email address"
+            required
+            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+
+          <select
+            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+            required
+            onChange={(e) => setForm({ ...form, group: e.target.value })}
+          >
+            <option value="">Select Role Group</option>
+            {roleGroups.map((r) => (
+              <option key={r}>{r}</option>
+            ))}
+          </select>
+
+          <div className="flex justify-end gap-3 mt-4">
             <button
+              type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="px-5 py-2 border border-gray-300 rounded-lg text-sm"
             >
-              <X size={24} />
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+            >
+              {loading ? "Creating..." : "Create User"}
             </button>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm"
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm"
-                  placeholder="Enter last name"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm"
-                placeholder="Enter email address"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Role <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm"
-                >
-                  <option value="">Select a role</option>
-                  {rolesList.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="Pending">Pending</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900">
-                <span className="font-semibold">Note:</span> A temporary password will be sent to the user's email address.
-              </p>
-            </div>
-
-            <div className="flex gap-4 justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium"
-              >
-                Create User
-              </button>
-            </div>
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   );
 };
 
-const AddRoleModal = ({ isOpen, onClose }) => {
-  const [roleName, setRoleName] = useState('');
-  const [roleDescription, setRoleDescription] = useState('');
-  const [selectedPermissions, setSelectedPermissions] = useState({});
+// ===================================================
+// ✅ Permissions Modal
+// ===================================================
+const EditPermissionsModal = ({ user, onClose }) => {
+  const [selected, setSelected] = useState(user?.permissions || []);
 
-  const handlePermissionChange = (permission) => {
-    setSelectedPermissions((prev) => ({
-      ...prev,
-      [permission]: !prev[permission],
-    }));
+  const handleToggle = (p) => {
+    setSelected((prev) =>
+      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+    );
   };
 
-  if (!isOpen) return null;
+  const handleSave = async () => {
+    try {
+      const token =
+        localStorage.getItem("superadmin_token") ||
+        localStorage.getItem("admin_token");
+
+      const res = await fetch(`${API_BASE}/update-permissions/${user._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ permissions: selected }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      alert("✅ Permissions updated");
+      onClose();
+    } catch (err) {
+      alert("❌ " + err.message);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Roles</h2>
-          <p className="text-gray-600 text-sm mb-6">Define describe the role's responsibilities</p>
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl w-full max-w-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+          <h2 className="text-lg font-bold">Edit Permissions - {user.name}</h2>
+          <button onClick={onClose}>
+            <X size={22} className="text-gray-600" />
+          </button>
+        </div>
 
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Role Name</label>
-                <input type="text" value={roleName} onChange={(e) => setRoleName(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm" placeholder="Enter role name" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Role Description</label>
-                <input type="text" value={roleDescription} onChange={(e) => setRoleDescription(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none text-sm" placeholder="Enter role description" />
-              </div>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          {samplePermissions.map((perm) => (
+            <label key={perm} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.includes(perm)}
+                onChange={() => handleToggle(perm)}
+                className="accent-green-500"
+              />
+              {perm}
+            </label>
+          ))}
+        </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-900 mb-4">Permissions</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                {permissions.map((permission, index) => (
-                  <label key={index} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={selectedPermissions[permission + index] || false} onChange={() => handlePermissionChange(permission + index)} className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500" />
-                    <span className="text-xs sm:text-sm text-gray-600">{permission}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-4 justify-end mt-8">
-            <button onClick={onClose} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">Cancel</button>
-            <button className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm">Create Role</button>
-          </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-5 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600"
+          >
+            Save
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default function UserManagement() {
-  const [activeTab, setActiveTab] = useState('userList');
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+// ===================================================
+// ✅ Activity Log
+// ===================================================
+const ActivityLog = () => {
+  const [logs, setLogs] = useState([]);
+
+  useEffect(() => {
+    // you can replace with your real endpoint later
+    setLogs([
+      {
+        id: 1,
+        user: "Abhijeet",
+        action: "Created user",
+        time: "2025-11-12 09:30",
+      },
+      {
+        id: 2,
+        user: "Harshit",
+        action: "Updated permissions",
+        time: "2025-11-12 10:00",
+      },
+    ]);
+  }, []);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Manage and control system users</p>
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-gray-900 mb-2">Activity Log</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Recent administrative actions
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="px-4 py-3 text-left font-semibold">User</th>
+              <th className="px-4 py-3 text-left font-semibold">Action</th>
+              <th className="px-4 py-3 text-left font-semibold">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
+              <tr
+                key={log.id}
+                className="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <td className="px-4 py-3">{log.user}</td>
+                <td className="px-4 py-3">{log.action}</td>
+                <td className="px-4 py-3 text-gray-600">{log.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+    </div>
+  );
+};
 
-      {/* Content Container */}
-      <div>
-        {/* Tab Navigation */}
+// ===================================================
+// ✅ Main User Management Page
+// ===================================================
+export default function UserManagement() {
+  const [activeTab, setActiveTab] = useState("userList");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editUser, setEditUser] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  return (
+    <ProtectedRoute roles={["superadmin", "hr_manager"]}>
+      <div className="bg-gray-50 min-h-screen">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            User Management
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            Manage and control system users
+          </p>
+        </div>
+
+        {/* Tabs */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mb-6">
-              <div className="flex gap-4 sm:gap-8 border-b border-gray-200 w-full sm:w-auto overflow-x-auto">
-                <button onClick={() => setActiveTab('userList')} className={`pb-3 px-1 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'userList' ? 'text-green-600 border-b-2 border-green-500' : 'text-gray-600 hover:text-gray-900'}`}>User List</button>
-                <button onClick={() => setActiveTab('rolesPermissions')} className={`pb-3 px-1 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'rolesPermissions' ? 'text-green-600 border-b-2 border-green-500' : 'text-gray-600 hover:text-gray-900'}`}>Roles & Permissions</button>
-                <button onClick={() => setActiveTab('activityLog')} className={`pb-3 px-1 font-medium text-sm transition-colors whitespace-nowrap ${activeTab === 'activityLog' ? 'text-green-600 border-b-2 border-green-500' : 'text-gray-600 hover:text-gray-900'}`}>Activity Log</button>
-              </div>
+          <div className="flex gap-4 sm:gap-8 border-b border-gray-200 w-full sm:w-auto overflow-x-auto">
+            {["userList", "rolesPermissions", "activityLog"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-3 px-1 font-medium text-sm ${
+                  activeTab === tab
+                    ? "text-green-600 border-b-2 border-green-500"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tab === "userList"
+                  ? "User List"
+                  : tab === "rolesPermissions"
+                  ? "Roles & Permissions"
+                  : "Activity Log"}
+              </button>
+            ))}
+          </div>
 
-          {activeTab === 'userList' && (
-            <button onClick={() => setIsAddUserModalOpen(true)} className="w-full sm:w-auto px-4 py-2 bg-[#A0EDA8] text-black rounded-lg hover:bg-green-500 hover:scale-105 flex items-center justify-center gap-2 font-medium text-sm">
-              <Plus size={18} />Add User
+          {activeTab === "userList" && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="w-full sm:w-auto px-4 py-2 bg-[#A0EDA8] text-black rounded-lg hover:bg-green-500 hover:scale-105 flex items-center justify-center gap-2 font-medium text-sm"
+            >
+              <Plus size={18} /> Add User
             </button>
           )}
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'userList' && <UserList />}
-        {activeTab === 'rolesPermissions' && <RolesPermissions onAddRoleClick={() => setIsAddRoleModalOpen(true)} />}
-        {activeTab === 'activityLog' && <ActivityLog />}
+        {activeTab === "userList" && (
+          <UserList
+            refreshKey={refreshKey}
+            onEditPermissions={(u) => setEditUser(u)}
+          />
+        )}
+        {activeTab === "rolesPermissions" && (
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Roles & Permissions
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Manage system-level access groups
+            </p>
+            <p className="text-sm text-gray-700">
+              (Coming soon — can connect with backend role management)
+            </p>
+          </div>
+        )}
+        {activeTab === "activityLog" && <ActivityLog />}
 
-        {/* Add User Modal */}
-        <AddUserModal isOpen={isAddUserModalOpen} onClose={() => setIsAddUserModalOpen(false)} />
-
-        {/* Add Role Modal */}
-        <AddRoleModal isOpen={isAddRoleModalOpen} onClose={() => setIsAddRoleModalOpen(false)} />
+        {/* Modals */}
+        <AddUserModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onUserAdded={() => setRefreshKey((k) => k + 1)}
+        />
+        {editUser && (
+          <EditPermissionsModal
+            user={editUser}
+            onClose={() => setEditUser(null)}
+          />
+        )}
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
