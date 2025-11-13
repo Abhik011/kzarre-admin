@@ -16,7 +16,7 @@ export default function VerifySuperAdminLogin() {
       ? localStorage.getItem("superadmin_email")
       : "";
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -39,11 +39,14 @@ export default function VerifySuperAdminLogin() {
         console.log("Superadmin login response:", data);
       setSuccess("✅ Login successful!");
       setTimeout(() => router.push("/dashboard"), 1200);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+   } catch (err) {
+  if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError("Something went wrong");
+  }
+}
+
   };
 
   return (

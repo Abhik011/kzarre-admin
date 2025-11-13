@@ -28,7 +28,7 @@ export default function SuperAdminLogin() {
   }, [API_BASE]);
 
   // ✅ Handle Login Submit
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setMessage("");
@@ -47,11 +47,11 @@ export default function SuperAdminLogin() {
 
       setMessage("✅ OTP sent to your email.");
       setTimeout(() => router.push("/superadmin/verify-login"), 1000);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+   } catch (err) {
+  const message = err instanceof Error ? err.message : "Something went wrong";
+  setError(message);
+}
+
   };
 
   // ✅ Handle Register Click
