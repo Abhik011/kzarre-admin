@@ -16,10 +16,10 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleLogin = (type) => {
-    if (type === 'superadmin') router.push('/superadmin/login');
-    else router.push('/admin/login');
-  };
+ const handleLogin = (type: 'superadmin' | 'admin') => {
+  if (type === 'superadmin') router.push('/superadmin/login');
+  else router.push('/admin/login');
+};
 
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E8F5E9] relative overflow-hidden">
