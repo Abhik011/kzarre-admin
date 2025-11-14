@@ -102,7 +102,7 @@ export default function SuperAdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/15 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#A0EDA8] transition"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/15 badge-text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-[#A0EDA8] transition"
             />
           </div>
           <button
@@ -132,7 +132,7 @@ export default function SuperAdminLogin() {
               : "bg-gray-700/60 text-gray-400 cursor-not-allowed border border-gray-600"
           }`}
         >
-          {canRegister ? "✨ Register as Super Admin" : "🔒 Registration Disabled"}
+          {canRegister ? " Register as Super Admin" : "Registration Disabled"}
         </button>
       </div>
     </div>

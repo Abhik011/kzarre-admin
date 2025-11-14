@@ -1,29 +1,84 @@
 @import "tailwindcss";
 
+/* Light Mode */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
+
+  --background-card: #ffffff;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e5e7eb;   
+
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --logo-color:#D2BD50;
+  --accent-green: #A0EDA8;
+}
+.badge-text-white {
+  color: #fff !important;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Dark Mode */
+html.dark {
+  --background: #0d0d0d;
+  --foreground: #f5f5f5;
+
+  --background-card: #141414;
+  --sidebar-bg: #111111;
+  --sidebar-border: #2a2a2a;
+
+  --text-primary: #ffffff;
+  --text-secondary: #bbbbbb;
+
+  --accent-green: #6DE784;
 }
 
+/* Body */
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  transition: background 0.4s ease, color 0.3s ease;
 }
+/* Fix Blue Text on Windows */
+* {
+  color: var(--text-primary);
+}
+
+/* Fix placeholder colors */
+::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+/* Fix input caret color */
+input, textarea, select {
+  caret-color: var(--text-primary);
+}
+
+/* Fix border color globally */
+* {
+  border-color: var(--sidebar-border);
+}
+
+/* Fix scrollbars */
+::-webkit-scrollbar {
+ width: 1px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sidebar-border);
+  border-radius: 4px; 
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+/* Loader (kept same) */
 @keyframes pulseLoader {
   0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
   40% { transform: scale(1); opacity: 1; }
@@ -33,10 +88,6 @@ body {
   animation: pulseLoader 1.2s infinite ease-in-out;
 }
 
-.animation-delay-150 {
-  animation-delay: 0.15s;
-}
+.animation-delay-150 { animation-delay: 0.15s; }
+.animation-delay-300 { animation-delay: 0.3s; }
 
-.animation-delay-300 {
-  animation-delay: 0.3s;
-}

@@ -357,23 +357,48 @@ const EditPermissionsModal = ({ user, onClose }) => {
 // ===================================================
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+  const token = localStorage.getItem("superadmin_token");
 
   useEffect(() => {
-    // you can replace with your real endpoint later
-    setLogs([
-      {
-        id: 1,
-        user: "Abhijeet",
-        action: "Created user",
-        time: "2025-11-12 09:30",
-      },
-      {
-        id: 2,
-        user: "Harshit",
-        action: "Updated permissions",
-        time: "2025-11-12 10:00",
-      },
-    ]);
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/activity`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Error fetching logs:", data.message);
+          setLoading(false);
+          return;
+        }
+
+        const formatted = data.logs.map((log, index) => ({
+          id: index + 1,
+          user: log.user,
+          action: log.action,
+          ip: log.ip || "Unknown IP",
+          time: log.timestamp
+            ? new Date(log.timestamp).toLocaleString()
+            : "Unknown",
+        }));
+
+        setLogs(formatted);
+      } catch (err) {
+        console.error("Activity Log Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
   }, []);
 
   return (
@@ -389,20 +414,85 @@ const ActivityLog = () => {
             <tr className="border-b border-gray-200">
               <th className="px-4 py-3 text-left font-semibold">User</th>
               <th className="px-4 py-3 text-left font-semibold">Action</th>
+              <th className="px-4 py-3 text-left font-semibold">IP</th>
               <th className="px-4 py-3 text-left font-semibold">Timestamp</th>
             </tr>
           </thead>
+
           <tbody>
-            {logs.map((log) => (
-              <tr
-                key={log.id}
-                className="border-b border-gray-100 hover:bg-gray-50"
-              >
-                <td className="px-4 py-3">{log.user}</td>
-                <td className="px-4 py-3">{log.action}</td>
-                <td className="px-4 py-3 text-gray-600">{log.time}</td>
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="text-center py-4 text-gray-500">
+                  Loading activity...
+                </td>
               </tr>
-            ))}
+            ) : logs.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-center py-4 text-gray-500">
+                  No activity found.
+                </td>
+              </tr>
+            ) : (
+              logs.map((log) => (
+                <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-4 py-3">{log.user}</td>
+                  <td className="px-4 py-3">{log.action}</td>
+                  <td className="px-4 py-3">{log.ip}</td>
+                  <td className="px-4 py-3">{log.time}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-gray-900 mb-2">Activity Log</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Recent administrative actions
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="px-4 py-3 text-left font-semibold">User</th>
+              <th className="px-4 py-3 text-left font-semibold">Action</th>
+              <th className="px-4 py-3 text-left font-semibold">Timestamp</th>
+              <th className="px-4 py-3 text-left font-semibold">Ip address</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="text-center py-4 text-gray-500">
+                  Loading activity...
+                </td>
+              </tr>
+            ) : logs.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center py-4 text-gray-500">
+                  No activity found.
+                </td>
+              </tr>
+            ) : (
+              logs.map((log) => (
+                <tr
+                  key={log.id}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="px-4 py-3">{log.user}</td>
+                  <td className="px-4 py-3">{log.action}</td>
+                  <td className="px-4 py-3 text-gray-600">{log.time}</td>
+                  <td className="px-4 py-3 text-gray-600">{log.Ip}</td>
+
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

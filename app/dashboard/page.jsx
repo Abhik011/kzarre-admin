@@ -10,6 +10,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
+
 import {
   LineChart,
   Line,
@@ -22,185 +23,198 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ import your existing guard
 
-// === dummy data ===
-const trafficData = [
-  { name: "Mon", value: 400 },
-  { name: "Tue", value: 500 },
-  { name: "Wed", value: 550 },
-  { name: "Thu", value: 700 },
-  { name: "Fri", value: 900 },
-  { name: "Sat", value: 1200 },
-  { name: "Sun", value: 1800 },
-];
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-const usersData = [
-  { name: "Mon", New: 70, Returning: 90 },
-  { name: "Tue", New: 40, Returning: 60 },
-  { name: "Wed", New: 80, Returning: 30 },
-  { name: "Thu", New: 30, Returning: 40 },
-  { name: "Fri", New: 20, Returning: 75 },
-  { name: "Sat", New: 75, Returning: 25 },
-  { name: "Sun", New: 55, Returning: 95 },
-];
-
-const dealsData = [
-  {
-    id: 1,
-    product: "Apple Watch",
-    location: "6096 Marjolaine Landing",
-    date: "12.09.2019 - 12:53 PM",
-    piece: 423,
-    amount: "$34,295",
-    status: "Delivered",
-    statusColor: "bg-teal-100 text-teal-800",
-  },
-  {
-    id: 2,
-    product: "Apple Watch",
-    location: "6096 Marjolaine Landing",
-    date: "12.09.2019 - 12:53 PM",
-    piece: 423,
-    amount: "$34,295",
-    status: "Pending",
-    statusColor: "bg-yellow-100 text-yellow-800",
-  },
-  {
-    id: 3,
-    product: "Apple Watch",
-    location: "6096 Marjolaine Landing",
-    date: "12.09.2019 - 12:53 PM",
-    piece: 423,
-    amount: "$34,295",
-    status: "Rejected",
-    statusColor: "bg-red-100 text-red-800",
-  },
-];
-
-// === stat card ===
+// Stat Card Component
 const StatCard = ({ title, value, change, icon: Icon, isPositive, bgColor }) => (
-  <div className="bg-white rounded-2xl p-4 sm:p-6 border-l-4 border-blue-400 shadow-sm">
-    <div className="flex items-start justify-between gap-3 sm:gap-0">
-      <div className="flex-1">
-        <p className="text-gray-600 text-xs sm:text-sm font-medium">{title}</p>
-        <h3 className="text-xl sm:text-3xl font-bold text-gray-900 mt-2">{value}</h3>
+  <div
+    className="
+      bg-[var(--background-card)]
+      border border-[var(--sidebar-border)]
+      rounded-2xl p-6 shadow-sm transition
+    "
+  >
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-[var(--text-secondary)] text-sm">{title}</p>
+        <h3 className="text-3xl font-bold text-[var(--text-primary)] mt-2">
+          {value}
+        </h3>
+
         <p
-          className={`text-xs sm:text-sm mt-2 flex items-center gap-1 ${
-            isPositive ? "text-teal-600" : "text-red-600"
-          }`}
+          className={`
+          text-sm mt-2 flex items-center gap-1
+          ${isPositive ? "text-teal-500" : "text-red-500"}
+        `}
         >
           {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
           {change}
         </p>
       </div>
-      <div className={`p-2 sm:p-4 rounded-lg flex-shrink-0 ${bgColor}`}>
-        <Icon size={24} className="text-gray-600 sm:w-8 sm:h-8" />
+
+      <div className={`p-4 rounded-lg flex-shrink-0 ${bgColor}`}>
+        <Icon size={28} className="text-[var(--text-primary)]" />
       </div>
     </div>
   </div>
 );
 
 export default function Dashboard() {
- const [role, setRole] = useState(null);
+  const [role, setRole] = useState(null);
+
+  // 👉 Analytics States
+  const [summary, setSummary] = useState(null);
+  const [trafficData, setTrafficData] = useState([]);
+  const [usersType, setUsersType] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setRole(localStorage.getItem("role"));
+
+    const fetchAnalytics = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+
+        const [summaryRes, trafficRes, usersTypeRes] = await Promise.all([
+          fetch(`${base}/api/analytics/summary`),
+          fetch(`${base}/api/analytics/traffic/daily`),
+          fetch(`${base}/api/analytics/users/type`),
+        ]);
+
+        const s = await summaryRes.json();
+        const t = await trafficRes.json();
+        const u = await usersTypeRes.json();
+
+        if (s.success) setSummary(s.summary);
+
+        if (t.success)
+          setTrafficData(
+            t.traffic.map((x) => ({
+              name: x._id,
+              value: x.visits,
+            }))
+          );
+
+        if (u.success) setUsersType(u);
+
+      } catch (err) {
+        console.error("❌ Analytics failed:", err);
+      }
+
+      setLoading(false);
+    };
+
+    fetchAnalytics();
   }, []);
 
-  // === Role-based visibility ===
-  const canViewSales = role === "superadmin";
-  const canViewDeals = role === "superadmin";
+  const canViewSales = role === "superadmin" || role === "admin";
+  const canViewDeals = role === "superadmin" || role === "admin";
   const canViewUsers = role === "superadmin" || role === "admin";
+
+  if (loading)
+    return (
+      <div className="p-10 text-center text-[var(--text-secondary)]">
+        Loading analytics…
+      </div>
+    );
 
   return (
     <ProtectedRoute roles={["admin", "superadmin"]}>
-      <div className="bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div className="sm:pb-6 flex justify-between items-center">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-          <span className="text-sm text-gray-600">Role: {role}</span>
+      <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] transition">
+
+        {/* Top Title Row */}
+        <div className="pb-6 flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <span className="text-sm text-[var(--text-secondary)]">Role: {role}</span>
         </div>
 
-        <div className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+        <div className="px-4 sm:px-6 lg:px-8 pb-12">
+
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            
+            {/* Users */}
             <StatCard
               title="Total Users"
-              value="11,250"
-              change="8.5% Up from yesterday"
+              value={summary?.totalUsers || 0}
+              change={`${usersType?.newUsers || 0} New`}
               icon={Users}
               isPositive={true}
-              bgColor="bg-blue-100"
+              bgColor="bg-blue-300/20"
             />
 
+            {/* Orders */}
             {canViewUsers && (
               <StatCard
                 title="Total Orders"
-                value="1,250"
-                change="8.5% Up from yesterday"
+                value={summary?.totalOrders || 0}
+                change="Orders processed"
                 icon={ShoppingCart}
                 isPositive={true}
-                bgColor="bg-yellow-100"
+                bgColor="bg-yellow-300/20"
               />
             )}
 
+            {/* Sales */}
             {canViewSales && (
               <StatCard
-                title="Total Sales"
-                value="$1,250"
-                change="1.5% Up from yesterday"
+                title="Total Revenue"
+                value={`₹${summary?.totalRevenue || 0}`}
+                change="↑ Performance"
                 icon={TrendingUp}
                 isPositive={true}
-                bgColor="bg-green-100"
+                bgColor="bg-green-300/20"
               />
             )}
 
+            {/* Pending */}
             <StatCard
-              title="Total Pending"
-              value="$1,250"
-              change="1.5% Down from yesterday"
+              title="New Users (24h)"
+              value={summary?.newUsers || 0}
+              change="Last 24 hours"
               icon={Clock}
-              isPositive={false}
-              bgColor="bg-orange-100"
+              isPositive={true}
+              bgColor="bg-orange-300/20"
             />
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            {/* Always visible */}
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">
-                Website Traffic
-              </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+
+            {/* Website Traffic */}
+            <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow">
+              <h3 className="text-lg font-bold mb-4">Website Traffic</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={trafficData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#6d5bf3c5"
-                    fill="#8979FF"
-                    isAnimationActive={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--sidebar-border)" />
+                  <XAxis stroke="var(--text-secondary)" dataKey="name" />
+                  <YAxis stroke="var(--text-secondary)" />
+                  <Tooltip contentStyle={{ background: "var(--background-card)", border: "1px solid var(--sidebar-border)" }} />
+                  <Line type="monotone" dataKey="value" stroke="#6d5bf3" strokeWidth={2} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
+            {/* New vs Returning Users */}
             {canViewUsers && (
-              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden">
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-4">
-                  New vs Returning Users
-                </h3>
+              <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow">
+                <h3 className="text-lg font-bold mb-4">New vs Returning Users</h3>
+
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={usersData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
+                  <BarChart
+                    data={[
+                      {
+                        name: "Users",
+                        New: usersType?.newUsers || 0,
+                        Returning: usersType?.returningUsers || 0,
+                      },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--sidebar-border)" />
+                    <XAxis dataKey="name" stroke="var(--text-secondary)" />
+                    <YAxis stroke="var(--text-secondary)" />
+                    <Tooltip contentStyle={{ background: "var(--background-card)", border: "1px solid var(--sidebar-border)" }} />
                     <Legend />
                     <Bar dataKey="New" fill="#a78bfa" />
                     <Bar dataKey="Returning" fill="#fb7185" />
@@ -209,82 +223,72 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
-          {/* Deals Table (SuperAdmin Only) */}
-          {canViewDeals && (
-            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6">
-                <h3 className="text-base sm:text-lg font-bold text-gray-900">Deals Details</h3>
-                <button className="w-full sm:w-auto px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                  October ▼
-                </button>
-              </div>
-
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Product Name
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Location
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Date - Time
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Piece
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Amount
-                      </th>
-                      <th className="px-4 sm:px-6 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dealsData.map((deal) => (
-                      <tr
-                        key={deal.id}
-                        className="border-b border-gray-200 hover:bg-gray-50"
-                      >
-                        <td className="px-4 sm:px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-lg flex-shrink-0"></div>
-                            <span className="text-xs sm:text-sm font-medium text-gray-900">
-                              {deal.product}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 hidden sm:table-cell">
-                          {deal.location}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-600 hidden md:table-cell">
-                          {deal.date}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium hidden lg:table-cell">
-                          {deal.piece}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-900 font-medium">
-                          {deal.amount}
-                        </td>
-                        <td className="px-4 sm:px-6 py-4">
-                          <span
-                            className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${deal.statusColor}`}
-                          >
-                            {deal.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
+        {/* Deals Table */}
+{/* {canViewDeals && (
+  <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow">
+
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="text-lg font-bold">Deals Details</h3>
+      <button className="px-4 py-2 border border-[var(--sidebar-border)] text-[var(--text-primary)] rounded-lg bg-[var(--background-card)] hover:bg-[var(--background)]">
+        October ▼
+      </button>
+    </div>
+
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-[var(--sidebar-border)] bg-[var(--background)]">
+            {["Product Name", "Location", "Date - Time", "Piece", "Amount", "Status"].map((head) => (
+              <th key={head}
+                className="px-6 py-3 text-left text-sm font-semibold text-[var(--text-primary)]"
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {dealsData.map((deal) => (
+            <tr key={deal.id}
+              className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background)]"
+            >
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-lg" />
+                  <span>{deal.product}</span>
+                </div>
+              </td>
+
+              <td className="px-6 py-4 text-[var(--text-secondary)] hidden sm:table-cell">
+                {deal.location}
+              </td>
+
+              <td className="px-6 py-4 text-[var(--text-secondary)] hidden md:table-cell">
+                {deal.date}
+              </td>
+
+              <td className="px-6 py-4 hidden lg:table-cell">
+                {deal.piece}
+              </td>
+
+              <td className="px-6 py-4">{deal.amount}</td>
+
+              <td className="px-6 py-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${deal.statusColor}`}>
+                  {deal.status}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+)} */}
+
       </div>
     </ProtectedRoute>
   );

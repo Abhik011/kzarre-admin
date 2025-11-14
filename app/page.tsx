@@ -58,15 +58,15 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => handleLogin('superadmin')}
-                className="px-6 py-3 w-full sm:w-auto bg-black text-white rounded-xl shadow-md hover:shadow-lg hover:bg-gray-800 transition-all duration-300 font-medium"
+                className="px-6 py-3 w-full sm:w-auto bg-black badge-text-white rounded-xl shadow-md hover:shadow-lg hover:bg-gray-800 transition-all duration-300 font-medium"
               >
-                👑 Login as Super Admin
+                Super Admin
               </button>
               <button
                 onClick={() => handleLogin('admin')}
                 className="px-6 py-3 w-full sm:w-auto bg-[#A0EDA8] text-black rounded-xl shadow-md hover:shadow-lg hover:bg-green-500 hover:text-white transition-all duration-300 font-medium"
               >
-                👨‍💼 Login as Admin
+              Admin
               </button>
             </div>
           </>

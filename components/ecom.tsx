@@ -1,5 +1,5 @@
 "use client";
-
+import { usePathname } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
@@ -73,9 +73,26 @@ interface Order {
   status?: string;
   items?: number;
 }
+  
+const getStockBadgeColor = (statusText: string) => {
+  switch (statusText) {
+    case "Critical":
+      return "bg-red-500 badge-text-white";
+
+    case "Low Stock":
+      return "bg-yellow-500 badge-text-white";
+
+    case "In Stock":
+      return "bg-green-500 badge-text-white";
+
+    default:
+      return "bg-gray-500 badge-text-white";
+  }
+};
 
 // -------------------- Component --------------------
 const ECommerceSection: React.FC = () => {
+  
   // Navigation states
   const [currentView, setCurrentView] = useState<
     "inventory" | "addProduct" | "orders" | "discounts"
@@ -88,6 +105,26 @@ const ECommerceSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Fetch products from backend
+
+// Put INSIDE the ECommerceSection component — NOT at the top
+const pathname = usePathname();
+
+// Sync tab with URL on refresh
+useEffect(() => {
+  if (pathname.includes("/ecom/inventory") || pathname.endsWith("/ecom")) {
+    setActiveTab("inventory");
+    setCurrentView("inventory");
+  } 
+  else if (pathname.includes("/ecom/orders")) {
+    setActiveTab("order");
+    setCurrentView("orders");
+  }
+  else if (pathname.includes("/ecom/discounts")) {
+    setActiveTab("discounts");
+  }
+}, [pathname]);
+
+  
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -580,58 +617,70 @@ const ECommerceSection: React.FC = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600 text-sm">Total Products</span>
+            <span className="text-[var(--textSecondary)] text-sm">
+              Total Products
+            </span>
             <Package className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
             {stats.totalProducts}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl p-6 border border-[var(--borderColor)]"
+        >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600 text-sm">Total Stock</span>
+            <span className="text-[var(--textSecondary)] text-sm">
+              Total Stock
+            </span>
             <Box className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
             {stats.totalStock}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600 text-sm">Sold</span>
+            <span className="text-[var(--textSecondary)] text-sm">Sold</span>
             <ShoppingCart className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-gray-900">{stats.sold}</div>
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
+            {stats.sold}
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600 text-sm">Return</span>
+            <span className="text-[var(--textSecondary)] text-sm">Return</span>
             <RotateCcw className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
             {stats.returns}
           </div>
         </div>
       </div>
 
       {/* Product List */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div
+        className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)]"
+      >
+        <div className="p-6 border-b border-[var(--borderColor)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
               Product List
             </h2>
             <div className="flex items-center gap-3">
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Filter size={20} className="text-gray-600" />
+                <Filter size={20} className="text-[var(--textSecondary)]" />
               </button>
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Download size={20} className="text-gray-600" />
+                <Download size={20} className="text-[var(--textSecondary)]" />
               </button>
             </div>
           </div>
@@ -641,29 +690,43 @@ const ECommerceSection: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
                   Product
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
                   Stock
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
                   Threshold
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
                   Purchase
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th
+                  className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                >
                   Price
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th
+                  className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                >
                   Valuation
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th
+                  className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                >
                   Supplier
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                <th
+                  className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                >
                   Actions
                 </th>
               </tr>
@@ -692,7 +755,8 @@ const ECommerceSection: React.FC = () => {
                 <tr>
                   <td
                     colSpan={8}
-                    className="text-center py-6 text-gray-500 bg-gray-50"
+                    className="text-center py-6 text-gray-500 bg-[var(--background)]
+dark:bg-[var(--bgCard)]"
                   >
                     No products found. Try adding one.
                   </td>
@@ -707,11 +771,15 @@ const ECommerceSection: React.FC = () => {
                   return (
                     <tr
                       key={product._id ?? product.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                      className="border-b border-[var(--borderColor)] hover:bg-[var(--background)]
+dark:bg-[var(--bgCard)] transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div
+                            className="text-sm font-medium text-[var(--textPrimary)]
+"
+                          >
                             {product.name}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -721,29 +789,35 @@ const ECommerceSection: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-[var(--textPrimary)]">
                             {product.stockQuantity ?? 0}
                           </span>
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${status.color}`}
+                            className={`
+    inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold 
+    ${getStockBadgeColor(status.text)}
+  `}
                           >
                             {status.text}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {product.threshold || 20}
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                        {product.threshold || 0}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                         ${product.purchase || "0.00"}
                       </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      <td
+                        className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]
+"
+                      >
                         ${product.price || "0.00"}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                         ${product.valuation || "—"}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                         {product.vendor || "—"}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -788,130 +862,180 @@ const ECommerceSection: React.FC = () => {
 
         {/* Product Details Modal */}
         {showProductModal && selectedProduct && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 relative overflow-y-auto max-h-[90vh]">
-              <button
-                onClick={() => setShowProductModal(false)}
-                className="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
+        
+<div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+
+  {/* MODAL WRAPPER */}
+<div
+  className="
+    dark: bg-[var(--background)]
+    border border-[var(--borderColor)]
+    rounded-2xl shadow-2xl
+    w-full max-w-4xl
+    p-6 relative
+    overflow-y-auto
+    max-h-[92vh]
+    transition-all duration-300">
+    <button
+      onClick={() => setShowProductModal(false)}
+      className="absolute top-3 right-3 
+                 text-[var(--textSecondary)] hover:text-[var(--textPrimary)] 
+                 transition"
+    >
+      <X size={24} />
+    </button>
+
+    {/* TITLE */}
+    <h2 className="text-2xl font-bold text-[var(--textPrimary)] mb-6">
+      {selectedProduct.name}
+    </h2>
+
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <div>
+        <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">
+          Images
+        </h3>
+
+        {/* Big main image */}
+        <div className="
+            w-full 
+            h-72 md:h-80 
+            rounded-xl
+            overflow-hidden 
+            border border-[var(--borderColor)]
+            bg-[var(--background)]
+            dark:bg-[var(--background)]
+            flex items-center justify-center
+          "
+        >
+          {selectedProduct.gallery?.[0] ? (
+            <img
+              src={selectedProduct.gallery[0]}
+              alt="product"
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-[var(--textSecondary)]">No Image</span>
+          )}
+        </div>
+
+        {/* Thumbnail image row */}
+        {selectedProduct.gallery && selectedProduct.gallery.length > 1 && (
+          <div className="mt-4 flex gap-3">
+            {selectedProduct.gallery.map((img: string, idx: number) => (
+              <div
+                key={idx}
+                className="
+                  w-20 h-20 
+                  rounded-lg  
+                  overflow-hidden 
+                  border border-[var(--borderColor)]
+                  bg-[var(--background)]
+                  dark:bg-[var(--background)]
+                  shadow-sm
+                "
               >
-                <X size={22} />
-              </button>
-
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                {selectedProduct.name}
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* ---------------- Images ---------------- */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">
-                    Images
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Array.isArray(selectedProduct.gallery) &&
-                    selectedProduct.gallery.length > 0 ? (
-                      selectedProduct.gallery.map(
-                        (img: string, idx: number) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt="product"
-                            className="rounded-lg border object-cover w-full h-32"
-                          />
-                        )
-                      )
-                    ) : (
-                      <p className="text-sm text-gray-500">
-                        No images available.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* ---------------- Details ---------------- */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">
-                    Details
-                  </h3>
-                  <ul className="text-sm text-gray-700 space-y-1">
-                    <li>
-                      <strong>Category:</strong>{" "}
-                      {selectedProduct.category || "—"}
-                    </li>
-                    <li>
-                      <strong>Vendor:</strong> {selectedProduct.vendor || "—"}
-                    </li>
-                    <li>
-                      <strong>Gender:</strong>{" "}
-                      {selectedProduct.gender?.join(", ") || "—"}
-                    </li>
-                    <li>
-                      <strong>Tags:</strong>{" "}
-                      {selectedProduct.tags?.join(", ") || "—"}
-                    </li>
-                    <li>
-                      <strong>Price:</strong> ${selectedProduct.price ?? "—"}
-                    </li>
-                    <li>
-                      <strong>Stock:</strong>{" "}
-                      {selectedProduct.stockQuantity ?? "—"}
-                    </li>
-                    <li>
-                      <strong>SKU:</strong> {selectedProduct.sku || "—"}
-                    </li>
-                    <li>
-                      <strong>Status:</strong>{" "}
-                      {selectedProduct.inStock ? (
-                        <span className="text-green-600">In Stock</span>
-                      ) : (
-                        <span className="text-red-600">Out of Stock</span>
-                      )}
-                    </li>
-                  </ul>
-                </div>
+                <img src={img} alt="" className="object-cover w-full h-full" />
               </div>
-
-              {/* ---------------- Variants ---------------- */}
-              {Array.isArray(selectedProduct.variants) &&
-                selectedProduct.variants.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">
-                      Variants
-                    </h3>
-                    <table className="w-full border border-gray-200 text-sm rounded-lg">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="py-2 px-3 text-left font-semibold text-gray-700">
-                            Size
-                          </th>
-                          <th className="py-2 px-3 text-left font-semibold text-gray-700">
-                            Color
-                          </th>
-                          <th className="py-2 px-3 text-left font-semibold text-gray-700">
-                            Stock
-                          </th>
-                          <th className="py-2 px-3 text-left font-semibold text-gray-700">
-                            Material
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProduct.variants.map(
-                          (v: Variant, idx: number) => (
-                            <tr key={idx} className="border-t">
-                              <td className="py-2 px-3">{v.size || "—"}</td>
-                              <td className="py-2 px-3">{v.color || "—"}</td>
-                              <td className="py-2 px-3">{v.stock ?? 0}</td>
-                              <td className="py-2 px-3">{v.material || "—"}</td>
-                            </tr>
-                          )
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-            </div>
+            ))}
           </div>
+        )}
+      </div>
+
+      {/* ========== DETAILS SECTION ========== */}
+      <div>
+        <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+          Details
+        </h3>
+
+        <ul className="text-sm space-y-2 text-[var(--textPrimary)]">
+          <li><strong>Category:</strong> {selectedProduct.category || "—"}</li>
+          <li><strong>Vendor:</strong> {selectedProduct.vendor || "—"}</li>
+          <li><strong>Gender:</strong> {selectedProduct.gender?.join(", ") || "—"}</li>
+          <li><strong>Tags:</strong> {selectedProduct.tags?.join(", ") || "—"}</li>
+          <li><strong>Price:</strong> ${selectedProduct.price ?? "—"}</li>
+          <li><strong>Stock:</strong> {selectedProduct.stockQuantity ?? "—"}</li>
+          <li><strong>SKU:</strong> {selectedProduct.sku || "—"}</li>
+
+          {/* Stock badge match theme */}
+          <li>
+            <strong>Status:</strong>{" "}
+            <span
+              className={`
+                inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                ${selectedProduct.inStock 
+                  ? "bg-green-600 text-white"
+                  : "bg-red-600 text-white"
+                }
+              `}
+            >
+              {selectedProduct.inStock ? "In Stock" : "Out of Stock"}
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    {/* ========== VARIANTS TABLE ========== */}
+    {selectedProduct.variants?.length > 0 && (
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+          Variants
+        </h3>
+
+        <table className="
+            w-full 
+            border border-[var(--borderColor)] 
+            rounded-xl 
+            overflow-hidden
+            text-sm
+          "
+        >
+          <thead
+            className="
+              bg-[var(--background)]
+              dark:bg-[var(--bgCard)]
+              border-b border-[var(--borderColor)]
+            "
+          >
+            <tr>
+              {["Size", "Color", "Stock", "Material"].map((h) => (
+                <th
+                  key={h}
+                  className="py-3 px-4 text-left font-semibold text-[var(--textPrimary)]"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {selectedProduct.variants.map((v: Variant, idx: number) => (
+              <tr
+                key={idx}
+                className="
+                  border-t border-[var(--borderColor)] 
+                  hover:bg-[var(--background)]
+                  transition
+                "
+              >
+                <td className="py-3 px-4">{v.size || "—"}</td>
+                <td className="py-3 px-4">{v.color || "—"}</td>
+                <td className="py-3 px-4">{v.stock ?? 0}</td>
+                <td className="py-3 px-4">{v.material || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</div>
+
+
         )}
       </div>
     </div>
@@ -923,12 +1047,18 @@ const ECommerceSection: React.FC = () => {
       {/* Left Column - Product Details */}
       <div className="lg:col-span-2 space-y-6">
         {/* Basic Information */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-gray-900 rounded-lg">
               <FileText size={20} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2
+              className="text-xl font-semibold text-[var(--textPrimary)]
+"
+            >
               Add New Product
             </h2>
           </div>
@@ -944,7 +1074,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("name", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter product name"
               />
             </div>
@@ -958,7 +1088,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("description", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                 placeholder="Enter product description"
                 rows={4}
               />
@@ -977,7 +1107,7 @@ const ECommerceSection: React.FC = () => {
                     type="checkbox"
                     checked={productForm.gender.includes("Men")}
                     onChange={() => handleGenderChange("Men")}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="w-4 h-4 text-green-600 border-[var(--borderColor)] rounded focus:ring-green-500"
                   />
                   <span className="text-sm text-gray-700">Men</span>
                 </label>
@@ -986,7 +1116,7 @@ const ECommerceSection: React.FC = () => {
                     type="checkbox"
                     checked={productForm.gender.includes("Women")}
                     onChange={() => handleGenderChange("Women")}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="w-4 h-4 text-green-600 border-[var(--borderColor)] rounded focus:ring-green-500"
                   />
                   <span className="text-sm text-gray-700">Women</span>
                 </label>
@@ -995,7 +1125,7 @@ const ECommerceSection: React.FC = () => {
                     type="checkbox"
                     checked={productForm.gender.includes("Unisex")}
                     onChange={() => handleGenderChange("Unisex")}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                    className="w-4 h-4 text-green-600 border-[var(--borderColor)] rounded focus:ring-green-500"
                   />
                   <span className="text-sm text-gray-700">Unisex</span>
                 </label>
@@ -1005,12 +1135,18 @@ const ECommerceSection: React.FC = () => {
         </div>
 
         {/* Pricing and Stock */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-gray-900 rounded-lg">
               <DollarSign size={20} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2
+              className="text-xl font-semibold text-[var(--textPrimary)]
+"
+            >
               Pricing and Stock
             </h2>
           </div>
@@ -1025,7 +1161,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("basePrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
@@ -1039,7 +1175,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("sellPrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
@@ -1053,7 +1189,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("discount", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0"
               />
             </div>
@@ -1066,7 +1202,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("discountType", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="percentage">Percentage</option>
                 <option value="fixed">Fixed Amount</option>
@@ -1076,9 +1212,15 @@ const ECommerceSection: React.FC = () => {
         </div>
 
         {/* Variants */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2
+              className="text-xl font-semibold text-[var(--textPrimary)]
+"
+            >
               Add Variants
             </h2>
             {!showAddVariant && (
@@ -1093,7 +1235,10 @@ const ECommerceSection: React.FC = () => {
           </div>
 
           {showAddVariant && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div
+              className="bg-[var(--background)]
+dark:bg-[var(--bgCard)] rounded-lg p-4 mb-6"
+            >
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1105,7 +1250,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, size: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., M, L, XL"
                   />
                 </div>
@@ -1119,7 +1264,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, color: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Black, Blue"
                   />
                 </div>
@@ -1133,7 +1278,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, material: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Wool, Cotton"
                   />
                 </div>
@@ -1150,7 +1295,7 @@ const ECommerceSection: React.FC = () => {
                         lowStockAlert: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="21"
                   />
                 </div>
@@ -1169,7 +1314,7 @@ const ECommerceSection: React.FC = () => {
                           : undefined,
                       })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="77"
                   />
                 </div>
@@ -1183,7 +1328,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, barcode: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -1200,7 +1345,7 @@ const ECommerceSection: React.FC = () => {
                     onChange={(e) =>
                       handleProductInputChange("sku", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -1214,7 +1359,9 @@ const ECommerceSection: React.FC = () => {
                   </button>
                   <button
                     onClick={generateSKU}
-                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ border border-[var(--borderColor)] text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)]
+dark:bg-[var(--bgCard)]"
                   >
                     Generate SKU
                   </button>
@@ -1228,23 +1375,41 @@ const ECommerceSection: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                  <tr className="border-b border-[var(--borderColor)]">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Size
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Color
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Material
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Price
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Stock
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+                    >
                       Actions
                     </th>
                   </tr>
@@ -1257,21 +1422,27 @@ const ECommerceSection: React.FC = () => {
                         variant.id ||
                         `${variant.size}-${variant.color}-${Math.random()}`
                       }
-                      className="border-b border-gray-200"
+                      className="border-b border-[var(--borderColor)]"
                     >
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td
+                        className="px-4 py-3 text-sm text-[var(--textPrimary)]
+"
+                      >
                         {variant.size}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
                         {variant.color}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
                         {variant.material}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td
+                        className="px-4 py-3 text-sm text-[var(--textPrimary)]
+"
+                      >
                         ${variant.price}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
                         {variant.stock}
                       </td>
                       <td className="px-4 py-3">
@@ -1294,8 +1465,14 @@ const ECommerceSection: React.FC = () => {
       {/* Right Column - Upload & Metadata */}
       <div className="lg:col-span-1 space-y-6">
         {/* Upload Images */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
+          <h3
+            className="text-lg font-semibold text-[var(--textPrimary)]
+ mb-4"
+          >
             Upload img
           </h3>
 
@@ -1317,9 +1494,10 @@ const ECommerceSection: React.FC = () => {
                 />
                 <button
                   onClick={() => removeImage(uploadedImages[selectedImage]?.id)}
-                  className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-md hover:shadow-lg"
+                  className="absolute top-2 right-2 p-1.5 bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-full shadow-md hover:shadow-lg"
                 >
-                  <X size={16} className="text-gray-600" />
+                  <X size={16} className="text-[var(--textSecondary)]" />
                 </button>
               </div>
 
@@ -1332,7 +1510,7 @@ const ECommerceSection: React.FC = () => {
                     className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${
                       selectedImage === index
                         ? "border-green-500"
-                        : "border-gray-200"
+                        : "border-[var(--borderColor)]"
                     }`}
                   >
                     <img
@@ -1347,7 +1525,7 @@ const ECommerceSection: React.FC = () => {
                 {uploadedImages.length < 4 && (
                   <label
                     htmlFor="add-more-images"
-                    className="w-16 h-16 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500"
+                    className="w-16 h-16 border-2 border-dashed border-[var(--borderColor)] rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500"
                   >
                     <Plus size={20} className="text-gray-400" />
                     <input
@@ -1365,7 +1543,9 @@ const ECommerceSection: React.FC = () => {
           ) : (
             <div
               className={`border-2 border-dashed rounded-lg p-8 text-center ${
-                isDragging ? "border-green-500 bg-green-50" : "border-gray-300"
+                isDragging
+                  ? "border-green-500 bg-green-50"
+                  : "border-[var(--borderColor)]"
               }`}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
@@ -1373,7 +1553,7 @@ const ECommerceSection: React.FC = () => {
               onDrop={handleDrop}
             >
               <ImageIcon size={48} className="mx-auto text-gray-400 mb-4" />
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-[var(--textSecondary)] mb-2">
                 Drag and drop images here
               </p>
               <p className="text-xs text-gray-500 mb-4">or</p>
@@ -1398,8 +1578,16 @@ const ECommerceSection: React.FC = () => {
         </div>
 
         {/* Category */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Category</h3>
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
+          <h3
+            className="text-lg font-semibold text-[var(--textPrimary)]
+ mb-4"
+          >
+            Category
+          </h3>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Product Categories
@@ -1409,7 +1597,7 @@ const ECommerceSection: React.FC = () => {
               onChange={(e) =>
                 handleProductInputChange("category", e.target.value)
               }
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             >
               <option value="">Select category</option>
               <option value="Mens">Mens</option>
@@ -1421,27 +1609,43 @@ const ECommerceSection: React.FC = () => {
         </div>
 
         {/* Vendor */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Vendor</h3>
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
+          <h3
+            className="text-lg font-semibold text-[var(--textPrimary)]
+ mb-4"
+          >
+            Vendor
+          </h3>
           <input
             type="text"
             value={productForm.vendor}
             onChange={(e) => handleProductInputChange("vendor", e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             placeholder="Enter vendor name"
           />
         </div>
 
         {/* Tags */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tag</h3>
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
+          <h3
+            className="text-lg font-semibold text-[var(--textPrimary)]
+ mb-4"
+          >
+            Tag
+          </h3>
           <input
             type="text"
             value={productForm.tags.join(", ")}
             onChange={(e) =>
               handleProductInputChange("tags", e.target.value.split(", "))
             }
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
+            className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
             placeholder="Enter tags separated by comma"
           />
           <button
@@ -1453,8 +1657,14 @@ const ECommerceSection: React.FC = () => {
         </div>
 
         {/* Custom Product Metadata */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div
+          className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)] p-6"
+        >
+          <h3
+            className="text-lg font-semibold text-[var(--textPrimary)]
+ mb-4"
+          >
             Custom Product Metadata
           </h3>
           <div className="space-y-4">
@@ -1468,7 +1678,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("primaryTag", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter primary tag"
               />
             </div>
@@ -1482,7 +1692,7 @@ const ECommerceSection: React.FC = () => {
                 onChange={(e) =>
                   handleProductInputChange("secondaryTag", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter secondary tag"
               />
             </div>
@@ -1500,35 +1710,65 @@ const ECommerceSection: React.FC = () => {
 
   // -------------------- Render Orders --------------------
   const renderOrders = () => (
-    <div className="bg-white rounded-xl border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">
+    <div
+      className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl border border-[var(--borderColor)]"
+    >
+      <div className="p-6 border-b border-[var(--borderColor)]">
+        <h2
+          className="text-xl font-semibold text-[var(--textPrimary)]
+"
+        >
           Orders Management
         </h2>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+            <tr
+              className="border-b border-[var(--borderColor)] bg-[var(--background)]
+dark:bg-[var(--bgCard)]"
+            >
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Order ID
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Customer
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Date
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Items
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Total
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+              <th
+                className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]
+"
+              >
                 Actions
               </th>
             </tr>
@@ -1537,21 +1777,28 @@ const ECommerceSection: React.FC = () => {
             {orders.map((order) => (
               <tr
                 key={order.id}
-                className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                className="border-b border-[var(--borderColor)] hover:bg-[var(--background)]
+dark:bg-[var(--bgCard)] transition-colors"
               >
-                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <td
+                  className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]
+"
+                >
                   {order.id}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                   {order.customer}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                   {order.date}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                   {order.items}
                 </td>
-                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                <td
+                  className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]
+"
+                >
                   {order.total}
                 </td>
                 <td className="px-6 py-4">
@@ -1582,32 +1829,31 @@ const ECommerceSection: React.FC = () => {
 
   // -------------------- Main Render --------------------
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1
+              className="text-2xl font-bold text-[var(--textPrimary)]
+"
+            >
               E-Commerce Management
             </h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-[var(--textSecondary)] mt-1">
               Manage your website's Ecommerce
             </p>
           </div>
           <div className="flex items-center gap-3">
             {currentView === "inventory" && (
               <>
-                <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                  <FileText size={18} />
-                  Draft
-                </button>
+               
                 <button
                   onClick={() => setCurrentView("addProduct")}
                   className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
                   style={{ backgroundColor: "#A0EDA8" }}
                 >
                   <Plus size={18} />
-                  Save & Publish
+                  Add Product
                 </button>
               </>
             )}
@@ -1615,7 +1861,9 @@ const ECommerceSection: React.FC = () => {
               <>
                 <button
                   onClick={() => setCurrentView("inventory")}
-                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg hover:bg-[var(--background)]
+dark:bg-[var(--bgCard)]"
                 >
                   Cancel
                 </button>
@@ -1644,55 +1892,65 @@ const ECommerceSection: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-6">
+      <div
+        className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ border-b border-[var(--borderColor)] px-6"
+      >
         <div className="flex gap-6">
-          <button
-            onClick={() => setActiveTab("product")}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "product"
-                ? "text-green-600 border-green-500"
-                : "text-gray-600 border-transparent hover:text-gray-900"
-            }`}
-          >
-            Product
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("inventory");
-              setCurrentView("inventory");
-            }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "inventory"
-                ? "text-green-600 border-green-500"
-                : "text-gray-600 border-transparent hover:text-gray-900"
-            }`}
-          >
-            Inventory
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab("order");
-              setCurrentView("orders");
-            }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "order"
-                ? "text-green-600 border-green-500"
-                : "text-gray-600 border-transparent hover:text-gray-900"
-            }`}
-          >
-            Order
-          </button>
-          <button
-            onClick={() => setActiveTab("discounts")}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "discounts"
-                ? "text-green-600 border-green-500"
-                : "text-gray-600 border-transparent hover:text-gray-900"
-            }`}
-          >
-            Discounts & Coupons
-          </button>
-        </div>
+
+  {/* Inventory */}
+  <button
+    onClick={() => {
+      setActiveTab("inventory");
+      setCurrentView("inventory");
+    }}
+    className={`
+      py-3 px-1 font-medium text-sm border-b-2 transition-colors
+      ${
+        activeTab === "inventory"
+          ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+          : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+      }
+    `}
+  >
+    Inventory
+  </button>
+
+  {/* Order */}
+  <button
+    onClick={() => {
+      setActiveTab("order");
+      setCurrentView("orders");
+    }}
+    className={`
+      py-3 px-1 font-medium text-sm border-b-2 transition-colors
+      ${
+        activeTab === "order"
+          ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+          : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+      }
+    `}
+  >
+    Order
+  </button>
+
+  {/* Discounts */}
+  <button
+    onClick={() => setActiveTab("discounts")}
+    className={`
+      py-3 px-1 font-medium text-sm border-b-2 transition-colors
+      ${
+        activeTab === "discounts"
+          ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+          : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+      }
+    `}
+  >
+    Discounts & Coupons
+  </button>
+
+</div>
+
       </div>
 
       {/* Content Area */}
@@ -1701,8 +1959,11 @@ const ECommerceSection: React.FC = () => {
         {currentView === "addProduct" && renderAddProduct()}
         {currentView === "orders" && renderOrders()}
         {activeTab === "discounts" && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <p className="text-gray-600">
+          <div
+            className="bg-[var(--background-card)] dark:bg-[var(--bgCard)]
+ rounded-xl shadow-sm p-8 text-center"
+          >
+            <p className="text-[var(--textSecondary)]">
               Discounts & Coupons management coming soon
             </p>
           </div>

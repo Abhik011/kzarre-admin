@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+
 import {
   LayoutDashboard,
   Users,
@@ -20,9 +21,15 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar() {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isActive = (href) =>
+    pathname === href || pathname.startsWith(href + '/');
 
   const menuItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -36,17 +43,54 @@ export default function Sidebar() {
     { label: 'Security & Compliance', icon: Shield, href: '/security' },
     { label: 'Website Settings', icon: Settings, href: '/settings' },
   ];
+    
+   // Load role from localStorage
+const [role, setRole] = useState("");
 
-  const isActive = (href) => {
-    return pathname === href || pathname.startsWith(href + '/');
-  };
+React.useEffect(() => {
+  if (typeof window !== "undefined") {
+    setRole(localStorage.getItem("role") || "");
+  }
+}, []);
+
+// Define role-wise menu visibility
+const roleAccess = {
+  superadmin: [
+    "Dashboard",
+    "User Management",
+    "CMS",
+    "Analytics",
+    "E-Commerce",
+    "S&L",
+    "Marketing",
+    "Payments & Finance",
+    "Security & Compliance",
+    "Website Settings",
+  ],
+  admin: [
+    "Dashboard",
+    "E-Commerce",
+    "CMS",
+    "Analytics",
+  ],
+  staff: [
+    "Dashboard",
+    "E-Commerce",
+  ],
+  viewer: ["Dashboard"],
+};
+
+
 
   return (
     <>
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white border border-gray-200 rounded-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 
+                   p-2 bg-[var(--background-card)] 
+                   border border-[var(--sidebar-border)] 
+                   rounded-lg transition"
       >
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -54,36 +98,50 @@ export default function Sidebar() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`${
-          isOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 h-screen flex flex-col transition-all duration-300 overflow-y-auto font-nunito-sans fixed lg:relative z-40 lg:z-auto
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        className={`${isOpen ? 'w-64' : 'w-22'}
+          bg-[var(--sidebar-bg)]
+          border-r border-[var(--sidebar-border)]
+          text-[var(--text-primary)]
+          h-screen flex flex-col transition-all duration-300
+          overflow-y-auto fixed lg:relative z-40 lg:z-auto
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0`}
       >
-        {/* Logo Section */}
-        <div className="p-3.5 border-b border-gray-200">
+        {/* Logo */}
+        <div className="p-4 border-b border-[var(--sidebar-border)]">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 hover:opacity-80 transition"
             onClick={() => setIsMobileOpen(false)}
           >
-            <div className="w-10 h-10 bg-green-900 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">KZ</span>
+            <div className="w-9 h-9 bg-green-900 rounded-full flex items-center justify-center">
+             <span className="text-[var(--logo-color)] !text-[var(--logo-color)] font-bold text-sm">KZ</span>
             </div>
-            {isOpen && <span className="font-semibold text-lg tracking-wide whitespace-nowrap">KZARRÈ</span>}
+
+            {isOpen && (
+              <span className="font-semibold text-lg tracking-wide">
+                KZARRÈ
+              </span>
+            )}
           </Link>
         </div>
 
-        {/* Navigation Menu */}
+        {/* Menu Items */}
         <nav className="flex-1 p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item) => {
+          <ul className="space-y-2 ">
+           {menuItems
+  .filter((item) =>
+    roleAccess[role]?.includes(item.label)
+  )
+  .map((item) => {
+
               const Icon = item.icon;
               const active = isActive(item.href);
 
@@ -92,14 +150,21 @@ export default function Sidebar() {
                   <Link
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      active
-                        ? 'bg-[#A0EDA8] text-black font-semibold'
-                        : 'text-gray-700 hover:bg-gray-300'
-                    }`}
+                    className={`
+                      w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+                      transition-all duration-200 
+                      ${
+                        active
+                          ? 'bg-[var(--accent-green)] text-black font-semibold'
+                          : 'text-[var(--text-primary)] hover:bg-[var(--background-card)]'
+                      }
+                    `}
                   >
-                    <Icon size={20} className="flex-shrink-0" />
-                    {isOpen && <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>}
+                   <Icon size={22} className="min-w-[22px]" />
+
+                    {isOpen && (
+                      <span className="text-sm font-medium ">{item.label}</span>
+                    )}
                   </Link>
                 </li>
               );
@@ -107,36 +172,61 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        {/* User Profile Section */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="bg-yellow-50 rounded-lg p-3">
+        {/* User Section */}
+        <div className="p-4 border-t border-[var(--sidebar-border)] ">
+          <div
+            className="bg-[var(--background-card)] 
+                       rounded-lg p-3 cursor-pointer
+                       hover:opacity-90 transition hover:bg-[var(--accent-green)]"
+            onClick={() => router.push("/profile")}
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-300 to-orange-500 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold">
+              {/* Avatar */}
+              <div className="w-8 h-8 bg-gradient-to-br 
+                              from-orange-300 to-orange-500 
+                              rounded-full flex items-center justify-center 
+                              text-white font-bold" >
                 A
               </div>
+
+              {/* Name + Email */}
               {isOpen && (
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-600 truncate">Abhijeet Kulkarni</p>
-                  <p className="text-xs text-gray-600 truncate">abhijeet.work@kzarre.com</p>
+                  <p className="font-semibold text-sm truncate text-[var(--text-primary)]">
+                    Abhijeet Kulkarni
+                  </p>
+                  <p className="text-xs truncate text-[var(--text-secondary)]">
+                    abhijeet.work@kzarre.com
+                  </p>
                 </div>
               )}
+
+              {/* 3-Dot Menu */}
               {isOpen && (
-                <button className="p-1 hover:bg-yellow-100 rounded transition-colors flex-shrink-0">
-                  <MoreVertical size={16} className="text-gray-600" />
+                <button
+                  className="p-1 hover:bg-[var(--accent-green)] rounded transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(!menuOpen);
+                  }}
+                >
+                  <MoreVertical size={16} className="text-[var(--text-primary)]" />
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Toggle Button */}
-        <div className="p-4 border-t border-gray-200 hidden lg:block">
+        {/* Collapse Button */}
+        <div className="p-4 border-t border-[var(--sidebar-border)] hidden lg:block">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            className="w-full flex items-center justify-center p-2 
+                       hover:bg-[var(--background-card)] rounded-lg transition"
           >
-            <span className="text-gray-600 font-bold">{isOpen ? '←' : '→'}</span>
+            <span className="font-bold text-[var(--text-primary)]">
+              {isOpen ? '←' : '→'}
+            </span>
           </button>
         </div>
       </aside>
