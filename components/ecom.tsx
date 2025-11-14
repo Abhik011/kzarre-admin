@@ -978,60 +978,38 @@ dark:bg-[var(--bgCard)] transition-colors"
       </div>
     </div>
 
-    {/* ========== VARIANTS TABLE ========== */}
-    {selectedProduct.variants?.length > 0 && (
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
-          Variants
-        </h3>
+    
+   {Array.isArray(selectedProduct?.variants) && selectedProduct.variants.length > 0 && (
+  <div className="mt-8">
+    <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+      Variants
+    </h3>
 
-        <table className="
-            w-full 
-            border border-[var(--borderColor)] 
-            rounded-xl 
-            overflow-hidden
-            text-sm
-          "
-        >
-          <thead
-            className="
-              bg-[var(--background)]
-              dark:bg-[var(--bgCard)]
-              border-b border-[var(--borderColor)]
-            "
-          >
-            <tr>
-              {["Size", "Color", "Stock", "Material"].map((h) => (
-                <th
-                  key={h}
-                  className="py-3 px-4 text-left font-semibold text-[var(--textPrimary)]"
-                >
-                  {h}
-                </th>
-              ))}
+    <div className="overflow-x-auto">
+      <table className="w-full border border-[var(--borderColor)] text-sm rounded-lg">
+        <thead className="bg-[var(--background-card)]">
+          <tr>
+            <th className="py-2 px-3 text-left">Size</th>
+            <th className="py-2 px-3 text-left">Color</th>
+            <th className="py-2 px-3 text-left">Stock</th>
+            <th className="py-2 px-3 text-left">Material</th>
+          </tr>
+        </thead>
+        <tbody>
+          {selectedProduct.variants.map((v, idx) => (
+            <tr key={idx} className="border-t border-[var(--borderColor)]">
+              <td className="py-2 px-3">{v.size || "—"}</td>
+              <td className="py-2 px-3">{v.color || "—"}</td>
+              <td className="py-2 px-3">{v.stock ?? 0}</td>
+              <td className="py-2 px-3">{v.material || "—"}</td>
             </tr>
-          </thead>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
-          <tbody>
-            {selectedProduct.variants.map((v: Variant, idx: number) => (
-              <tr
-                key={idx}
-                className="
-                  border-t border-[var(--borderColor)] 
-                  hover:bg-[var(--background)]
-                  transition
-                "
-              >
-                <td className="py-3 px-4">{v.size || "—"}</td>
-                <td className="py-3 px-4">{v.color || "—"}</td>
-                <td className="py-3 px-4">{v.stock ?? 0}</td>
-                <td className="py-3 px-4">{v.material || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
   </div>
 </div>
 

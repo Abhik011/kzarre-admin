@@ -29,7 +29,7 @@ const AnalyticsPage = () => {
   const [summary, setSummary] = useState<any>({});
   const [traffic, setTraffic] = useState([]);
   const [ordersDaily, setOrdersDaily] = useState([]);
-  const [userType, setUserType] = useState([]);
+const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
   const [categorySales, setCategorySales] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
 
@@ -61,14 +61,14 @@ const AnalyticsPage = () => {
     setOrdersDaily(data.orders || []);
   };
 
-  const fetchUserType = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/users/type`);
-    const data = await res.json();
-    setUserType([
-      { name: "New Users", value: data.newUsers },
-      { name: "Returning Users", value: data.returningUsers },
-    ]);
-  };
+ const fetchUserType = async () => {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/users/type`);
+  const data = await res.json();
+  setUserType([
+    { name: "New Users", value: data.newUsers },
+    { name: "Returning Users", value: data.returningUsers },
+  ]);
+};
 
   const fetchCategorySales = async () => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/category-sales`);
