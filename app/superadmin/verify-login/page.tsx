@@ -26,6 +26,7 @@ export default function VerifySuperAdminLogin() {
       const res = await fetch(`${API_BASE}/api/superadmin/login/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, otp }),
       });
 

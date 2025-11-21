@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import {
   LineChart,
@@ -16,24 +17,57 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import {
-  Users,
-  ShoppingCart,
-  TrendingUp,
-  BarChart3,
-  Globe,
-  Package,
-} from "lucide-react";
+import { Users, ShoppingCart, TrendingUp, BarChart3 } from "lucide-react";
+
+// ----------------------
+// ✅ TYPES
+// ----------------------
+interface TrafficItem {
+  _id: string;
+  visits: number;
+}
+
+interface OrderDaily {
+  _id: string;
+  total: number;
+}
+
+interface UserTypeItem {
+  name: string;
+  value: number;
+  [key: string]: string | number;   // <-- FIX
+}
+
+
+interface CategorySalesItem {
+  _id: string;
+  total: number;
+}
+
+interface TopProductItem {
+  _id: string;
+  sold: number;
+}
+
+interface SummaryItem {
+  totalOrders?: number;
+  totalRevenue?: number;
+  newUsers?: number;
+  totalUsers?: number;
+}
+
+// Dynamic maps
+const CountryTraffic = dynamic(() => import("./CountryTraffic"), { ssr: false });
+const RegionTraffic = dynamic(() => import("./RegionTraffic"), { ssr: false });
 
 const AnalyticsPage = () => {
-  const [summary, setSummary] = useState<any>({});
-  const [traffic, setTraffic] = useState([]);
-  const [ordersDaily, setOrdersDaily] = useState([]);
-const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
-  const [categorySales, setCategorySales] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
+  const [summary, setSummary] = useState<SummaryItem>({});
+  const [traffic, setTraffic] = useState<TrafficItem[]>([]);
+  const [ordersDaily, setOrdersDaily] = useState<OrderDaily[]>([]);
+  const [userType, setUserType] = useState<UserTypeItem[]>([]);
+  const [categorySales, setCategorySales] = useState<CategorySalesItem[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProductItem[]>([]);
 
-  // Fetch everything on load
   useEffect(() => {
     fetchSummary();
     fetchTraffic();
@@ -43,41 +77,57 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
     fetchTopProducts();
   }, []);
 
+  // ----------------------
+  // Fetch Functions
+  //-----------------------
+
   const fetchSummary = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/summary`);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/summary`
+    );
     const data = await res.json();
-    setSummary(data.summary);
+    setSummary(data.summary || {});
   };
 
   const fetchTraffic = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/traffic/daily`);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/traffic/daily`
+    );
     const data = await res.json();
     setTraffic(data.traffic || []);
   };
 
   const fetchOrdersDaily = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/orders/daily`);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/orders/daily`
+    );
     const data = await res.json();
     setOrdersDaily(data.orders || []);
   };
 
- const fetchUserType = async () => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/users/type`);
-  const data = await res.json();
-  setUserType([
-    { name: "New Users", value: data.newUsers },
-    { name: "Returning Users", value: data.returningUsers },
-  ]);
-};
+  const fetchUserType = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/users/type`
+    );
+    const data = await res.json();
+    setUserType([
+      { name: "New Users", value: data.newUsers },
+      { name: "Returning Users", value: data.returningUsers },
+    ]);
+  };
 
   const fetchCategorySales = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/category-sales`);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/category-sales`
+    );
     const data = await res.json();
     setCategorySales(data.data || []);
   };
 
   const fetchTopProducts = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/top-products`);
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/top-products`
+    );
     const data = await res.json();
     setTopProducts(data.products || []);
   };
@@ -86,7 +136,7 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-6 mb-6">
         <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
           Advanced Analytics
@@ -96,7 +146,7 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
         </p>
       </div>
 
-      {/* KPI CARDS */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <KPICard title="Total Orders" icon={<ShoppingCart />} value={summary.totalOrders} />
         <KPICard title="Revenue" icon={<TrendingUp />} value={`$${summary.totalRevenue}`} />
@@ -104,10 +154,21 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
         <KPICard title="Total Users" icon={<BarChart3 />} value={summary.totalUsers} />
       </div>
 
-      {/* CHARTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* WORLD MAP */}
+      <ChartCard title="Global Visitor Distribution (Vercel Style)">
+        <CountryTraffic />
+      </ChartCard>
 
-        {/* Traffic */}
+      {/* REGION LIST */}
+      <div className="mt-6">
+        <ChartCard title="Region-wise Traffic">
+          <RegionTraffic />
+        </ChartCard>
+      </div>
+
+      {/* DAILY TRAFFIC, USERS, ORDERS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* TRAFFIC */}
         <ChartCard title="Daily Traffic (Visitors)">
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={traffic}>
@@ -120,19 +181,21 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* User Breakdown */}
+        {/* USER TYPE */}
         <ChartCard title="New vs Returning Users">
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={userType} cx="50%" cy="50%" outerRadius={90} dataKey="value">
-                {userType.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                {userType.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i]} />
+                ))}
               </Pie>
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* Orders */}
+        {/* ORDERS */}
         <ChartCard title="Orders Per Day">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={ordersDaily}>
@@ -146,9 +209,8 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
         </ChartCard>
       </div>
 
-      {/* CATEGORY SALES + TOP PRODUCTS */}
+      {/* CATEGORY + TOP PRODUCTS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
         <ChartCard title="Sales by Category">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={categorySales}>
@@ -162,7 +224,7 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
 
         <ChartCard title="Top Selling Products">
           <ul className="space-y-3">
-            {topProducts.map((p: any, i) => (
+            {topProducts.map((p, i) => (
               <li
                 key={p._id}
                 className="flex justify-between bg-[var(--background-card)] dark:bg-[var(--bgCard)] p-3 rounded-lg"
@@ -182,8 +244,18 @@ const [userType, setUserType] = useState<{ name: string; value: number }[]>([]);
   );
 };
 
-// KPI Card Component
-const KPICard = ({ title, icon, value }: any) => (
+// ----------------------
+// KPI CARD
+// ----------------------
+const KPICard = ({
+  title,
+  icon,
+  value,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  value: any;
+}) => (
   <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-5">
     <div className="flex items-center justify-between">
       <span className="text-sm text-[var(--textSecondary)]">{title}</span>
@@ -193,8 +265,16 @@ const KPICard = ({ title, icon, value }: any) => (
   </div>
 );
 
-// Chart card
-const ChartCard = ({ title, children }: any) => (
+// ----------------------
+// CHART CARD WRAPPER
+// ----------------------
+const ChartCard = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
   <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-6">
     <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
       {title}

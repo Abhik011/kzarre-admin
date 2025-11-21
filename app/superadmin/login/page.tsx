@@ -38,6 +38,7 @@ export default function SuperAdminLogin() {
       const res = await fetch(`${API_BASE}/api/superadmin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email }),
       });
       const data = await res.json();

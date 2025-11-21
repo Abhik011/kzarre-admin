@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import Link from "next/link";
 
 export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -10,28 +9,41 @@ export default function AdminLogin() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/usersadmin/login`, {
+      const res = await fetch(`${API_BASE}/api/usersadmin/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Invalid credentials");
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
+
+      // Store token
       localStorage.setItem("admin_token", data.accessToken);
-      localStorage.setItem("admin_role", data.admin.role);  
+      localStorage.setItem("admin_role", data.admin.role);
+
       window.location.href = "/dashboard";
     } catch (err: any) {
-      setError(err.message);
+      const errorMessage =
+        err instanceof Error ? err.message : "Something went wrong";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -40,6 +52,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
@@ -94,13 +107,10 @@ export default function AdminLogin() {
             </button>
           </div>
 
-          {/* Remember Me + Forgot Password */}
+          {/* Remember + Forgot */}
           <div className="flex justify-between items-center text-sm text-gray-600">
             <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="accent-indigo-500 rounded-sm"
-              />
+              <input type="checkbox" className="accent-indigo-500 rounded-sm" />
               Remember me
             </label>
             <a href="#" className="hover:text-indigo-600 transition-colors">
@@ -108,7 +118,7 @@ export default function AdminLogin() {
             </a>
           </div>
 
-          {/* Submit */}
+          {/* Button */}
           <button
             type="submit"
             disabled={loading}
@@ -117,9 +127,6 @@ export default function AdminLogin() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        {/* Register Link */}
-       
       </div>
     </div>
   );

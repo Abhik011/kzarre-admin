@@ -3,66 +3,114 @@
 import { useState, useEffect, useCallback } from "react";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://192.168.0.215:5000";
+  process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://kzarre.local:5000";
+
+// -------------------------------------------------------
+// 🔍 Choose refresh API depending on logged-in role
+// -------------------------------------------------------
+const getRefreshRoute = () => {
+  if (typeof window === "undefined") return "/api/superadmin/refresh";
+
+  const role = localStorage.getItem("role");
+  const adminRole = localStorage.getItem("admin_role");
+
+  if (role === "superadmin") return "/api/superadmin/refresh";
+  if (adminRole === "admin") return "/api/usersadmin/refresh";
+
+  return "/api/superadmin/refresh"; // fallback
+};
 
 export default function useAuth() {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load existing token
+  // -------------------------------------------------------
+  // ⛔ Skip on login pages
+  // -------------------------------------------------------
   useEffect(() => {
-    const stored = localStorage.getItem("admin_token");
-    console.log("🔑 Loaded token from LocalStorage:", stored ? "YES" : "NO");
-    if (stored) setToken(stored);
-    setLoading(false);
+    if (typeof window === "undefined") return;
+
+    const skipRoutes = [
+      "/superadmin/login",
+      "/superadmin/verify-login",
+      "/admin/login",
+    ];
+
+    if (skipRoutes.includes(window.location.pathname)) {
+      console.log("⛔ Skipping useAuth on auth page");
+      setLoading(false);
+    }
   }, []);
 
-  // 🔁 Refresh access token
+  // -------------------------------------------------------
+  // 🔁 Refresh access token using cookie
+  // -------------------------------------------------------
   const refreshAccessToken = useCallback(async () => {
-    console.log("🔄 Attempting silent token refresh...");
+    if (typeof window === "undefined") return null;
+
+    const refreshRoute = getRefreshRoute();
+    console.log("🔄 Refresh Endpoint:", refreshRoute);
 
     try {
-      console.log("🌐 Refresh API:", `${API_BASE}/api/superadmin/refresh`);
-
-      const res = await fetch(`${API_BASE}/api/superadmin/refresh`, {
+      const res = await fetch(`${API_BASE}${refreshRoute}`, {
         method: "POST",
-        credentials: "include", // MUST send refresh cookie
+        credentials: "include", // 🔥 VERY IMPORTANT
       });
 
       console.log("📡 Refresh Response Status:", res.status);
 
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("❌ Refresh failed. Server said:", errText);
-        throw new Error("Refresh failed");
+        const errorText = await res.text();
+        console.error("❌ Refresh failed:", errorText);
+        return null;
       }
 
       const data = await res.json();
-      console.log("📦 Refresh Response Data:", data);
 
       if (data.accessToken) {
-        console.log("✅ Token refreshed successfully");
         localStorage.setItem("admin_token", data.accessToken);
         setToken(data.accessToken);
-      } else {
-        console.warn("⚠️ No accessToken returned from refresh endpoint");
+        console.log("✅ Token refreshed");
+        return data.accessToken;
       }
+
+      console.warn("⚠️ Backend returned no accessToken");
+      return null;
     } catch (err) {
-      console.error("🔥 Silent refresh error:", err.message);
+      console.error("🔥 Refresh error:", err);
+      return null;
     }
   }, []);
 
-  // 🕒 Auto-refresh token every 14 minutes
+  // -------------------------------------------------------
+  // 🔐 Load token on first load
+  // -------------------------------------------------------
   useEffect(() => {
-    console.log("⏱️ Auto-refresh timer started: every 14 minutes");
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("admin_token");
+
+    if (!stored) {
+      console.log("⚠️ No token found. Trying refresh...");
+      refreshAccessToken().finally(() => setLoading(false));
+      return;
+    }
+
+    setToken(stored);
+
+    // Try refreshing in background anyway
+    refreshAccessToken().finally(() => setLoading(false));
+  }, [refreshAccessToken]);
+
+  // -------------------------------------------------------
+  // ⏱ Auto-refresh every 14 min
+  // -------------------------------------------------------
+  useEffect(() => {
     const interval = setInterval(() => {
       refreshAccessToken();
     }, 14 * 60 * 1000);
 
-    return () => {
-      console.log("🧹 Auto-refresh timer cleared");
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [refreshAccessToken]);
 
   return { token, setToken, refreshAccessToken, loading };

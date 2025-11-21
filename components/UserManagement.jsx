@@ -25,6 +25,9 @@ const samplePermissions = [
 // ===================================================
 // ✅ User List
 // ===================================================
+// ===================================================
+// ✅ User List (Dark-Mode Updated)
+// ===================================================
 const UserList = ({ refreshKey, onEditPermissions }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -37,29 +40,20 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
           localStorage.getItem("superadmin_token") ||
           localStorage.getItem("admin_token");
 
-        // ✅ Correct API path
         const res = await fetch(`${API_BASE}/users`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // ✅ Check for errors before parsing
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.message || `Error ${res.status}`);
         }
 
         const data = await res.json();
-
-        // ✅ Validate array response
-        if (!Array.isArray(data)) {
-          console.warn("Unexpected response:", data);
-          setUsers([]);
-        } else {
-          setUsers(data);
-        }
+        setUsers(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Error fetching users:", err.message);
-        setUsers([]); // avoid crash if response invalid
+        setUsers([]);
       } finally {
         setLoading(false);
       }
@@ -78,6 +72,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await res.json();
       alert(data.message);
     } catch (err) {
@@ -86,62 +81,112 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-      <h3 className="text-lg font-bold text-gray-900 mb-2">User List</h3>
-      <p className="text-sm text-gray-600 mb-4">Manage system users</p>
+    <div
+      className="
+      bg-[var(--background-card)] 
+      dark:bg-[var(--bgCard)]
+      border border-[var(--borderColor)]
+      rounded-2xl p-4 sm:p-6 shadow-sm
+    "
+    >
+      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
+        User List
+      </h3>
+      <p className="text-sm text-[var(--textSecondary)] mb-4">
+        Manage system users
+      </p>
 
+      {/* Loading */}
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading users...</p>
+        <p className="text-[var(--textSecondary)] text-sm">Loading users...</p>
       ) : users.length === 0 ? (
-        <p className="text-gray-500 text-sm">No users found.</p>
+        <p className="text-[var(--textSecondary)] text-sm">No users found.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-3 text-left font-semibold">Name</th>
-                <th className="px-4 py-3 text-left font-semibold">Email</th>
-                <th className="px-4 py-3 text-left font-semibold">Role</th>
-                <th className="px-4 py-3 text-left font-semibold">Group</th>
-                <th className="px-4 py-3 text-left font-semibold">Status</th>
-                <th className="px-4 py-3 text-left font-semibold">Actions</th>
+              <tr className="border-b border-[var(--borderColor)]">
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Email
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Role
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Group
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
+                  Actions
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {users.map((u) => (
                 <tr
                   key={u._id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="
+                    border-b border-[var(--borderColor)]
+                  "
                 >
-                  <td className="px-4 py-3">{u.name}</td>
-                  <td className="px-4 py-3 text-gray-700">{u.email}</td>
-                  <td className="px-4 py-3 text-gray-700">{u.role}</td>
-                  <td className="px-4 py-3 text-gray-700">{u.group}</td>
+                  <td className="px-4 py-3 text-[var(--textPrimary)]">
+                    {u.name}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {u.email}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {u.role}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {u.group}
+                  </td>
+
+                  {/* STATUS BADGE */}
                   <td className="px-4 py-3">
                     <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      className="px-3 py-1 text-xs font-medium rounded"
+                      style={
                         u.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                          ? {
+                              background: "rgba(34,197,94,0.08)",
+                              color: "rgb(34, 197, 94)",
+                            }
+                          : {
+                              background: "rgba(239, 68, 68, 0.08)",
+                              color: "rgb(239, 68, 68)",
+                            }
+                      }
                     >
                       {u.isActive ? "Active" : "Inactive"}
                     </span>
                   </td>
+
+                  {/* ACTIONS */}
                   <td className="px-4 py-3 flex items-center gap-2">
                     <button
                       onClick={() => onEditPermissions(u)}
-                      className="text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1"
+                      className="text-green-600 dark:text-green-400 hover:underline text-xs flex items-center gap-1"
                     >
                       <Shield size={14} /> Edit
                     </button>
+
                     <button
                       onClick={() => toggleActive(u._id)}
-                      className={`text-xs ${
-                        u.isActive
-                          ? "text-red-600 hover:text-red-800"
-                          : "text-green-600 hover:text-green-800"
-                      }`}
+                      className={`
+                        text-xs 
+                        ${
+                          u.isActive
+                            ? "text-red-600 dark:text-red-400 hover:underline"
+                            : "text-green-600 dark:text-green-400 hover:underline"
+                        }
+                      `}
                     >
                       {u.isActive ? "Deactivate" : "Activate"}
                     </button>
@@ -155,9 +200,11 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
     </div>
   );
 };
-
 // ===================================================
 // ✅ Add User Modal
+// ===================================================
+// ===================================================
+// ✅ Add User Modal (Dark Mode Updated)
 // ===================================================
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   const [form, setForm] = useState({
@@ -190,8 +237,10 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
           group: form.group,
         }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+
       alert("✅ User created successfully");
       onUserAdded();
       onClose();
@@ -205,65 +254,119 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full shadow-xl p-6 sm:p-8">
+    <div
+      className="
+      fixed inset-0 bg-black/40 dark:bg-black/60 
+      backdrop-blur-md flex items-center justify-center 
+      z-50 p-4
+    "
+    >
+      <div
+        className="
+        bg-[var(--background-card)] 
+        dark:bg-[var(--bgCard)]
+        border border-[var(--borderColor)]
+        rounded-xl max-w-2xl w-full shadow-xl p-6 sm:p-8
+      "
+      >
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Add New User</h2>
+          <h2 className="text-xl font-bold text-[var(--textPrimary)]">
+            Add New User
+          </h2>
+
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
           >
             <X size={24} />
           </button>
         </div>
 
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* NAME FIELDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               placeholder="First name"
               required
-              className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+              className="
+                border border-[var(--borderColor)]
+                bg-transparent text-[var(--textPrimary)]
+                rounded-lg p-2 focus:ring-2 focus:ring-green-500
+              "
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
             />
+
             <input
               placeholder="Last name"
               required
-              className="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+              className="
+                border border-[var(--borderColor)]
+                bg-transparent text-[var(--textPrimary)]
+                rounded-lg p-2 focus:ring-2 focus:ring-green-500
+              "
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             />
           </div>
 
+          {/* EMAIL */}
           <input
             type="email"
             placeholder="Email address"
             required
-            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+            className="
+              w-full border border-[var(--borderColor)]
+              bg-transparent text-[var(--textPrimary)]
+              rounded-lg p-2 focus:ring-2 focus:ring-green-500
+            "
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
 
+          {/* GROUP SELECT */}
           <select
-            className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500"
+            className="
+              w-full border border-[var(--borderColor)]
+              bg-transparent text-[var(--textPrimary)]
+              rounded-lg p-2 focus:ring-2 focus:ring-green-500
+            "
             required
             onChange={(e) => setForm({ ...form, group: e.target.value })}
           >
-            <option value="">Select Role Group</option>
+            <option value="" className="text-black">
+              Select Role Group
+            </option>
             {roleGroups.map((r) => (
-              <option key={r}>{r}</option>
+              <option
+                key={r}
+                value={r}
+                className="text-black dark:text-white dark:bg-[#111]"
+              >
+                {r}
+              </option>
             ))}
           </select>
 
+          {/* ACTION BUTTONS */}
           <div className="flex justify-end gap-3 mt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 border border-gray-300 rounded-lg text-sm"
+              className="
+                px-5 py-2 border border-[var(--borderColor)]
+                rounded-lg text-sm text-[var(--textSecondary)]
+              "
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+              className="
+                px-5 py-2 bg-green-500 text-white rounded-lg 
+                hover:bg-green-600 text-sm
+              "
             >
               {loading ? "Creating..." : "Create User"}
             </button>
@@ -274,9 +377,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   );
 };
 
-// ===================================================
-// ✅ Permissions Modal
-// ===================================================
 const EditPermissionsModal = ({ user, onClose }) => {
   const [selected, setSelected] = useState(user?.permissions || []);
 
@@ -300,8 +400,10 @@ const EditPermissionsModal = ({ user, onClose }) => {
         },
         body: JSON.stringify({ permissions: selected }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
+
       alert("✅ Permissions updated");
       onClose();
     } catch (err) {
@@ -310,39 +412,77 @@ const EditPermissionsModal = ({ user, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-lg shadow-lg p-6">
+    <div
+      className="
+        fixed inset-0 bg-black/40 dark:bg-black/60
+        backdrop-blur-md flex items-center justify-center
+        z-50 p-4
+      "
+    >
+      <div
+        className="
+          bg-[var(--background-card)]
+          dark:bg-[var(--bgCard)]
+          border border-[var(--borderColor)]
+          rounded-xl w-full max-w-lg shadow-lg p-6
+        "
+      >
+        {/* HEADER */}
         <div className="flex justify-between mb-6">
-          <h2 className="text-lg font-bold">Edit Permissions - {user.name}</h2>
+          <h2 className="text-lg font-bold text-[var(--textPrimary)]">
+            Edit Permissions – {user.name}
+          </h2>
+
           <button onClick={onClose}>
-            <X size={22} className="text-gray-600" />
+            <X
+              size={22}
+              className="text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
+            />
           </button>
         </div>
 
+        {/* PERMISSIONS GRID */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           {samplePermissions.map((perm) => (
-            <label key={perm} className="flex items-center gap-2 text-sm">
+            <label
+              key={perm}
+              className="
+                flex items-center gap-2 text-sm
+                text-[var(--textPrimary)]
+              "
+            >
               <input
                 type="checkbox"
                 checked={selected.includes(perm)}
                 onChange={() => handleToggle(perm)}
-                className="accent-green-500"
+                className="
+                  accent-green-500
+                  h-4 w-4
+                "
               />
               {perm}
             </label>
           ))}
         </div>
 
+        {/* ACTION BUTTONS */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-2 border border-gray-300 rounded-lg text-sm"
+            className="
+              px-5 py-2 border border-[var(--borderColor)]
+              rounded-lg text-sm text-[var(--textSecondary)]
+            "
           >
             Cancel
           </button>
+
           <button
             onClick={handleSave}
-            className="px-5 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600"
+            className="
+              px-5 py-2 bg-green-500 text-white rounded-lg text-sm 
+              hover:bg-green-600 transition-all
+            "
           >
             Save
           </button>
@@ -354,6 +494,9 @@ const EditPermissionsModal = ({ user, onClose }) => {
 
 // ===================================================
 // ✅ Activity Log
+// ===================================================
+// ===================================================
+// ✅ Activity Log (Dark Mode Updated)
 // ===================================================
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
@@ -373,12 +516,7 @@ const ActivityLog = () => {
         });
 
         const data = await res.json();
-
-        if (!res.ok) {
-          console.error("Error fetching logs:", data.message);
-          setLoading(false);
-          return;
-        }
+        if (!res.ok) return;
 
         const formatted = data.logs.map((log, index) => ({
           id: index + 1,
@@ -402,80 +540,56 @@ const ActivityLog = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-      <h3 className="text-lg font-bold text-gray-900 mb-2">Activity Log</h3>
-      <p className="text-sm text-gray-600 mb-4">
+    <div
+      className="
+        bg-[var(--background-card)]
+        dark:bg-[var(--bgCard)]
+        border border-[var(--borderColor)]
+        rounded-2xl p-4 sm:p-6 shadow-sm
+      "
+    >
+      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
+        Activity Log
+      </h3>
+      <p className="text-sm text-[var(--textSecondary)] mb-4">
         Recent administrative actions
       </p>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-4 py-3 text-left font-semibold">User</th>
-              <th className="px-4 py-3 text-left font-semibold">Action</th>
-              <th className="px-4 py-3 text-left font-semibold">IP</th>
-              <th className="px-4 py-3 text-left font-semibold">Timestamp</th>
+            <tr className="border-b border-[var(--borderColor)]">
+              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
+                User
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
+                Action
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
+                IP
+              </th>
+              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
+                Timestamp
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="text-center py-4 text-gray-500">
+                <td
+                  colSpan={4}
+                  className="text-center py-4 text-[var(--textSecondary)]"
+                >
                   Loading activity...
                 </td>
               </tr>
             ) : logs.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-4 text-gray-500">
-                  No activity found.
-                </td>
-              </tr>
-            ) : (
-              logs.map((log) => (
-                <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-4 py-3">{log.user}</td>
-                  <td className="px-4 py-3">{log.action}</td>
-                  <td className="px-4 py-3">{log.ip}</td>
-                  <td className="px-4 py-3">{log.time}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-      <h3 className="text-lg font-bold text-gray-900 mb-2">Activity Log</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Recent administrative actions
-      </p>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-4 py-3 text-left font-semibold">User</th>
-              <th className="px-4 py-3 text-left font-semibold">Action</th>
-              <th className="px-4 py-3 text-left font-semibold">Timestamp</th>
-              <th className="px-4 py-3 text-left font-semibold">Ip address</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={3} className="text-center py-4 text-gray-500">
-                  Loading activity...
-                </td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="text-center py-4 text-gray-500">
+                <td
+                  colSpan={4}
+                  className="text-center py-4 text-[var(--textSecondary)]"
+                >
                   No activity found.
                 </td>
               </tr>
@@ -483,13 +597,24 @@ const ActivityLog = () => {
               logs.map((log) => (
                 <tr
                   key={log.id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="
+                    border-b border-[var(--borderColor)]
+                    hover:bg-gray-100 dark:hover:bg-[var(--hoverRow)]
+                    transition
+                  "
                 >
-                  <td className="px-4 py-3">{log.user}</td>
-                  <td className="px-4 py-3">{log.action}</td>
-                  <td className="px-4 py-3 text-gray-600">{log.time}</td>
-                  <td className="px-4 py-3 text-gray-600">{log.Ip}</td>
-
+                  <td className="px-4 py-3 text-[var(--textPrimary)]">
+                    {log.user}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {log.action}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {log.ip}
+                  </td>
+                  <td className="px-4 py-3 text-[var(--textSecondary)]">
+                    {log.time}
+                  </td>
                 </tr>
               ))
             )}
@@ -503,6 +628,9 @@ const ActivityLog = () => {
 // ===================================================
 // ✅ Main User Management Page
 // ===================================================
+// ===================================================
+// ✅ Main User Management Page (Dark Mode Updated)
+// ===================================================
 export default function UserManagement() {
   const [activeTab, setActiveTab] = useState("userList");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -511,28 +639,39 @@ export default function UserManagement() {
 
   return (
     <ProtectedRoute roles={["superadmin", "hr_manager"]}>
-      <div className="bg-gray-50 min-h-screen">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+      <div className="min-h-screen">
+        {/* HEADER */}
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--textPrimary)]">
             User Management
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+
+          <p className="text-sm sm:text-base text-[var(--textSecondary)] mt-1">
             Manage and control system users
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mb-6">
-          <div className="flex gap-4 sm:gap-8 border-b border-gray-200 w-full sm:w-auto overflow-x-auto">
+          <div
+            className="
+              flex gap-4 sm:gap-8 
+              border-b border-[var(--borderColor)]
+              w-full sm:w-auto overflow-x-auto
+            "
+          >
             {["userList", "rolesPermissions", "activityLog"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 px-1 font-medium text-sm ${
-                  activeTab === tab
-                    ? "text-green-600 border-b-2 border-green-500"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`
+                  pb-3 px-1 font-medium text-sm transition
+                  ${
+                    activeTab === tab
+                      ? "text-green-500 border-b-2 border-green-500"
+                      : "text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
+                  }
+                `}
               >
                 {tab === "userList"
                   ? "User List"
@@ -543,44 +682,60 @@ export default function UserManagement() {
             ))}
           </div>
 
+          {/* ADD USER BUTTON */}
           {activeTab === "userList" && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="w-full sm:w-auto px-4 py-2 bg-[#A0EDA8] text-black rounded-lg hover:bg-green-500 hover:scale-105 flex items-center justify-center gap-2 font-medium text-sm"
+              className="
+                w-full sm:w-auto px-4 py-2 
+                bg-green-400 text-black rounded-lg 
+                hover:bg-green-500 active:scale-95 
+                flex items-center justify-center gap-2 font-medium text-sm
+              "
             >
               <Plus size={18} /> Add User
             </button>
           )}
         </div>
 
-        {/* Tab Content */}
+        {/* CONTENT AREA */}
         {activeTab === "userList" && (
           <UserList
             refreshKey={refreshKey}
             onEditPermissions={(u) => setEditUser(u)}
           />
         )}
+
         {activeTab === "rolesPermissions" && (
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
+          <div
+            className="
+              bg-[var(--background-card)]
+              dark:bg-[var(--bgCard)]
+              border border-[var(--borderColor)]
+              rounded-2xl p-4 sm:p-6 shadow-sm
+            "
+          >
+            <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
               Roles & Permissions
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[var(--textSecondary)] mb-4">
               Manage system-level access groups
             </p>
-            <p className="text-sm text-gray-700">
-              (Coming soon — can connect with backend role management)
+            <p className="text-sm text-[var(--textSecondary)]">
+              (Coming soon — backend integration pending)
             </p>
           </div>
         )}
+
         {activeTab === "activityLog" && <ActivityLog />}
 
-        {/* Modals */}
+        {/* MODALS */}
         <AddUserModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onUserAdded={() => setRefreshKey((k) => k + 1)}
         />
+
         {editUser && (
           <EditPermissionsModal
             user={editUser}
