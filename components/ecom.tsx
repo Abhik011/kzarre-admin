@@ -84,12 +84,20 @@ interface Product {
 }
 
 interface Order {
-  id: string;
-  customer?: string;
-  date?: string;
-  total?: string;
+  _id: string; // ✅ MongoDB ID
+  orderId?: string; // ✅ Optional human-readable ID (if exists)
+  amount?: number;
   status?: string;
-  items?: number;
+  createdAt?: string;
+  items?: any[];
+  address?: {
+    name?: string;
+    phone?: string;
+    pincode?: string;
+    city?: string;
+    state?: string;
+    line1?: string;
+  };
 }
 
 const getStockBadgeColor = (statusText: string) => {
@@ -171,54 +179,54 @@ const ECommerceSection: React.FC = () => {
   const [orderDetailsModal, setOrderDetailsModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [modalOrder, setModalOrder] = useState(null);
+  const [modalOrder, setModalOrder] = useState<OrderDetailsModel | null>(null);
 
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [statusOrderId, setStatusOrderId] = useState(null);
+  const [statusOrderId, setStatusOrderId] = useState<string | null>(null);
+
   const [newStatus, setNewStatus] = useState("pending");
 
-  const [openDropdown, setOpenDropdown] = useState(null);
-// ===============================
-// UPDATE ORDER STATUS (ADMIN)
-// ===============================
-const updateStatus = async (status: string) => {
-  if (!statusOrderId) return;
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/orders/${statusOrderId}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
-        },
-        body: JSON.stringify({ status }),
+  // ===============================
+  // UPDATE ORDER STATUS (ADMIN)
+  // ===============================
+  const updateStatus = async (status: string) => {
+    if (!statusOrderId) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/orders/${statusOrderId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(`Failed: ${data.message}`);
+        return;
       }
-    );
 
-    const data = await res.json();
+      // 🔥 Update UI instantly
+      setOrders((prev: any[]) =>
+        prev.map((o) => (o._id === statusOrderId ? { ...o, status } : o))
+      );
 
-    if (!data.success) {
-      alert(`Failed: ${data.message}`);
-      return;
+      alert("Status updated successfully!");
+
+      setShowStatusModal(false);
+    } catch (error) {
+      console.error("UPDATE STATUS ERROR:", error);
+      alert("Something went wrong while updating status.");
     }
-
-    // 🔥 Update UI instantly
-    setOrders((prev: any[]) =>
-      prev.map((o) =>
-        o.orderId === statusOrderId ? { ...o, status } : o
-      )
-    );
-
-    alert("Status updated successfully!");
-
-    setShowStatusModal(false);
-  } catch (error) {
-    console.error("UPDATE STATUS ERROR:", error);
-    alert("Something went wrong while updating status.");
-  }
-};
+  };
 
   // Fetch orders (production)
   const [orders, setOrders] = useState<Order[]>([]);
@@ -309,7 +317,10 @@ const updateStatus = async (status: string) => {
       (sum, p) => sum + (Number(p.stockQuantity ?? p.stock ?? 0) || 0),
       0
     ),
-    sold: orders.reduce((s, o) => s + (o.items || 0), 0),
+
+    // ✅ FIXED: safely counts all order items
+    sold: orders.reduce((s, o) => s + (o.items?.length || 0), 0),
+
     returns: 0,
   };
 
@@ -2208,30 +2219,30 @@ const updateStatus = async (status: string) => {
     </div>
   );
   const handleCancelOrder = async (orderId: string) => {
-  if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!confirm("Are you sure you want to cancel this order?")) return;
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/order/${orderId}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
-        },
-        body: JSON.stringify({ status: "failed" }),
-      }
-    );
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/order/${orderId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
+          },
+          body: JSON.stringify({ status: "failed" }),
+        }
+      );
 
-    if (!res.ok) throw new Error("Cancel failed");
+      if (!res.ok) throw new Error("Cancel failed");
 
-    alert("Order cancelled");
-    fetchOrders();
-  } catch (err) {
-    alert("Cancel order error");
-    console.error(err);
-  }
-};
+      alert("Order cancelled");
+      fetchOrders();
+    } catch (err) {
+      alert("Cancel order error");
+      console.error(err);
+    }
+  };
 
   // ===================== ORDER DETAILS MODAL =====================
   interface OrderItem {
@@ -2268,99 +2279,106 @@ const updateStatus = async (status: string) => {
     onStatusClick: (order: any) => void;
     onPrintClick: (order: any) => void;
   }
-interface StatusModalProps {
-  orderId: string;
-  currentStatus: string;
-  onClose: () => void;
-  onUpdate: (newStatus: string) => void;
-}
+  interface StatusModalProps {
+    orderId: string;
+    currentStatus: string;
+    onClose: () => void;
+    onUpdate: (newStatus: string) => void;
+  }
 
-const StatusModal: React.FC<StatusModalProps> = ({
-  orderId,
-  currentStatus,
-  onClose,
-  onUpdate,
-}) => {
-  const [status, setStatus] = React.useState(currentStatus);
+  const StatusModal: React.FC<StatusModalProps> = ({
+    orderId,
+    currentStatus,
+    onClose,
+    onUpdate,
+  }) => {
+    const [status, setStatus] = React.useState(currentStatus);
 
-  const statuses = ["pending", "paid", "failed", "shipped", "delivered", "cancelled"];
+    const statuses = [
+      "pending",
+      "paid",
+      "failed",
+      "shipped",
+      "delivered",
+      "cancelled",
+    ];
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-xl w-full max-w-md p-6 relative">
-
-        {/* Close Button */}
-        <button
-          className="absolute top-3 right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full"
-          onClick={onClose}
-        >
-          ✕
-        </button>
-
-        <h2 className="text-xl font-bold text-[var(--textPrimary)] mb-4">
-          Update Order Status
-        </h2>
-
-        <p className="text-[var(--textSecondary)] mb-3">
-          Order: <strong>{orderId}</strong>
-        </p>
-
-        {/* Status Dropdown */}
-        <label className="block text-sm text-[var(--textPrimary)] mb-1">
-          Select Status
-        </label>
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-2 border border-[var(--borderColor)] rounded bg-[var(--background)] dark:bg-[var(--bgCard)] text-[var(--textPrimary)]"
-        >
-          {statuses.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-xl w-full max-w-md p-6 relative">
+          {/* Close Button */}
           <button
+            className="absolute top-3 right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full"
             onClick={onClose}
-            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
           >
-            Cancel
+            ✕
           </button>
 
-          <button
-            onClick={() => onUpdate(status)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          <h2 className="text-xl font-bold text-[var(--textPrimary)] mb-4">
+            Update Order Status
+          </h2>
+
+          <p className="text-[var(--textSecondary)] mb-3">
+            Order: <strong>{orderId}</strong>
+          </p>
+
+          {/* Status Dropdown */}
+          <label className="block text-sm text-[var(--textPrimary)] mb-1">
+            Select Status
+          </label>
+
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full p-2 border border-[var(--borderColor)] rounded bg-[var(--background)] dark:bg-[var(--bgCard)] text-[var(--textPrimary)]"
           >
-            Update
-          </button>
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </option>
+            ))}
+          </select>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={onClose}
+              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={() => onUpdate(status)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              Update
+            </button>
+          </div>
         </div>
-
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-const handlePrintLabel = (order: any) => {
-  if (!order) return;
+  const handlePrintLabel = (order: any) => {
+    if (!order) return;
 
-  const brandLogo = "/logo.png";                      // YOUR BRAND LOGO
-  const carrierLogo = "https://upload.wikimedia.org/wikipedia/commons/4/4e/USPS_logo.png"; // USPS Logo
-  const qrValue = `${window.location.origin}/track/${order.orderId}`;
-  const trackingNumber = order.orderId.replace("ORD-", "TRK00"); // Fake tracking number
+    const brandLogo = "/logo.png"; // YOUR BRAND LOGO
+    const carrierLogo =
+      "https://upload.wikimedia.org/wikipedia/commons/4/4e/USPS_logo.png"; // USPS Logo
+    const qrValue = `${window.location.origin}/track/${order._id}`;
+    const trackingNumber = order._id.slice(-10).toUpperCase();
+    // Fake tracking number
 
-  const item = order.items?.[0] || {};
+    const item = order.items?.[0] || {};
 
-  const sku = item.sku || "N/A";
-  const weight = item.weight || "0.45 kg";
-  const category = order.category || "Apparel";
+    const sku = item.sku || "N/A";
+    const weight = item.weight || "0.45 kg";
+    const category = order.category || "Apparel";
 
-  const printWindow = window.open("", "_blank", "width=400,height=600");
+    const printWindow = window.open("", "_blank", "width=400,height=600");
 
-  printWindow!.document.write(`
+    printWindow!.document.write(`
   <html>
   <head>
     <title>Shipping Label</title>
@@ -2457,7 +2475,9 @@ const handlePrintLabel = (order: any) => {
         <div class="info">
           ${order.address?.name}<br/>
           ${order.address?.line1}<br/>
-          ${order.address?.city}, ${order.address?.state} ${order.address?.pincode}<br/>
+          ${order.address?.city}, ${order.address?.state} ${
+      order.address?.pincode
+    }<br/>
           Phone: ${order.address?.phone}
         </div>
       </div>
@@ -2518,8 +2538,8 @@ const handlePrintLabel = (order: any) => {
   </html>
   `);
 
-  printWindow!.document.close();
-};
+    printWindow!.document.close();
+  };
 
   const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     order,
@@ -2698,12 +2718,12 @@ const handlePrintLabel = (order: any) => {
           <tbody>
             {orders.map((order) => (
               <tr
-                key={order.orderId}
+                key={order._id}
                 className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] transition-colors"
               >
                 {/* ORDER ID */}
                 <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
-                  {order.orderId}
+                  {order._id}
                 </td>
 
                 {/* CUSTOMER */}
@@ -2751,7 +2771,7 @@ const handlePrintLabel = (order: any) => {
                   <button
                     onClick={() =>
                       setOpenDropdown(
-                        openDropdown === order.orderId ? null : order.orderId
+                        openDropdown === order._id ? null : order._id
                       )
                     }
                     className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -2759,12 +2779,20 @@ const handlePrintLabel = (order: any) => {
                     <MoreVertical size={18} className="text-gray-500" />
                   </button>
 
-                  {openDropdown === order.orderId && (
+                  {openDropdown === order._id && (
                     <div className="absolute right-6 mt-2 w-48 bg-white dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-lg shadow-lg z-50">
                       {/* VIEW DETAILS */}
                       <button
                         onClick={() => {
-                          setModalOrder(order);
+                          setModalOrder({
+                            orderId: order.orderId || order._id, // ✅ guaranteed string
+                            amount: Number(order.amount || 0),
+                            status: order.status || "pending",
+                            createdAt:
+                              order.createdAt || new Date().toISOString(),
+                            items: order.items || [],
+                            address: order.address || {},
+                          });
                           setShowOrderModal(true);
                           setOpenDropdown(null);
                         }}
@@ -2776,8 +2804,10 @@ const handlePrintLabel = (order: any) => {
                       {/* UPDATE STATUS */}
                       <button
                         onClick={() => {
-                          setStatusOrderId(order.orderId);
-                          setNewStatus(order.status);
+                          setStatusOrderId(order._id);
+
+                          setNewStatus(order.status || "pending");
+
                           setShowStatusModal(true);
                           setOpenDropdown(null);
                         }}
@@ -2804,7 +2834,7 @@ const handlePrintLabel = (order: any) => {
 
                       {/* CANCEL ORDER */}
                       <button
-                        onClick={() => handleCancelOrder(order.orderId)}
+                        onClick={() => handleCancelOrder(order._id)}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
                       >
                         Cancel Order
@@ -2820,27 +2850,26 @@ const handlePrintLabel = (order: any) => {
 
       {/* ORDER DETAILS MODAL */}
       {showOrderModal && modalOrder && (
-     <OrderDetailsModal
-  order={modalOrder}
-  onClose={() => setShowOrderModal(false)}
-  onStatusClick={(order) => {
-    setStatusOrderId(order.orderId);
-    setNewStatus(order.status);
-    setShowStatusModal(true);
-  }}
-  onPrintClick={handlePrintLabel}
-/>
-
+        <OrderDetailsModal
+          order={modalOrder}
+          onClose={() => setShowOrderModal(false)}
+          onStatusClick={(order) => {
+            setStatusOrderId(order.orderId || order._id);
+            setNewStatus(order.status || "pending");
+            setShowStatusModal(true);
+          }}
+          onPrintClick={handlePrintLabel}
+        />
       )}
 
       {/* STATUS MODAL */}
       {showStatusModal && (
-         <StatusModal
-    orderId={statusOrderId!}
-    currentStatus={newStatus}
-    onClose={() => setShowStatusModal(false)}
-    onUpdate={(status) => updateStatus(status)}
-  />
+        <StatusModal
+          orderId={statusOrderId!}
+          currentStatus={newStatus}
+          onClose={() => setShowStatusModal(false)}
+          onUpdate={(status) => updateStatus(status)}
+        />
       )}
     </div>
   );
