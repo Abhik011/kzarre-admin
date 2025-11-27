@@ -30,7 +30,6 @@ import {
   Grid,
   List,
 } from "lucide-react";
-import Image from "next/image";
 
 // -------------------- Types --------------------
 interface Variant {
@@ -168,6 +167,58 @@ const ECommerceSection: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const [orderDetailsModal, setOrderDetailsModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [modalOrder, setModalOrder] = useState(null);
+
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusOrderId, setStatusOrderId] = useState(null);
+  const [newStatus, setNewStatus] = useState("pending");
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+// ===============================
+// UPDATE ORDER STATUS (ADMIN)
+// ===============================
+const updateStatus = async (status: string) => {
+  if (!statusOrderId) return;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/orders/${statusOrderId}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
+        },
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(`Failed: ${data.message}`);
+      return;
+    }
+
+    // 🔥 Update UI instantly
+    setOrders((prev: any[]) =>
+      prev.map((o) =>
+        o.orderId === statusOrderId ? { ...o, status } : o
+      )
+    );
+
+    alert("Status updated successfully!");
+
+    setShowStatusModal(false);
+  } catch (error) {
+    console.error("UPDATE STATUS ERROR:", error);
+    alert("Something went wrong while updating status.");
+  }
+};
 
   // Fetch orders (production)
   const [orders, setOrders] = useState<Order[]>([]);
@@ -453,7 +504,9 @@ const ECommerceSection: React.FC = () => {
   };
 
   // new: customer photos file select
-  const handleCustomerPhotosSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCustomerPhotosSelect = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = e.target.files;
     if (!files) return;
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
@@ -542,7 +595,9 @@ const ECommerceSection: React.FC = () => {
     setVariants((prev) => prev.filter((v) => v.id !== id));
 
   const generateSKU = () => {
-    const sku = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`.toUpperCase();
+    const sku = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 11)}`.toUpperCase();
     handleProductInputChange("sku", sku);
   };
 
@@ -609,7 +664,7 @@ const ECommerceSection: React.FC = () => {
 
     setCurrentView("addProduct");
   };
-// Part 2/3 (continued)
+  // Part 2/3 (continued)
   // -------------------- Save product (uploads to backend) --------------------
   const handleSaveProduct = async () => {
     try {
@@ -620,7 +675,9 @@ const ECommerceSection: React.FC = () => {
 
       // if creating new product and no existingImages and no newImages -> require at least one image
       if (existingImages.length === 0 && newImages.length === 0) {
-        alert('Please upload at least one valid image using "Browse Files" or drag and drop.');
+        alert(
+          'Please upload at least one valid image using "Browse Files" or drag and drop.'
+        );
         return;
       }
 
@@ -641,12 +698,18 @@ const ECommerceSection: React.FC = () => {
       formData.append("careInstructions", productForm.careInstructions || "");
       formData.append("notes", productForm.notes || "");
       formData.append("terms", productForm.terms || "");
-      formData.append("specifications", JSON.stringify(productForm.specifications || {}));
+      formData.append(
+        "specifications",
+        JSON.stringify(productForm.specifications || {})
+      );
       formData.append("faq", JSON.stringify(productForm.faq || []));
 
       // IMPORTANT: include existing image URLs so backend can keep them (no reupload)
       formData.append("existingGallery", JSON.stringify(existingImages || []));
-      formData.append("existingCustomerPhotos", JSON.stringify(existingCustomerPhotos || []));
+      formData.append(
+        "existingCustomerPhotos",
+        JSON.stringify(existingCustomerPhotos || [])
+      );
 
       // append new product images (files)
       newImages.forEach((file) => {
@@ -664,7 +727,10 @@ const ECommerceSection: React.FC = () => {
         formData.append("productId", String(selectedProduct._id));
       }
 
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token") || ""
+          : "";
 
       setUploading(true);
       setUploadProgress(0);
@@ -677,7 +743,8 @@ const ECommerceSection: React.FC = () => {
         if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          if (e.lengthComputable)
+            setUploadProgress(Math.round((e.loaded / e.total) * 100));
         };
 
         xhr.onload = async () => {
@@ -690,7 +757,9 @@ const ECommerceSection: React.FC = () => {
               if (resp && resp.product) {
                 // if product returned, update list (replace if same id)
                 setProducts((prev) => {
-                  const idx = prev.findIndex((p) => (p._id ?? p.id) === resp.product._id);
+                  const idx = prev.findIndex(
+                    (p) => (p._id ?? p.id) === resp.product._id
+                  );
                   if (idx >= 0) {
                     const copy = [...prev];
                     copy[idx] = resp.product;
@@ -705,11 +774,19 @@ const ECommerceSection: React.FC = () => {
                 const newProduct: Product = {
                   id: Date.now(),
                   name: productForm.name,
-                  stockQuantity: variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0),
+                  stockQuantity: variants.reduce(
+                    (sum, v) => sum + (Number(v.stock) || 0),
+                    0
+                  ),
                   threshold: 20,
                   purchase: `$${productForm.basePrice}`,
                   price: `$${productForm.sellPrice}`,
-                  valuation: `${variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0) * (Number(productForm.sellPrice) || 0)}`,
+                  valuation: `${
+                    variants.reduce(
+                      (sum, v) => sum + (Number(v.stock) || 0),
+                      0
+                    ) * (Number(productForm.sellPrice) || 0)
+                  }`,
                   vendor: productForm.vendor || "Unknown",
                   category: productForm.category,
                   sku: productForm.sku,
@@ -798,8 +875,10 @@ const ECommerceSection: React.FC = () => {
   };
 
   const getStockStatus = (stock: number, threshold: number) => {
-    if (stock <= 5) return { text: "Critical", color: "text-red-600 bg-red-50" };
-    if (stock <= threshold) return { text: "Low Stock", color: "text-yellow-600 bg-yellow-50" };
+    if (stock <= 5)
+      return { text: "Critical", color: "text-red-600 bg-red-50" };
+    if (stock <= threshold)
+      return { text: "Low Stock", color: "text-yellow-600 bg-yellow-50" };
     return { text: "In Stock", color: "text-green-600 bg-green-50" };
   };
 
@@ -809,15 +888,26 @@ const ECommerceSection: React.FC = () => {
   >("details");
 
   // ------------------ helper small UI functions ------------------
-  const isPreviewFromExisting = (preview: { id: number; url: any; name: string }) => {
+  const isPreviewFromExisting = (preview: {
+    id: number;
+    url: any;
+    name: string;
+  }) => {
     // we identify existing previews by url being a string that matches an existingImages entry
-    return typeof preview.url === "string" && existingImages.includes(preview.url as string);
+    return (
+      typeof preview.url === "string" &&
+      existingImages.includes(preview.url as string)
+    );
   };
 
-  const isPreviewFromNewFile = (preview: { id: number; url: any; name: string }) => {
+  const isPreviewFromNewFile = (preview: {
+    id: number;
+    url: any;
+    name: string;
+  }) => {
     return newImages.some((f) => f.name === preview.name);
   };
-// Part 3/3 (continued)
+  // Part 3/3 (continued)
   // ------------- Render Inventory -------------
   const renderInventory = () => (
     <div className="space-y-6">
@@ -825,18 +915,26 @@ const ECommerceSection: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[var(--textSecondary)] text-sm">Total Products</span>
+            <span className="text-[var(--textSecondary)] text-sm">
+              Total Products
+            </span>
             <Package className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-[var(--textPrimary)]">{stats.totalProducts}</div>
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
+            {stats.totalProducts}
+          </div>
         </div>
 
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[var(--textSecondary)] text-sm">Total Stock</span>
+            <span className="text-[var(--textSecondary)] text-sm">
+              Total Stock
+            </span>
             <Box className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-[var(--textPrimary)]">{stats.totalStock}</div>
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
+            {stats.totalStock}
+          </div>
         </div>
 
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
@@ -844,7 +942,9 @@ const ECommerceSection: React.FC = () => {
             <span className="text-[var(--textSecondary)] text-sm">Sold</span>
             <ShoppingCart className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-[var(--textPrimary)]">{stats.sold}</div>
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
+            {stats.sold}
+          </div>
         </div>
 
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
@@ -852,7 +952,9 @@ const ECommerceSection: React.FC = () => {
             <span className="text-[var(--textSecondary)] text-sm">Return</span>
             <RotateCcw className="text-gray-400" size={20} />
           </div>
-          <div className="text-2xl font-bold text-[var(--textPrimary)]">{stats.returns}</div>
+          <div className="text-2xl font-bold text-[var(--textPrimary)]">
+            {stats.returns}
+          </div>
         </div>
       </div>
 
@@ -860,7 +962,9 @@ const ECommerceSection: React.FC = () => {
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
         <div className="p-6 border-b border-[var(--borderColor)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">Product List</h2>
+            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
+              Product List
+            </h2>
             <div className="flex items-center gap-3">
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <Filter size={20} className="text-[var(--textSecondary)]" />
@@ -877,58 +981,149 @@ const ECommerceSection: React.FC = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Product</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Stock</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Threshold</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Purchase</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Price</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Valuation</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Supplier</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]"> Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Product
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Stock
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Threshold
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Purchase
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Price
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Valuation
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Supplier
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                  {" "}
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={8} className="text-center py-6 text-gray-500">
-                    <RotateCcw className="inline-block animate-spin mr-2" size={18} /> Loading products...
+                    <RotateCcw
+                      className="inline-block animate-spin mr-2"
+                      size={18}
+                    />{" "}
+                    Loading products...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-6 text-red-600 bg-red-50 border-y">⚠️ {error}</td>
+                  <td
+                    colSpan={8}
+                    className="text-center py-6 text-red-600 bg-red-50 border-y"
+                  >
+                    ⚠️ {error}
+                  </td>
                 </tr>
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-6 text-gray-500 bg-[var(--background)] dark:bg-[var(--bgCard)]">No products found. Try adding one.</td>
+                  <td
+                    colSpan={8}
+                    className="text-center py-6 text-gray-500 bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                  >
+                    No products found. Try adding one.
+                  </td>
                 </tr>
               ) : (
                 products.map((product) => {
-                  const status = getStockStatus(product.stockQuantity ?? product.variants?.[0]?.stock ?? 0, product.threshold || 20);
+                  const status = getStockStatus(
+                    product.stockQuantity ?? product.variants?.[0]?.stock ?? 0,
+                    product.threshold || 20
+                  );
                   return (
-                    <tr key={product._id ?? product.id} className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] dark:bg-[var(--bgCard)] transition-colors">
+                    <tr
+                      key={product._id ?? product.id}
+                      className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] dark:bg-[var(--bgCard)] transition-colors"
+                    >
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-[var(--textPrimary)]">{product.name}</div>
-                          <div className="text-xs text-gray-500">SKU: {product.sku || "—"}</div>
+                          <div className="text-sm font-medium text-[var(--textPrimary)]">
+                            {product.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            SKU: {product.sku || "—"}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-[var(--textPrimary)]">{product.stockQuantity ?? 0}</span>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStockBadgeColor(status.text)}`}>{status.text}</span>
+                          <span className="text-sm text-[var(--textPrimary)]">
+                            {product.stockQuantity ?? 0}
+                          </span>
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStockBadgeColor(
+                              status.text
+                            )}`}
+                          >
+                            {status.text}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">{product.threshold || 0}</td>
-                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">${product.purchase || "0.00"}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">${product.price || "0.00"}</td>
-                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">${product.valuation || "—"}</td>
-                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">{product.vendor || "—"}</td>
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                        {product.threshold || 0}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                        ${product.purchase || "0.00"}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
+                        ${product.price || "0.00"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                        ${product.valuation || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                        {product.vendor || "—"}
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => { setSelectedProduct(product); setShowProductModal(true); }} className="p-2 rounded-lg hover:bg-green-50 text-green-600" title="View Details"><FileText size={18} /></button>
-                          <button onClick={() => handleEditProduct(product)} className="p-2 rounded-lg hover:bg-blue-50 text-blue-600" title="Edit Product"><Edit size={18} /></button>
-                          <button onClick={() => handleDeleteProduct(String(product._id ?? product.id))} className="p-2 rounded-lg hover:bg-red-50 text-red-600" title="Delete Product"><Trash2 size={18} /></button>
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setShowProductModal(true);
+                            }}
+                            className="p-2 rounded-lg hover:bg-green-50 text-green-600"
+                            title="View Details"
+                          >
+                            <FileText size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleEditProduct(product)}
+                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600"
+                            title="Edit Product"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteProduct(
+                                String(product._id ?? product.id)
+                              )
+                            }
+                            className="p-2 rounded-lg hover:bg-red-50 text-red-600"
+                            title="Delete Product"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -942,71 +1137,139 @@ const ECommerceSection: React.FC = () => {
         {/* Product Details Modal */}
         {showProductModal && selectedProduct && (
           <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className={`dark: bg-[var(--background)] border border-[var(--borderColor)] rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[92vh] transition-all duration-300`}>
-              <button onClick={() => setShowProductModal(false)} className="absolute top-3 right-3 text-[var(--textSecondary)] hover:text-[var(--textPrimary)] transition"><X size={24} /></button>
+            <div
+              className={`dark: bg-[var(--background)] border border-[var(--borderColor)] rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[92vh] transition-all duration-300`}
+            >
+              <button
+                onClick={() => setShowProductModal(false)}
+                className="absolute top-3 right-3 text-[var(--textSecondary)] hover:text-[var(--textPrimary)] transition"
+              >
+                <X size={24} />
+              </button>
 
-              <h2 className="text-2xl font-bold text-[var(--textPrimary)] mb-6">{selectedProduct.name}</h2>
+              <h2 className="text-2xl font-bold text-[var(--textPrimary)] mb-6">
+                {selectedProduct.name}
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">Images</h3>
+                  <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">
+                    Images
+                  </h3>
                   <div className="w-full h-72 md:h-80 rounded-xl overflow-hidden border border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--background)] flex items-center justify-center">
-                    {selectedProduct.gallery?.[0] ? <img src={selectedProduct.gallery[0]} alt="product" className="w-full h-full object-contain" /> : <span className="text-[var(--textSecondary)]">No Image</span>}
+                    {selectedProduct.gallery?.[0] ? (
+                      <img
+                        src={selectedProduct.gallery[0]}
+                        alt="product"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-[var(--textSecondary)]">
+                        No Image
+                      </span>
+                    )}
                   </div>
 
-                  {selectedProduct.gallery && selectedProduct.gallery.length > 1 && (
-                    <div className="mt-4 flex gap-3">
-                      {selectedProduct.gallery.map((img: string, idx: number) => (
-                        <div key={idx} className="w-20 h-20 rounded-lg overflow-hidden border border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--background)] shadow-sm">
-                          <img src={img} alt="" className="object-cover w-full h-full" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {selectedProduct.gallery &&
+                    selectedProduct.gallery.length > 1 && (
+                      <div className="mt-4 flex gap-3">
+                        {selectedProduct.gallery.map(
+                          (img: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className="w-20 h-20 rounded-lg overflow-hidden border border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--background)] shadow-sm"
+                            >
+                              <img
+                                src={img}
+                                alt=""
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">Details</h3>
+                  <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+                    Details
+                  </h3>
                   <ul className="text-sm space-y-2 text-[var(--textPrimary)]">
-                    <li><strong>Category:</strong> {selectedProduct.category || "—"}</li>
-                    <li><strong>Vendor:</strong> {selectedProduct.vendor || "—"}</li>
-                    <li><strong>Gender:</strong> {selectedProduct.gender?.join(", ") || "—"}</li>
-                    <li><strong>Tags:</strong> {selectedProduct.tags?.join(", ") || "—"}</li>
-                    <li><strong>Price:</strong> ${selectedProduct.price ?? "—"}</li>
-                    <li><strong>Stock:</strong> {selectedProduct.stockQuantity ?? "—"}</li>
-                    <li><strong>SKU:</strong> {selectedProduct.sku || "—"}</li>
-                    <li><strong>Status:</strong> <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${selectedProduct.inStock ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>{selectedProduct.inStock ? "In Stock" : "Out of Stock"}</span></li>
+                    <li>
+                      <strong>Category:</strong>{" "}
+                      {selectedProduct.category || "—"}
+                    </li>
+                    <li>
+                      <strong>Vendor:</strong> {selectedProduct.vendor || "—"}
+                    </li>
+                    <li>
+                      <strong>Gender:</strong>{" "}
+                      {selectedProduct.gender?.join(", ") || "—"}
+                    </li>
+                    <li>
+                      <strong>Tags:</strong>{" "}
+                      {selectedProduct.tags?.join(", ") || "—"}
+                    </li>
+                    <li>
+                      <strong>Price:</strong> ${selectedProduct.price ?? "—"}
+                    </li>
+                    <li>
+                      <strong>Stock:</strong>{" "}
+                      {selectedProduct.stockQuantity ?? "—"}
+                    </li>
+                    <li>
+                      <strong>SKU:</strong> {selectedProduct.sku || "—"}
+                    </li>
+                    <li>
+                      <strong>Status:</strong>{" "}
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                          selectedProduct.inStock
+                            ? "bg-green-600 text-white"
+                            : "bg-red-600 text-white"
+                        }`}
+                      >
+                        {selectedProduct.inStock ? "In Stock" : "Out of Stock"}
+                      </span>
+                    </li>
                   </ul>
                 </div>
               </div>
 
-              {Array.isArray(selectedProduct?.variants) && selectedProduct.variants.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">Variants</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border border-[var(--borderColor)] text-sm rounded-lg">
-                      <thead className="bg-[var(--background-card)]">
-                        <tr>
-                          <th className="py-2 px-3 text-left">Size</th>
-                          <th className="py-2 px-3 text-left">Color</th>
-                          <th className="py-2 px-3 text-left">Stock</th>
-                          <th className="py-2 px-3 text-left">Material</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProduct.variants.map((v, idx) => (
-                          <tr key={idx} className="border-t border-[var(--borderColor)]">
-                            <td className="py-2 px-3">{v.size || "—"}</td>
-                            <td className="py-2 px-3">{v.color || "—"}</td>
-                            <td className="py-2 px-3">{v.stock ?? 0}</td>
-                            <td className="py-2 px-3">{v.material || "—"}</td>
+              {Array.isArray(selectedProduct?.variants) &&
+                selectedProduct.variants.length > 0 && (
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+                      Variants
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-[var(--borderColor)] text-sm rounded-lg">
+                        <thead className="bg-[var(--background-card)]">
+                          <tr>
+                            <th className="py-2 px-3 text-left">Size</th>
+                            <th className="py-2 px-3 text-left">Color</th>
+                            <th className="py-2 px-3 text-left">Stock</th>
+                            <th className="py-2 px-3 text-left">Material</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {selectedProduct.variants.map((v, idx) => (
+                            <tr
+                              key={idx}
+                              className="border-t border-[var(--borderColor)]"
+                            >
+                              <td className="py-2 px-3">{v.size || "—"}</td>
+                              <td className="py-2 px-3">{v.color || "—"}</td>
+                              <td className="py-2 px-3">{v.stock ?? 0}</td>
+                              <td className="py-2 px-3">{v.material || "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </div>
         )}
@@ -1025,24 +1288,54 @@ const ECommerceSection: React.FC = () => {
             <div className="p-2 bg-gray-900 rounded-lg">
               <FileText size={20} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">Add / Edit Product</h2>
+            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
+              Add / Edit Product
+            </h2>
           </div>
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name Product</label>
-              <input type="text" value={productForm.name} onChange={(e) => handleProductInputChange("name", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter product name" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Name Product
+              </label>
+              <input
+                type="text"
+                value={productForm.name}
+                onChange={(e) =>
+                  handleProductInputChange("name", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Enter product name"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description Product</label>
-              <textarea value={productForm.description} onChange={(e) => handleProductInputChange("description", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none" placeholder="Enter product description" rows={4} />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description Product
+              </label>
+              <textarea
+                value={productForm.description}
+                onChange={(e) =>
+                  handleProductInputChange("description", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                placeholder="Enter product description"
+                rows={4}
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select value={productForm.category} onChange={(e) => handleProductInputChange("category", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={productForm.category}
+                  onChange={(e) =>
+                    handleProductInputChange("category", e.target.value)
+                  }
+                  className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
                   <option value="">Select category</option>
                   <option value="Men">Men</option>
                   <option value="Women">Women</option>
@@ -1053,28 +1346,87 @@ const ECommerceSection: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gender
+                </label>
                 <div className="flex gap-4 items-center">
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={productForm.gender.includes("Men")} onChange={(e) => { if (e.target.checked) handleProductInputChange("gender", [...productForm.gender, "Men"]); else handleProductInputChange("gender", productForm.gender.filter((g) => g !== "Men")); }} />
+                    <input
+                      type="checkbox"
+                      checked={productForm.gender.includes("Men")}
+                      onChange={(e) => {
+                        if (e.target.checked)
+                          handleProductInputChange("gender", [
+                            ...productForm.gender,
+                            "Men",
+                          ]);
+                        else
+                          handleProductInputChange(
+                            "gender",
+                            productForm.gender.filter((g) => g !== "Men")
+                          );
+                      }}
+                    />
                     <span>Men</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={productForm.gender.includes("Women")} onChange={(e) => { if (e.target.checked) handleProductInputChange("gender", [...productForm.gender, "Women"]); else handleProductInputChange("gender", productForm.gender.filter((g) => g !== "Women")); }} />
+                    <input
+                      type="checkbox"
+                      checked={productForm.gender.includes("Women")}
+                      onChange={(e) => {
+                        if (e.target.checked)
+                          handleProductInputChange("gender", [
+                            ...productForm.gender,
+                            "Women",
+                          ]);
+                        else
+                          handleProductInputChange(
+                            "gender",
+                            productForm.gender.filter((g) => g !== "Women")
+                          );
+                      }}
+                    />
                     <span>Women</span>
                   </label>
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={productForm.gender.includes("Unisex")} onChange={(e) => { if (e.target.checked) handleProductInputChange("gender", [...productForm.gender, "Unisex"]); else handleProductInputChange("gender", productForm.gender.filter((g) => g !== "Unisex")); }} />
+                    <input
+                      type="checkbox"
+                      checked={productForm.gender.includes("Unisex")}
+                      onChange={(e) => {
+                        if (e.target.checked)
+                          handleProductInputChange("gender", [
+                            ...productForm.gender,
+                            "Unisex",
+                          ]);
+                        else
+                          handleProductInputChange(
+                            "gender",
+                            productForm.gender.filter((g) => g !== "Unisex")
+                          );
+                      }}
+                    />
                     <span>Unisex</span>
                   </label>
                 </div>
 
-                <p className="text-xs text-[var(--textSecondary)] mt-1">Multi select — Choose who this product is for</p>
+                <p className="text-xs text-[var(--textSecondary)] mt-1">
+                  Multi select — Choose who this product is for
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vendor</label>
-                <input type="text" value={productForm.vendor} onChange={(e) => handleProductInputChange("vendor", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter vendor name" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vendor
+                </label>
+                <input
+                  type="text"
+                  value={productForm.vendor}
+                  onChange={(e) =>
+                    handleProductInputChange("vendor", e.target.value)
+                  }
+                  className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Enter vendor name"
+                />
               </div>
             </div>
           </div>
@@ -1086,24 +1438,64 @@ const ECommerceSection: React.FC = () => {
             <div className="p-2 bg-gray-900 rounded-lg">
               <DollarSign size={20} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">Pricing and Stock</h2>
+            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
+              Pricing and Stock
+            </h2>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Base Pricing</label>
-              <input type="number" value={productForm.basePrice} onChange={(e) => handleProductInputChange("basePrice", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="0.00" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Base Pricing
+              </label>
+              <input
+                type="number"
+                value={productForm.basePrice}
+                onChange={(e) =>
+                  handleProductInputChange("basePrice", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="0.00"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sell Price</label>
-              <input type="number" value={productForm.sellPrice} onChange={(e) => handleProductInputChange("sellPrice", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="0.00" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sell Price
+              </label>
+              <input
+                type="number"
+                value={productForm.sellPrice}
+                onChange={(e) =>
+                  handleProductInputChange("sellPrice", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="0.00"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Discount</label>
-              <input type="number" value={productForm.discount} onChange={(e) => handleProductInputChange("discount", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="0" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Discount
+              </label>
+              <input
+                type="number"
+                value={productForm.discount}
+                onChange={(e) =>
+                  handleProductInputChange("discount", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="0"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Discount type</label>
-              <select value={productForm.discountType} onChange={(e) => handleProductInputChange("discountType", e.target.value)} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Discount type
+              </label>
+              <select
+                value={productForm.discountType}
+                onChange={(e) =>
+                  handleProductInputChange("discountType", e.target.value)
+                }
+                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
                 <option value="percentage">Percentage</option>
                 <option value="fixed">Fixed Amount</option>
               </select>
@@ -1114,9 +1506,15 @@ const ECommerceSection: React.FC = () => {
         {/* Variants (unchanged) */}
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">Add Variants</h2>
+            <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
+              Add Variants
+            </h2>
             {!showAddVariant && (
-              <button onClick={() => setShowAddVariant(true)} className="px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90" style={{ backgroundColor: "#A0EDA8" }}>
+              <button
+                onClick={() => setShowAddVariant(true)}
+                className="px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90"
+                style={{ backgroundColor: "#A0EDA8" }}
+              >
                 Add Variants
               </button>
             )}
@@ -1126,39 +1524,128 @@ const ECommerceSection: React.FC = () => {
             <div className="bg-[var(--background)] dark:bg-[var(--bgCard)] rounded-lg p-4 mb-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
-                  <input type="text" value={String(newVariant.size ?? "")} onChange={(e) => setNewVariant({ ...newVariant, size: e.target.value })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., M, L, XL" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Size
+                  </label>
+                  <input
+                    type="text"
+                    value={String(newVariant.size ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, size: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="e.g., M, L, XL"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
-                  <input type="text" value={String(newVariant.color ?? "")} onChange={(e) => setNewVariant({ ...newVariant, color: e.target.value })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., Black, Blue" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Color
+                  </label>
+                  <input
+                    type="text"
+                    value={String(newVariant.color ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, color: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="e.g., Black, Blue"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                  <input type="text" value={String(newVariant.material ?? "")} onChange={(e) => setNewVariant({ ...newVariant, material: e.target.value })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., Wool, Cotton" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Material
+                  </label>
+                  <input
+                    type="text"
+                    value={String(newVariant.material ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, material: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="e.g., Wool, Cotton"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Low Stock Alert</label>
-                  <input type="number" value={String(newVariant.lowStockAlert ?? "")} onChange={(e) => setNewVariant({ ...newVariant, lowStockAlert: Number(e.target.value) })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="21" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Low Stock Alert
+                  </label>
+                  <input
+                    type="number"
+                    value={String(newVariant.lowStockAlert ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({
+                        ...newVariant,
+                        lowStockAlert: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="21"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
-                  <input type="number" value={String(newVariant.stock ?? "")} onChange={(e) => setNewVariant({ ...newVariant, stock: e.target.value ? Number(e.target.value) : undefined })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="77" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    value={String(newVariant.stock ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({
+                        ...newVariant,
+                        stock: e.target.value
+                          ? Number(e.target.value)
+                          : undefined,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="77"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Barcode value</label>
-                  <input type="text" value={String(newVariant.barcode ?? "")} onChange={(e) => setNewVariant({ ...newVariant, barcode: e.target.value })} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="2324kvbs-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Barcode value
+                  </label>
+                  <input
+                    type="text"
+                    value={String(newVariant.barcode ?? "")}
+                    onChange={(e) =>
+                      setNewVariant({ ...newVariant, barcode: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="2324kvbs-2"
+                  />
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">SKU</label>
-                  <input type="text" value={productForm.sku} onChange={(e) => handleProductInputChange("sku", e.target.value)} className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="2324kvbs-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.sku}
+                    onChange={(e) =>
+                      handleProductInputChange("sku", e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="2324kvbs-2"
+                  />
                 </div>
                 <div className="flex items-center gap-3 mt-7">
-                  <button onClick={handleAddVariant} className="px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90" style={{ backgroundColor: "#A0EDA8" }}>Add Variants</button>
-                  <button onClick={generateSKU} className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]">Generate SKU</button>
+                  <button
+                    onClick={handleAddVariant}
+                    className="px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90"
+                    style={{ backgroundColor: "#A0EDA8" }}
+                  >
+                    Add Variants
+                  </button>
+                  <button
+                    onClick={generateSKU}
+                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                  >
+                    Generate SKU
+                  </button>
                 </div>
               </div>
             </div>
@@ -1170,23 +1657,59 @@ const ECommerceSection: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[var(--borderColor)]">
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Size</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Color</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Material</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Price</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Stock</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Size
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Color
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Material
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Price
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Stock
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {variants.map((variant) => (
-                    <tr key={variant._id || variant.id || `${variant.size}-${variant.color}-${Math.random()}`} className="border-b border-[var(--borderColor)]">
-                      <td className="px-4 py-3 text-sm text-[var(--textPrimary)]">{variant.size}</td>
-                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">{variant.color}</td>
-                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">{variant.material}</td>
-                      <td className="px-4 py-3 text-sm text-[var(--textPrimary)]">${variant.price}</td>
-                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">{variant.stock}</td>
-                      <td className="px-4 py-3"><button onClick={() => removeVariant(variant.id)} className="text-red-600 hover:text-red-800"><Trash2 size={16} /></button></td>
+                    <tr
+                      key={
+                        variant._id ||
+                        variant.id ||
+                        `${variant.size}-${variant.color}-${Math.random()}`
+                      }
+                      className="border-b border-[var(--borderColor)]"
+                    >
+                      <td className="px-4 py-3 text-sm text-[var(--textPrimary)]">
+                        {variant.size}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
+                        {variant.color}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
+                        {variant.material}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[var(--textPrimary)]">
+                        ${variant.price}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[var(--textSecondary)]">
+                        {variant.stock}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => removeVariant(variant.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1200,97 +1723,294 @@ const ECommerceSection: React.FC = () => {
       <div className="lg:col-span-1 space-y-6">
         {/* Upload Images */}
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
-          <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">Upload img</h3>
+          <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+            Upload img
+          </h3>
 
           {/* Combined preview: existingImages (URLs) + newImages (previews) */}
           <div className="space-y-4">
             {/* Main preview */}
             <div className="relative rounded-lg overflow-hidden bg-gray-100">
               {imagePreviews[selectedImage] ? (
-                <img src={String(imagePreviews[selectedImage].url)} alt="Product" className="w-full h-64 object-contain rounded-lg" />
+                <img
+                  src={String(imagePreviews[selectedImage].url)}
+                  alt="Product"
+                  className="w-full h-64 object-contain rounded-lg"
+                />
               ) : (
-                <div className="w-full h-64 flex items-center justify-center text-[var(--textSecondary)]">No image selected</div>
+                <div className="w-full h-64 flex items-center justify-center text-[var(--textSecondary)]">
+                  No image selected
+                </div>
               )}
 
               {/* Controls */}
               <div className="absolute top-2 right-2 flex gap-2">
-                <button onClick={() => {
-                  // if preview from existing, remove existing; otherwise remove new file
-                  const p = imagePreviews[selectedImage];
-                  if (!p) return;
-                  if (isPreviewFromExisting(p)) removeExistingImage(String(p.url));
-                  else removeNewImage(p.name);
-                  // remove preview at index
-                  setImagePreviews(prev => prev.filter((x, idx) => idx !== selectedImage));
-                  setSelectedImage(0);
-                }} className="p-1.5 bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-full shadow-md hover:shadow-lg"><X size={16} className="text-[var(--textSecondary)]" /></button>
+                <button
+                  onClick={() => {
+                    // if preview from existing, remove existing; otherwise remove new file
+                    const p = imagePreviews[selectedImage];
+                    if (!p) return;
+                    if (isPreviewFromExisting(p))
+                      removeExistingImage(String(p.url));
+                    else removeNewImage(p.name);
+                    // remove preview at index
+                    setImagePreviews((prev) =>
+                      prev.filter((x, idx) => idx !== selectedImage)
+                    );
+                    setSelectedImage(0);
+                  }}
+                  className="p-1.5 bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-full shadow-md hover:shadow-lg"
+                >
+                  <X size={16} className="text-[var(--textSecondary)]" />
+                </button>
               </div>
             </div>
 
             {/* Thumbnails */}
             <div className="flex gap-2 items-center">
               {imagePreviews.map((img, index) => (
-                <button key={img.id} onClick={() => setSelectedImage(index)} className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-green-500" : "border-[var(--borderColor)]"}`}>
-                  <img src={String(img.url)} alt={img.name} className="w-full h-full object-cover" />
+                <button
+                  key={img.id}
+                  onClick={() => setSelectedImage(index)}
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${
+                    selectedImage === index
+                      ? "border-green-500"
+                      : "border-[var(--borderColor)]"
+                  }`}
+                >
+                  <img
+                    src={String(img.url)}
+                    alt={img.name}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
 
               {/* Add new files */}
-              <label htmlFor="add-more-images" className="w-16 h-16 border-2 border-dashed border-[var(--borderColor)] rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500">
+              <label
+                htmlFor="add-more-images"
+                className="w-16 h-16 border-2 border-dashed border-[var(--borderColor)] rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500"
+              >
                 <Plus size={20} className="text-gray-400" />
-                <input id="add-more-images" type="file" accept="image/*" multiple onChange={(e) => { if (e.target.files) handleNewImageFiles(Array.from(e.target.files)); }} className="hidden" />
+                <input
+                  id="add-more-images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files)
+                      handleNewImageFiles(Array.from(e.target.files));
+                  }}
+                  className="hidden"
+                />
               </label>
             </div>
           </div>
 
           {/* Info */}
-          <p className="text-xs text-[var(--textSecondary)] mt-3">Existing images are preserved when saving — new images will be uploaded.</p>
+          <p className="text-xs text-[var(--textSecondary)] mt-3">
+            Existing images are preserved when saving — new images will be
+            uploaded.
+          </p>
         </div>
 
         {/* Vertical Tabs + Tab Content */}
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-4 flex gap-4">
           {/* Sidebar */}
           <div className="w-36 border-r border-[var(--borderColor)] pr-3">
-            <button onClick={() => setDetailsTab("details")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "details" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>Details</button>
-            <button onClick={() => setDetailsTab("specs")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "specs" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>Specifications</button>
-            <button onClick={() => setDetailsTab("faq")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "faq" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>FAQ</button>
-            <button onClick={() => setDetailsTab("customer")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "customer" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>Customer Photos</button>
-            <button onClick={() => setDetailsTab("notes")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "notes" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>Notes</button>
-            <button onClick={() => setDetailsTab("terms")} className={`w-full text-left py-2 px-2 rounded ${detailsTab === "terms" ? "bg-green-50" : "hover:bg-[var(--background)]"}`}>Terms</button>
+            <button
+              onClick={() => setDetailsTab("details")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "details"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setDetailsTab("specs")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "specs"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              Specifications
+            </button>
+            <button
+              onClick={() => setDetailsTab("faq")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "faq"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              FAQ
+            </button>
+            <button
+              onClick={() => setDetailsTab("customer")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "customer"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              Customer Photos
+            </button>
+            <button
+              onClick={() => setDetailsTab("notes")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "notes"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              Notes
+            </button>
+            <button
+              onClick={() => setDetailsTab("terms")}
+              className={`w-full text-left py-2 px-2 rounded ${
+                detailsTab === "terms"
+                  ? "bg-green-50"
+                  : "hover:bg-[var(--background)]"
+              }`}
+            >
+              Terms
+            </button>
           </div>
 
           {/* Tab Content */}
           <div className="flex-1">
             {detailsTab === "details" && (
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Highlights</label>
-                <textarea value={productForm.highlights} onChange={(e) => handleProductInputChange("highlights", e.target.value)} className="w-full p-3 border border-[var(--borderColor)] rounded" rows={3} />
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Material Details</label>
-                <input type="text" value={productForm.materialDetails} onChange={(e) => handleProductInputChange("materialDetails", e.target.value)} className="w-full p-2 border border-[var(--borderColor)] rounded" />
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Care Instructions</label>
-                <input type="text" value={productForm.careInstructions} onChange={(e) => handleProductInputChange("careInstructions", e.target.value)} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Highlights
+                </label>
+                <textarea
+                  value={productForm.highlights}
+                  onChange={(e) =>
+                    handleProductInputChange("highlights", e.target.value)
+                  }
+                  className="w-full p-3 border border-[var(--borderColor)] rounded"
+                  rows={3}
+                />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Material Details
+                </label>
+                <input
+                  type="text"
+                  value={productForm.materialDetails}
+                  onChange={(e) =>
+                    handleProductInputChange("materialDetails", e.target.value)
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Care Instructions
+                </label>
+                <input
+                  type="text"
+                  value={productForm.careInstructions}
+                  onChange={(e) =>
+                    handleProductInputChange("careInstructions", e.target.value)
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
               </div>
             )}
 
             {detailsTab === "specs" && (
               <div className="space-y-3">
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Material</label>
-                <input type="text" value={productForm.specifications.material} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, material: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Material
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.material}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      material: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
 
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Fit</label>
-                <input type="text" value={productForm.specifications.fit} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, fit: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Fit
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.fit}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      fit: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
 
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Wash Care</label>
-                <input type="text" value={productForm.specifications.washCare} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, washCare: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Wash Care
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.washCare}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      washCare: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
 
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Pattern</label>
-                <input type="text" value={productForm.specifications.pattern} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, pattern: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Pattern
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.pattern}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      pattern: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
 
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Origin</label>
-                <input type="text" value={productForm.specifications.origin} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, origin: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Origin
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.origin}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      origin: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
 
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Others</label>
-                <input type="text" value={productForm.specifications.others} onChange={(e) => handleProductInputChange("specifications", { ...productForm.specifications, others: e.target.value })} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Others
+                </label>
+                <input
+                  type="text"
+                  value={productForm.specifications.others}
+                  onChange={(e) =>
+                    handleProductInputChange("specifications", {
+                      ...productForm.specifications,
+                      others: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                />
               </div>
             )}
 
@@ -1300,43 +2020,105 @@ const ECommerceSection: React.FC = () => {
                   {productForm.faq.map((f, idx) => (
                     <div key={idx} className="flex gap-2 items-start">
                       <div className="flex-1">
-                        <input placeholder="Question" value={f.question} onChange={(e) => {
-                          const list = [...productForm.faq];
-                          list[idx].question = e.target.value;
-                          handleProductInputChange("faq", list);
-                        }} className="w-full p-2 border border-[var(--borderColor)] rounded mb-2" />
-                        <input placeholder="Answer" value={f.answer} onChange={(e) => {
-                          const list = [...productForm.faq];
-                          list[idx].answer = e.target.value;
-                          handleProductInputChange("faq", list);
-                        }} className="w-full p-2 border border-[var(--borderColor)] rounded" />
+                        <input
+                          placeholder="Question"
+                          value={f.question}
+                          onChange={(e) => {
+                            const list = [...productForm.faq];
+                            list[idx].question = e.target.value;
+                            handleProductInputChange("faq", list);
+                          }}
+                          className="w-full p-2 border border-[var(--borderColor)] rounded mb-2"
+                        />
+                        <input
+                          placeholder="Answer"
+                          value={f.answer}
+                          onChange={(e) => {
+                            const list = [...productForm.faq];
+                            list[idx].answer = e.target.value;
+                            handleProductInputChange("faq", list);
+                          }}
+                          className="w-full p-2 border border-[var(--borderColor)] rounded"
+                        />
                       </div>
-                      <button onClick={() => { const list = productForm.faq.filter((_, i) => i !== idx); handleProductInputChange("faq", list); }} className="text-red-600 ml-2"><Trash2 /></button>
+                      <button
+                        onClick={() => {
+                          const list = productForm.faq.filter(
+                            (_, i) => i !== idx
+                          );
+                          handleProductInputChange("faq", list);
+                        }}
+                        className="text-red-600 ml-2"
+                      >
+                        <Trash2 />
+                      </button>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => handleProductInputChange("faq", [...productForm.faq, { question: "", answer: "" }])} className="mt-3 px-3 py-1 rounded bg-[var(--background-card)] border border-[var(--borderColor)]">Add FAQ</button>
+                <button
+                  onClick={() =>
+                    handleProductInputChange("faq", [
+                      ...productForm.faq,
+                      { question: "", answer: "" },
+                    ])
+                  }
+                  className="mt-3 px-3 py-1 rounded bg-[var(--background-card)] border border-[var(--borderColor)]"
+                >
+                  Add FAQ
+                </button>
               </div>
             )}
 
             {detailsTab === "customer" && (
               <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Customer Photos</label>
-                <input type="file" accept="image/*" multiple onChange={handleCustomerPhotosSelect} className="mb-2" />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Customer Photos
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleCustomerPhotosSelect}
+                  className="mb-2"
+                />
                 <div className="flex gap-2 flex-wrap">
                   {/* show existing customer photos first */}
                   {existingCustomerPhotos.map((url) => (
-                    <div key={url} className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]">
-                      <img src={url} alt={url} className="w-full h-full object-cover" />
-                      <button onClick={() => removeExistingCustomerPhoto(url)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"><X size={12} /></button>
+                    <div
+                      key={url}
+                      className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]"
+                    >
+                      <img
+                        src={url}
+                        alt={url}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeExistingCustomerPhoto(url)}
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   ))}
 
                   {/* then show previews for new customer photos */}
                   {customerPhotosPreview.map((p) => (
-                    <div key={p.id} className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]">
-                      <img src={typeof p.url === "string" ? p.url : ""} alt={p.name} className="w-full h-full object-cover" />
-                      <button onClick={() => removeNewCustomerPhotoFile(p.name)} className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"><X size={12} /></button>
+                    <div
+                      key={p.id}
+                      className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]"
+                    >
+                      <img
+                        src={typeof p.url === "string" ? p.url : ""}
+                        alt={p.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => removeNewCustomerPhotoFile(p.name)}
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1345,15 +2127,33 @@ const ECommerceSection: React.FC = () => {
 
             {detailsTab === "notes" && (
               <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Notes</label>
-                <textarea value={productForm.notes} onChange={(e) => handleProductInputChange("notes", e.target.value)} className="w-full p-2 border border-[var(--borderColor)] rounded" rows={4} />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Notes
+                </label>
+                <textarea
+                  value={productForm.notes}
+                  onChange={(e) =>
+                    handleProductInputChange("notes", e.target.value)
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  rows={4}
+                />
               </div>
             )}
 
             {detailsTab === "terms" && (
               <div>
-                <label className="block text-sm font-medium text-[var(--textPrimary)]">Terms & Conditions</label>
-                <textarea value={productForm.terms} onChange={(e) => handleProductInputChange("terms", e.target.value)} className="w-full p-2 border border-[var(--borderColor)] rounded" rows={4} />
+                <label className="block text-sm font-medium text-[var(--textPrimary)]">
+                  Terms & Conditions
+                </label>
+                <textarea
+                  value={productForm.terms}
+                  onChange={(e) =>
+                    handleProductInputChange("terms", e.target.value)
+                  }
+                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  rows={4}
+                />
               </div>
             )}
           </div>
@@ -1361,55 +2161,687 @@ const ECommerceSection: React.FC = () => {
 
         {/* Tags & Save */}
         <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
-          <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">Tag</h3>
-          <input type="text" value={productForm.tags.join(", ")} onChange={(e) => handleProductInputChange("tags", e.target.value.split(",").map((s) => s.trim()))} className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3" placeholder="Enter tags separated by comma" />
+          <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
+            Tag
+          </h3>
+          <input
+            type="text"
+            value={productForm.tags.join(", ")}
+            onChange={(e) =>
+              handleProductInputChange(
+                "tags",
+                e.target.value.split(",").map((s) => s.trim())
+              )
+            }
+            className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
+            placeholder="Enter tags separated by comma"
+          />
           <div className="flex gap-2">
-            <button onClick={handleSaveProduct} className="flex-1 px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90" style={{ backgroundColor: "#A0EDA8" }}>
-              {uploading ? <><RotateCcw size={16} className="animate-spin inline-block mr-2" /> Uploading {uploadProgress}%</> : <>Save & Publish</>}
+            <button
+              onClick={handleSaveProduct}
+              className="flex-1 px-4 py-2 text-black text-sm font-medium rounded-lg hover:opacity-90"
+              style={{ backgroundColor: "#A0EDA8" }}
+            >
+              {uploading ? (
+                <>
+                  <RotateCcw
+                    size={16}
+                    className="animate-spin inline-block mr-2"
+                  />{" "}
+                  Uploading {uploadProgress}%
+                </>
+              ) : (
+                <>Save & Publish</>
+              )}
             </button>
-            <button onClick={() => { setCurrentView("inventory"); }} className="flex-1 px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg">Cancel</button>
+            <button
+              onClick={() => {
+                setCurrentView("inventory");
+              }}
+              className="flex-1 px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
+  const handleCancelOrder = async (orderId: string) => {
+  if (!confirm("Are you sure you want to cancel this order?")) return;
 
-  // -------------------- Render Orders --------------------
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/order/${orderId}/status`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": process.env.NEXT_PUBLIC_ADMIN_API_KEY || "",
+        },
+        body: JSON.stringify({ status: "failed" }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Cancel failed");
+
+    alert("Order cancelled");
+    fetchOrders();
+  } catch (err) {
+    alert("Cancel order error");
+    console.error(err);
+  }
+};
+
+  // ===================== ORDER DETAILS MODAL =====================
+  interface OrderItem {
+    product: string;
+    qty: number;
+    price: number;
+    name?: string;
+    image?: string;
+    size?: string;
+    color?: string;
+  }
+
+  interface OrderAddress {
+    name?: string;
+    phone?: string;
+    pincode?: string;
+    city?: string;
+    state?: string;
+    line1?: string;
+  }
+
+  interface OrderDetailsModel {
+    orderId: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+    items: OrderItem[];
+    address: OrderAddress;
+  }
+
+  interface OrderDetailsModalProps {
+    order: OrderDetailsModel | null;
+    onClose: () => void;
+    onStatusClick: (order: any) => void;
+    onPrintClick: (order: any) => void;
+  }
+interface StatusModalProps {
+  orderId: string;
+  currentStatus: string;
+  onClose: () => void;
+  onUpdate: (newStatus: string) => void;
+}
+
+const StatusModal: React.FC<StatusModalProps> = ({
+  orderId,
+  currentStatus,
+  onClose,
+  onUpdate,
+}) => {
+  const [status, setStatus] = React.useState(currentStatus);
+
+  const statuses = ["pending", "paid", "failed", "shipped", "delivered", "cancelled"];
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-xl w-full max-w-md p-6 relative">
+
+        {/* Close Button */}
+        <button
+          className="absolute top-3 right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full"
+          onClick={onClose}
+        >
+          ✕
+        </button>
+
+        <h2 className="text-xl font-bold text-[var(--textPrimary)] mb-4">
+          Update Order Status
+        </h2>
+
+        <p className="text-[var(--textSecondary)] mb-3">
+          Order: <strong>{orderId}</strong>
+        </p>
+
+        {/* Status Dropdown */}
+        <label className="block text-sm text-[var(--textPrimary)] mb-1">
+          Select Status
+        </label>
+
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="w-full p-2 border border-[var(--borderColor)] rounded bg-[var(--background)] dark:bg-[var(--bgCard)] text-[var(--textPrimary)]"
+        >
+          {statuses.map((s) => (
+            <option key={s} value={s}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </option>
+          ))}
+        </select>
+
+        {/* Buttons */}
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={() => onUpdate(status)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Update
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+const handlePrintLabel = (order: any) => {
+  if (!order) return;
+
+  const brandLogo = "/logo.png";                      // YOUR BRAND LOGO
+  const carrierLogo = "https://upload.wikimedia.org/wikipedia/commons/4/4e/USPS_logo.png"; // USPS Logo
+  const qrValue = `${window.location.origin}/track/${order.orderId}`;
+  const trackingNumber = order.orderId.replace("ORD-", "TRK00"); // Fake tracking number
+
+  const item = order.items?.[0] || {};
+
+  const sku = item.sku || "N/A";
+  const weight = item.weight || "0.45 kg";
+  const category = order.category || "Apparel";
+
+  const printWindow = window.open("", "_blank", "width=400,height=600");
+
+  printWindow!.document.write(`
+  <html>
+  <head>
+    <title>Shipping Label</title>
+    <style>
+      body {
+        width: 4in;
+        height: 6in;
+        margin: 0;
+        padding: 12px;
+        font-family: Arial, sans-serif;
+        box-sizing: border-box;
+      }
+      .label {
+        border: 2px solid #000;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      /* HEADER */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+      }
+      .header img {
+        height: 40px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin: 6px 0 2px;
+        font-size: 13px;
+      }
+
+      .info {
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .barcode-box {
+        text-align: center;
+        margin: 10px 0;
+      }
+
+      .small-line {
+        font-size: 11px;
+        border-top: 1px solid #000;
+        padding-top: 3px;
+        margin-top: 5px;
+      }
+
+      .product-title {
+        font-size: 12px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+
+      .flex-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="label">
+
+      <!-- HEADER -->
+      <div class="header">
+        <img src="${brandLogo}" />
+        <img src="${carrierLogo}" />
+      </div>
+
+      <!-- FROM -->
+      <div>
+        <div class="section-title">FROM:</div>
+        <div class="info">
+          KZARRE Fashion<br/>
+          48B Shreysh Colony<br/>
+          Taloda, MH 425413<br/>
+          Phone: 7498722304
+        </div>
+      </div>
+
+      <!-- TO -->
+      <div>
+        <div class="section-title">TO:</div>
+        <div class="info">
+          ${order.address?.name}<br/>
+          ${order.address?.line1}<br/>
+          ${order.address?.city}, ${order.address?.state} ${order.address?.pincode}<br/>
+          Phone: ${order.address?.phone}
+        </div>
+      </div>
+
+      <!-- TRACKING + BARCODE -->
+      <div class="barcode-box">
+        <div class="section-title">Tracking Number:</div>
+        <div>${trackingNumber}</div>
+        <svg id="barcode"></svg>
+        <div id="qrcode" style="margin-top:4px;"></div>
+      </div>
+
+      <!-- SKU / WEIGHT / CATEGORY -->
+      <div class="flex-row">
+        <div>SKU: ${sku}</div>
+        <div>Weight: ${weight}</div>
+        <div>Category: ${category}</div>
+      </div>
+
+      <!-- PRODUCT SHORT TITLE -->
+      <div class="product-title">${item.name || "Product"}</div>
+
+      <!-- SERVICE LINE -->
+      <div class="small-line">
+        Service: USPS Priority | Zone: 3 | Batch: B12
+      </div>
+
+    </div>
+
+    <!-- JS LIBRARIES -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+    <script>
+      // BARCODE
+      JsBarcode("#barcode", "${trackingNumber}", {
+        format: "CODE128",
+        width: 2,
+        height: 45,
+        displayValue: true
+      });
+
+      // QR CODE
+      QRCode.toCanvas(
+        document.getElementById("qrcode"),
+        "${qrValue}",
+        { width: 90 },
+        () => {}
+      );
+
+      window.onload = () => {
+        window.print();
+        setTimeout(() => window.close(), 500);
+      };
+    </script>
+
+  </body>
+  </html>
+  `);
+
+  printWindow!.document.close();
+};
+
+  const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
+    order,
+    onClose,
+    onStatusClick,
+    onPrintClick,
+  }) => {
+    if (!order) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-xl w-full max-w-3xl p-6 relative max-h-[90vh] overflow-auto">
+          {/* Close Button */}
+          <button
+            className="absolute top-3 right-3 p-2 bg-gray-200 hover:bg-gray-300 rounded-full"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+
+          {/* Header */}
+          <h2 className="text-2xl font-bold text-[var(--textPrimary)] mb-4">
+            Order Details — {order.orderId}
+          </h2>
+
+          {/* Customer Info */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+              Customer Information
+            </h3>
+            <p className="text-[var(--textSecondary)] text-sm mt-2">
+              <strong>Name:</strong> {order.address?.name || "—"} <br />
+              <strong>Phone:</strong> {order.address?.phone || "—"} <br />
+              <strong>City:</strong> {order.address?.city || "—"} <br />
+              <strong>State:</strong> {order.address?.state || "—"} <br />
+              <strong>Address:</strong> {order.address?.line1 || "—"}
+            </p>
+          </div>
+
+          {/* Ordered Items */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">
+              Ordered Items
+            </h3>
+
+            {order.items?.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex gap-4 p-3 border border-[var(--borderColor)] rounded-lg mb-3"
+              >
+                {/* Product Image */}
+                <img
+                  src={item.image || "/no-image.png"}
+                  alt=""
+                  className="w-20 h-20 rounded object-cover border"
+                />
+
+                <div>
+                  <p className="font-medium text-[var(--textPrimary)]">
+                    {item.name}
+                  </p>
+                  <p className="text-[var(--textSecondary)] text-sm">
+                    Qty: {item.qty}
+                  </p>
+                  <p className="text-[var(--textSecondary)] text-sm">
+                    Size: {item.size || "—"}
+                  </p>
+                  <p className="text-[var(--textSecondary)] text-sm">
+                    Color: {item.color || "—"}
+                  </p>
+                  <p className="font-semibold text-[var(--textPrimary)] mt-1">
+                    ₹{item.price}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Order Summary */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
+              Order Summary
+            </h3>
+            <p className="text-sm text-[var(--textSecondary)] mt-2">
+              <strong>Total Amount:</strong> ₹{order.amount} <br />
+              <strong>Status:</strong>{" "}
+              <span
+                className={`px-2 py-1 rounded text-xs ${
+                  order.status === "paid"
+                    ? "bg-green-200 text-green-800"
+                    : order.status === "failed"
+                    ? "bg-red-200 text-red-800"
+                    : "bg-yellow-200 text-yellow-800"
+                }`}
+              >
+                {order.status}
+              </span>
+              <br />
+              <strong>Placed On:</strong>{" "}
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleString()
+                : "—"}
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center mt-6">
+            {/* LEFT BUTTONS */}
+            <div className="flex gap-3">
+              {/* UPDATE STATUS */}
+              <button
+                onClick={() => onStatusClick(order)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              >
+                Update Status
+              </button>
+
+              {/* PRINT LABEL */}
+              <button
+                onClick={() => onPrintClick(order)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
+              >
+                Print Shipping Label
+              </button>
+            </div>
+
+            {/* CLOSE */}
+            <button
+              onClick={onClose}
+              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderOrders = () => (
     <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
       <div className="p-6 border-b border-[var(--borderColor)]">
-        <h2 className="text-xl font-semibold text-[var(--textPrimary)]">Orders Management</h2>
+        <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
+          Orders Management
+        </h2>
       </div>
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Order ID</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Customer</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Date</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Items</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Total</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Status</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Actions</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Order ID
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Customer
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Placed At
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Items
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Total
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Status
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
+                Actions
+              </th>
             </tr>
           </thead>
+
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id} className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] dark:bg-[var(--bgCard)] transition-colors">
-                <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">{order.id}</td>
-                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">{order.customer}</td>
-                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">{order.date}</td>
-                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">{order.items}</td>
-                <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">{order.total}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${order.status === "Delivered" ? "bg-green-100 text-green-800" : order.status === "Shipped" ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"}`}>{order.status}</span>
+              <tr
+                key={order.orderId}
+                className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] transition-colors"
+              >
+                {/* ORDER ID */}
+                <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
+                  {order.orderId}
                 </td>
-                <td className="px-6 py-4"><button className="p-1 hover:bg-gray-200 rounded transition-colors"><MoreVertical size={18} className="text-gray-500" /></button></td>
+
+                {/* CUSTOMER */}
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                  {order.address?.name || "—"}
+                </td>
+
+                {/* DATE */}
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                  {order.createdAt
+                    ? new Date(order.createdAt).toLocaleString()
+                    : "—"}
+                </td>
+
+                {/* ITEM COUNT */}
+                <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
+                  {order.items?.length}
+                </td>
+
+                {/* AMOUNT */}
+                <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
+                  ₹{order.amount}
+                </td>
+
+                {/* STATUS */}
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold rounded-full
+                  ${
+                    order.status === "delivered"
+                      ? "bg-green-100 text-green-800"
+                      : order.status === "shipped"
+                      ? "bg-blue-100 text-blue-800"
+                      : order.status === "cancelled"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+                  >
+                    {order.status}
+                  </span>
+                </td>
+
+                {/* ACTIONS DROPDOWN */}
+                <td className="px-6 py-4 relative">
+                  <button
+                    onClick={() =>
+                      setOpenDropdown(
+                        openDropdown === order.orderId ? null : order.orderId
+                      )
+                    }
+                    className="p-1 hover:bg-gray-200 rounded transition-colors"
+                  >
+                    <MoreVertical size={18} className="text-gray-500" />
+                  </button>
+
+                  {openDropdown === order.orderId && (
+                    <div className="absolute right-6 mt-2 w-48 bg-white dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-lg shadow-lg z-50">
+                      {/* VIEW DETAILS */}
+                      <button
+                        onClick={() => {
+                          setModalOrder(order);
+                          setShowOrderModal(true);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        View Details
+                      </button>
+
+                      {/* UPDATE STATUS */}
+                      <button
+                        onClick={() => {
+                          setStatusOrderId(order.orderId);
+                          setNewStatus(order.status);
+                          setShowStatusModal(true);
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Update Status
+                      </button>
+
+                      {/* PRINT LABEL */}
+                      <button
+                        onClick={() => alert("Print Label Coming Soon")}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Print Shipping Label
+                      </button>
+
+                      {/* INVOICE */}
+                      <button
+                        onClick={() => alert("Invoice Download Coming Soon")}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Download Invoice
+                      </button>
+
+                      {/* CANCEL ORDER */}
+                      <button
+                        onClick={() => handleCancelOrder(order.orderId)}
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                      >
+                        Cancel Order
+                      </button>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* ORDER DETAILS MODAL */}
+      {showOrderModal && modalOrder && (
+     <OrderDetailsModal
+  order={modalOrder}
+  onClose={() => setShowOrderModal(false)}
+  onStatusClick={(order) => {
+    setStatusOrderId(order.orderId);
+    setNewStatus(order.status);
+    setShowStatusModal(true);
+  }}
+  onPrintClick={handlePrintLabel}
+/>
+
+      )}
+
+      {/* STATUS MODAL */}
+      {showStatusModal && (
+         <StatusModal
+    orderId={statusOrderId!}
+    currentStatus={newStatus}
+    onClose={() => setShowStatusModal(false)}
+    onUpdate={(status) => updateStatus(status)}
+  />
+      )}
     </div>
   );
 
@@ -1419,20 +2851,47 @@ const ECommerceSection: React.FC = () => {
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--textPrimary)]">E-Commerce Management</h1>
-            <p className="text-sm text-[var(--textSecondary)] mt-1">Manage your website's Ecommerce</p>
+            <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
+              E-Commerce Management
+            </h1>
+            <p className="text-sm text-[var(--textSecondary)] mt-1">
+              Manage your website's Ecommerce
+            </p>
           </div>
           <div className="flex items-center gap-3">
             {currentView === "inventory" && (
-              <button onClick={() => setCurrentView("addProduct")} className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2" style={{ backgroundColor: "#A0EDA8" }}>
+              <button
+                onClick={() => setCurrentView("addProduct")}
+                className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
+                style={{ backgroundColor: "#A0EDA8" }}
+              >
                 <Plus size={18} /> Add Product
               </button>
             )}
             {currentView === "addProduct" && (
               <>
-                <button onClick={() => setCurrentView("inventory")} className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]">Cancel</button>
-                <button onClick={handleSaveProduct} className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2" style={{ backgroundColor: "#A0EDA8" }} disabled={uploading}>
-                  {uploading ? <><RotateCcw size={18} className="animate-spin" /> Uploading {uploadProgress}%</> : <><Save size={18} /> Save & Publish</>}
+                <button
+                  onClick={() => setCurrentView("inventory")}
+                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProduct}
+                  className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
+                  style={{ backgroundColor: "#A0EDA8" }}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <RotateCcw size={18} className="animate-spin" /> Uploading{" "}
+                      {uploadProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <Save size={18} /> Save & Publish
+                    </>
+                  )}
                 </button>
               </>
             )}
@@ -1443,9 +2902,42 @@ const ECommerceSection: React.FC = () => {
       {/* Tabs */}
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] px-6">
         <div className="flex gap-6">
-          <button onClick={() => { setActiveTab("inventory"); setCurrentView("inventory"); }} className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory" ? "text-[var(--accent-green)] !border-[var(--accent-green)]" : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"}`}>Inventory</button>
-          <button onClick={() => { setActiveTab("order"); setCurrentView("orders"); }} className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order" ? "text-[var(--accent-green)] !border-[var(--accent-green)]" : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"}`}>Order</button>
-          <button onClick={() => setActiveTab("discounts")} className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts" ? "text-[var(--accent-green)] !border-[var(--accent-green)]" : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"}`}>Discounts & Coupons</button>
+          <button
+            onClick={() => {
+              setActiveTab("inventory");
+              setCurrentView("inventory");
+            }}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "inventory"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Inventory
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("order");
+              setCurrentView("orders");
+            }}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "order"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Order
+          </button>
+          <button
+            onClick={() => setActiveTab("discounts")}
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
+              activeTab === "discounts"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Discounts & Coupons
+          </button>
         </div>
       </div>
 
@@ -1454,7 +2946,13 @@ const ECommerceSection: React.FC = () => {
         {currentView === "inventory" && renderInventory()}
         {currentView === "addProduct" && renderAddProduct()}
         {currentView === "orders" && renderOrders()}
-        {activeTab === "discounts" && (<div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-sm p-8 text-center"><p className="text-[var(--textSecondary)]">Discounts & Coupons management coming soon</p></div>)}
+        {activeTab === "discounts" && (
+          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl shadow-sm p-8 text-center">
+            <p className="text-[var(--textSecondary)]">
+              Discounts & Coupons management coming soon
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

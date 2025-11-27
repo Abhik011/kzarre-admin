@@ -28,7 +28,8 @@ export default function CMSComplete() {
 
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
-  const role = typeof window !== "undefined" ? localStorage.getItem("role") : "";
+  const role =
+    typeof window !== "undefined" ? localStorage.getItem("role") : "";
   const isSuperAdmin = role === "superadmin";
 
   // =============================
@@ -62,23 +63,28 @@ export default function CMSComplete() {
   const [imageKeywords, setImageKeywords] = useState([]);
 
   // helper: determine if current display type expects multiple files
- const isGrid =
-  postData.displayTo === "women-grid" ||
-  postData.displayTo === "men-grid" ||
-  postData.displayTo === "women-4grid" ||
-  postData.displayTo === "men-4grid";
+  const isGrid =
+    postData.displayTo === "women-grid" ||
+    postData.displayTo === "men-grid" ||
+    postData.displayTo === "women-4grid" ||
+    postData.displayTo === "men-4grid";
 
   const isCarousel = postData.displayTo === "home-banner-carousel";
 
   // expected count for grid (backend currently expects 5 for women-grid/men-grid)W
   let expectedGridCount = 0;
 
-if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
-  expectedGridCount = 5;
-} else if (postData.displayTo === "women-4grid" || postData.displayTo === "men-4grid") {
-  expectedGridCount = 4;
-}
-
+  if (
+    postData.displayTo === "women-grid" ||
+    postData.displayTo === "men-grid"
+  ) {
+    expectedGridCount = 5;
+  } else if (
+    postData.displayTo === "women-4grid" ||
+    postData.displayTo === "men-4grid"
+  ) {
+    expectedGridCount = 4;
+  }
 
   // =============================
   // FETCH CMS CONTENT (DARK-MODE READY)
@@ -177,7 +183,9 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
 
     // If single-banner (bannerOne/bannerTwo/bannerToggle/post) -> only first image accepted
     if (
-      ["bannerOne", "bannerTwo", "bannerToggle", "post"].includes(postData.displayTo)
+      ["bannerOne", "bannerTwo", "bannerToggle", "post"].includes(
+        postData.displayTo
+      )
     ) {
       const image = files.find((f) => f.type.startsWith("image/"));
       if (!image) {
@@ -211,7 +219,9 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
 
       // For grids: enforce exact count
       if (isGrid && imageFiles.length !== expectedGridCount) {
-        alert(`This grid requires exactly ${expectedGridCount} images. You selected ${imageFiles.length}.`);
+        alert(
+          `This grid requires exactly ${expectedGridCount} images. You selected ${imageFiles.length}.`
+        );
         return;
       }
 
@@ -235,11 +245,21 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
         setUploadedMediaList(previews);
         // initialize per-image meta arrays to match count
         const count = previews.length;
-        setImageTitles((t) => Array.from({ length: count }, (_, i) => t[i] || ""));
-        setImageDescriptions((d) => Array.from({ length: count }, (_, i) => d[i] || ""));
-        setImageMetaTags((m) => Array.from({ length: count }, (_, i) => m[i] || ""));
-        setImageMetaDescriptions((md) => Array.from({ length: count }, (_, i) => md[i] || ""));
-        setImageKeywords((k) => Array.from({ length: count }, (_, i) => k[i] || ""));
+        setImageTitles((t) =>
+          Array.from({ length: count }, (_, i) => t[i] || "")
+        );
+        setImageDescriptions((d) =>
+          Array.from({ length: count }, (_, i) => d[i] || "")
+        );
+        setImageMetaTags((m) =>
+          Array.from({ length: count }, (_, i) => m[i] || "")
+        );
+        setImageMetaDescriptions((md) =>
+          Array.from({ length: count }, (_, i) => md[i] || "")
+        );
+        setImageKeywords((k) =>
+          Array.from({ length: count }, (_, i) => k[i] || "")
+        );
         // clear single preview if any
         setUploadedMedia(null);
       });
@@ -247,7 +267,9 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
     }
 
     // fallback: pick first image as single
-    const fallback = files.find((f) => f.type.startsWith("image/") || f.type.startsWith("video/"));
+    const fallback = files.find(
+      (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
+    );
     if (fallback) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -299,18 +321,25 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
 
       // Basic validations for multi
       if (isGrid && uploadedMediaList.length !== expectedGridCount) {
-        alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
+        alert(
+          `Please upload exactly ${expectedGridCount} images for this grid.`
+        );
         return;
       }
 
-      if (postData.displayTo === "home-landing-video" && !uploadedMedia?.rawFile) {
+      if (
+        postData.displayTo === "home-landing-video" &&
+        !uploadedMedia?.rawFile
+      ) {
         alert("Please upload a landing video.");
         return;
       }
 
       const formData = new FormData();
       // append simple fields
-      Object.entries(postData).forEach(([key, value]) => formData.append(key, value));
+      Object.entries(postData).forEach(([key, value]) =>
+        formData.append(key, value)
+      );
 
       // Append gridCount to help backend (optional)
       if (isGrid) formData.append("gridCount", String(expectedGridCount));
@@ -331,9 +360,11 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
         formData.append("titles", JSON.stringify(imageTitles));
         formData.append("descriptions", JSON.stringify(imageDescriptions));
         formData.append("metaTags", JSON.stringify(imageMetaTags));
-        formData.append("metaDescriptions", JSON.stringify(imageMetaDescriptions));
+        formData.append(
+          "metaDescriptions",
+          JSON.stringify(imageMetaDescriptions)
+        );
         formData.append("imageKeywords", JSON.stringify(imageKeywords));
-
       }
 
       // If single image was set (e.g. bannerOne/bannerTwo/post) we already appended file above.
@@ -487,7 +518,8 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
           className="px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm"
           style={{ backgroundColor: "var(--accent-green)" }}
         >
-          <Save size={16} /> Save (Request Approval)
+          <Save size={16} />
+          Save
         </button>
 
         <button
@@ -554,12 +586,25 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                   >
                     <option value="">Select place to display</option>
                     <option value="post">Post (single image)</option>
-                    <option value="home-landing-video">Home Landing Video (video)</option>
+                    <option value="home-landing-video">
+                      Home Landing Video (video)
+                    </option>
+                    <option value="men-page-video">Men Page Video</option>
+                    <option value="women-page-video">Women Page Video</option>
+                    <option value="accessories-video">Accessories Video</option>
+                    <option value="heritage-video">Heritage Video</option>
+
                     <option value="bannerOne">Home Banner One (image)</option>
                     <option value="bannerTwo">Home Banner Two (image)</option>
-                    <option value="women-4grid">Women Banner Grid (4 images)</option>
-                    <option value="men-4grid">Men Banner Grid (4 images)</option>
-                    <option value="women-grid">Women Banner Grid (5 images)</option>
+                    <option value="women-4grid">
+                      Women Banner Grid (4 images)
+                    </option>
+                    <option value="men-4grid">
+                      Men Banner Grid (4 images)
+                    </option>
+                    <option value="women-grid">
+                      Women Banner Grid (5 images)
+                    </option>
                     <option value="men-grid">Men Banner Grid (5 images)</option>
                     <option value="about-page">About Page</option>
                     <option value="product-page">Product Page</option>
@@ -585,13 +630,17 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                         <div className="relative rounded-lg overflow-hidden bg-[var(--background)] border border-[var(--sidebar-border)]">
                           {uploadedMedia.type === "video" ? (
                             <video
-                              src={uploadedMedia.uploadedUrl || uploadedMedia.url}
+                              src={
+                                uploadedMedia.uploadedUrl || uploadedMedia.url
+                              }
                               controls
                               className="w-full h-64 object-contain"
                             />
                           ) : (
                             <img
-                              src={uploadedMedia.uploadedUrl || uploadedMedia.url}
+                              src={
+                                uploadedMedia.uploadedUrl || uploadedMedia.url
+                              }
                               alt={uploadedMedia.name}
                               className="w-full h-64 object-contain"
                             />
@@ -600,7 +649,10 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                             onClick={removeMedia}
                             className="absolute top-2 right-2 p-1.5 bg-[var(--background-card)] rounded-full shadow hover:shadow-lg transition"
                           >
-                            <X size={18} className="text-[var(--text-primary)]" />
+                            <X
+                              size={18}
+                              className="text-[var(--text-primary)]"
+                            />
                           </button>
                         </div>
                       ) : null}
@@ -610,8 +662,15 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                         <div className="space-y-3">
                           <div className="grid grid-cols-2 gap-3">
                             {uploadedMediaList.map((m, idx) => (
-                              <div key={idx} className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)]">
-                                <img src={m.url} alt={m.name} className="w-full h-40 object-cover" />
+                              <div
+                                key={idx}
+                                className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)]"
+                              >
+                                <img
+                                  src={m.url}
+                                  alt={m.name}
+                                  className="w-full h-40 object-cover"
+                                />
                                 <button
                                   onClick={() => removeMediaAt(idx)}
                                   className="absolute top-1 right-1 p-1 bg-[var(--background-card)] rounded-full"
@@ -628,7 +687,9 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                             {uploadedMediaList.map((_, idx) => (
                               <div key={idx} className="p-3 border rounded">
                                 <div className="flex justify-between items-center mb-2">
-                                  <div className="text-sm font-medium text-[var(--text-primary)]">Image #{idx + 1}</div>
+                                  <div className="text-sm font-medium text-[var(--text-primary)]">
+                                    Image #{idx + 1}
+                                  </div>
                                 </div>
 
                                 <input
@@ -657,21 +718,33 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
 
                                 {/* hidden meta fields (use if you want to set meta per image) */}
                                 <div style={{ display: "none" }}>
-                                  <input type="text" value={imageMetaTags[idx] || ""} onChange={(e) => {
-                                    const copy = [...imageMetaTags];
-                                    copy[idx] = e.target.value;
-                                    setImageMetaTags(copy);
-                                  }} />
-                                  <input type="text" value={imageMetaDescriptions[idx] || ""} onChange={(e) => {
-                                    const copy = [...imageMetaDescriptions];
-                                    copy[idx] = e.target.value;
-                                    setImageMetaDescriptions(copy);
-                                  }} />
-                                  <input type="text" value={imageKeywords[idx] || ""} onChange={(e) => {
-                                    const copy = [...imageKeywords];
-                                    copy[idx] = e.target.value;
-                                    setImageKeywords(copy);
-                                  }} />
+                                  <input
+                                    type="text"
+                                    value={imageMetaTags[idx] || ""}
+                                    onChange={(e) => {
+                                      const copy = [...imageMetaTags];
+                                      copy[idx] = e.target.value;
+                                      setImageMetaTags(copy);
+                                    }}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={imageMetaDescriptions[idx] || ""}
+                                    onChange={(e) => {
+                                      const copy = [...imageMetaDescriptions];
+                                      copy[idx] = e.target.value;
+                                      setImageMetaDescriptions(copy);
+                                    }}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={imageKeywords[idx] || ""}
+                                    onChange={(e) => {
+                                      const copy = [...imageKeywords];
+                                      copy[idx] = e.target.value;
+                                      setImageKeywords(copy);
+                                    }}
+                                  />
                                 </div>
                               </div>
                             ))}
@@ -681,7 +754,8 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
 
                       <div className="mt-3 text-sm text-[var(--text-secondary)]">
                         <p className="font-medium text-[var(--text-primary)]">
-                          {uploadedMedia?.name || `${uploadedMediaList.length} images selected`}
+                          {uploadedMedia?.name ||
+                            `${uploadedMediaList.length} images selected`}
                         </p>
                         {uploadedMedia && <p>{uploadedMedia.size}</p>}
                         <p className="text-xs text-[var(--text-secondary)]">
@@ -728,7 +802,13 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                             type="file"
                             multiple={isCarousel || isGrid}
                             accept={
-                              postData.displayTo === "home-landing-video"
+                              [
+                                "home-landing-video",
+                                "men-page-video",
+                                "women-page-video",
+                                "accessories-video",
+                                "heritage-video",
+                              ].includes(postData.displayTo)
                                 ? "video/*"
                                 : "image/*"
                             }
@@ -1171,7 +1251,9 @@ if (postData.displayTo === "women-grid" || postData.displayTo === "men-grid") {
                   </label>
                   <input
                     type="text"
-                    value={"" /* placeholder - your original state was not included in the provided file */}
+                    value={
+                      "" /* placeholder - your original state was not included in the provided file */
+                    }
                     onChange={() => {}}
                     className="w-full px-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)]"
                     placeholder="Enter category name"
