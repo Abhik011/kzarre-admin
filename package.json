@@ -1,0 +1,50 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.17.5",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@vercel/speed-insights": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "d3-geo": "^3.1.1",
+    "jsbarcode": "^3.12.1",
+    "lucide-react": "^0.548.0",
+    "next": "^16.0.7",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "recharts": "^3.4.1",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhik011/kzarre-admin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhik011/kzarre-admin/issues"
+  },
+  "homepage": "https://github.com/Abhik011/kzarre-admin#readme"
+}
