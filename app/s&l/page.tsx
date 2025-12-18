@@ -3,429 +3,336 @@
 import React, { useEffect, useState } from "react";
 
 /* =========================
-   TYPES
+   COOKIE TOKEN HELPER
 ========================= */
-
-interface CarrierConfig {
-  enabled?: boolean;
-  apiKey?: string;
-  accountNumber?: string;
-  labelFormat?: string;
-  defaultService?: string;
-}
-
-interface ShippingSettings {
-  ups?: CarrierConfig;
-  fedex?: CarrierConfig;
-  dhl?: CarrierConfig;
-  defaultCarrier?: string;
-}
-
-interface ReturnItem {
-  _id: string;
-  status: string;
-}
+const getAuthTokenFromCookie = () => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|; )refresh_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
 /* =========================
-   CARRIER CONFIG FORM
+   TYPES (MATCH BACKEND)
 ========================= */
-
-interface CarrierConfigFormProps {
-  label: string;
-  config: CarrierConfig;
-  onChange: (config: CarrierConfig) => void;
+interface CourierPartner {
+  _id: string;
+  name: string;
+  slug: string;
+  enabled: boolean;
+  environment: "sandbox" | "production";
+  baseUrls: {
+    sandbox?: string;
+    production?: string;
+  };
+  auth: {
+    type: "apiKey" | "bearer" | "basic" | "oauth2";
+    apiKey?: string;
+    token?: string;
+    username?: string;
+    password?: string;
+  };
+  endpoints: {
+    rate?: string;
+    shipment?: string;
+    tracking?: string;
+    cancel?: string;
+  };
+  currency: string;
 }
 
-function CarrierConfigForm({
-  label,
-  config,
-  onChange,
-}: CarrierConfigFormProps) {
-  const handleChange = (field: keyof CarrierConfig, value: any) => {
-    onChange({
-      ...config,
-      [field]: value,
-    });
+interface AdminOrder {
+  _id: string;
+  orderId: string;
+  status: string;
+  amount: number;
+  paymentMethod: string;
+  shipment?: {
+    carrier?: string;
+    trackingId?: string;
+    status?: string;
+    labelUrl?: string;
   };
-
-  return (
-    <div className="border rounded-xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-lg">{label}</h3>
-        <label className="flex items-center gap-2 text-sm">
-          <span>Enabled</span>
-          <input
-            type="checkbox"
-            checked={!!config.enabled}
-            onChange={(e) => handleChange("enabled", e.target.checked)}
-          />
-        </label>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm mb-1">API Key</label>
-          <input
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            type="text"
-            value={config.apiKey || ""}
-            onChange={(e) => handleChange("apiKey", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Account Number</label>
-          <input
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            type="text"
-            value={config.accountNumber || ""}
-            onChange={(e) => handleChange("accountNumber", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Label Format</label>
-          <select
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            value={config.labelFormat || "PDF"}
-            onChange={(e) => handleChange("labelFormat", e.target.value)}
-          >
-            <option value="PDF">PDF</option>
-            <option value="ZPL">ZPL</option>
-            <option value="PNG">PNG</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Default Service</label>
-          <input
-            className="w-full border rounded-lg px-3 py-2 text-sm"
-            type="text"
-            value={config.defaultService || ""}
-            onChange={(e) =>
-              handleChange("defaultService", e.target.value)
-            }
-          />
-        </div>
-      </div>
-    </div>
-  );
 }
 
 /* =========================
    MAIN PAGE
 ========================= */
-
 export default function ShippingAndLogisticsPage() {
-  const [activeTab, setActiveTab] = useState("integration");
+  const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+  const token = getAuthTokenFromCookie();
 
-  // Shipping settings
-  const [loadingSettings, setLoadingSettings] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [settings, setSettings] = useState<ShippingSettings | null>(
-    null
-  );
-  const [defaultCarrier, setDefaultCarrier] = useState("");
+  const [couriers, setCouriers] = useState<CourierPartner[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Returns
-  const [returns, setReturns] = useState<ReturnItem[]>([]);
-  const [returnsStatusFilter, setReturnsStatusFilter] =
-    useState("pending");
-  const [loadingReturns, setLoadingReturns] = useState(false);
-  const [updatingReturnId, setUpdatingReturnId] = useState<
-    string | null
-  >(null);
+  const [form, setForm] = useState<Partial<CourierPartner>>({
+    enabled: true,
+    environment: "sandbox",
+    currency: "USD",
+    auth: { type: "apiKey" },
+    baseUrls: {},
+    endpoints: {},
+  });
 
   /* =========================
-     LOAD SETTINGS
+     FETCH COURIERS
   ========================= */
+  const fetchCouriers = async () => {
+    const res = await fetch(`${API}/api/admin/couriers`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    setCouriers(await res.json());
+  };
+
+  /* =========================
+     FETCH ORDERS
+  ========================= */
+  const fetchOrders = async () => {
+    const res = await fetch(`${API}/api/admin/orders`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    setOrders(await res.json());
+  };
 
   useEffect(() => {
-    fetchSettings();
+    fetchCouriers();
+    fetchOrders();
   }, []);
 
-  const fetchSettings = async () => {
-    try {
-      setLoadingSettings(true);
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/shipping/settings`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error(
-          "Shipping Settings API Error:",
-          res.status,
-          errText
-        );
-        throw new Error("Failed to load settings");
-      }
-
-      const data = await res.json();
-      setSettings(data);
-      setDefaultCarrier(data.defaultCarrier || "");
-    } catch (err) {
-      console.error("fetchSettings ERROR:", err);
-      alert("Failed to load shipping settings");
-    } finally {
-      setLoadingSettings(false);
+  /* =========================
+     SAVE COURIER
+  ========================= */
+  const saveCourier = async () => {
+    if (!form.name || !form.slug) {
+      alert("Courier name & slug required");
+      return;
     }
-  };
 
-  const handleCarrierChange = (
-    carrierKey: keyof ShippingSettings,
-    newConfig: CarrierConfig
-  ) => {
-    setSettings((prev) =>
-      prev
-        ? {
-            ...prev,
-            [carrierKey]: newConfig,
-          }
-        : prev
-    );
-  };
+    setSaving(true);
 
-  const handleSaveSettings = async () => {
-    try {
-      setSavingSettings(true);
+    await fetch(`${API}/api/admin/couriers/${form.slug}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(form),
+    });
 
-      const payload = {
-        ups: settings?.ups || {},
-        fedex: settings?.fedex || {},
-        dhl: settings?.dhl || {},
-        defaultCarrier,
-      };
+    setForm({
+      enabled: true,
+      environment: "sandbox",
+      currency: "USD",
+      auth: { type: "apiKey" },
+      baseUrls: {},
+      endpoints: {},
+    });
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/shipping/settings`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) throw new Error("Save failed");
-
-      const data = await res.json();
-      setSettings(data);
-      setDefaultCarrier(data.defaultCarrier || "");
-      alert("Shipping settings saved");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save shipping settings");
-    } finally {
-      setSavingSettings(false);
-    }
+    fetchCouriers();
+    setSaving(false);
   };
 
   /* =========================
-     RETURNS
+     CREATE SHIPMENT
   ========================= */
-
-  useEffect(() => {
-    if (activeTab === "returns") {
-      fetchReturns();
-    }
-  }, [activeTab, returnsStatusFilter]);
-
-  const fetchReturns = async () => {
-    try {
-      setLoadingReturns(true);
-
-      const url =
-        returnsStatusFilter === "all"
-          ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/returns`
-          : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/returns?status=${returnsStatusFilter}`;
-
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch returns");
-
-      const data = await res.json();
-      setReturns(data);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to load return requests");
-    } finally {
-      setLoadingReturns(false);
-    }
+  const createShipment = async (id: string, courier: string) => {
+    await fetch(`${API}/api/admin/orders/${id}/ship`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ courier }),
+    });
+    fetchOrders();
   };
 
-  const updateReturnStatus = async (
-    id: string,
-    status: string,
-    options: any = {}
-  ) => {
-    try {
-      setUpdatingReturnId(id);
+  /* =========================
+     CANCEL ORDER
+  ========================= */
+  const cancelOrder = async (id: string) => {
+    if (!confirm("Cancel this order?")) return;
+    await fetch(`${API}/api/admin/orders/${id}/cancel`, {
+      method: "PATCH",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    fetchOrders();
+  };
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/returns/${id}/status`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status, ...options }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Update failed");
-
-      const updated = await res.json();
-      setReturns((prev) =>
-        prev.map((r) => (r._id === id ? updated : r))
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update return");
-    } finally {
-      setUpdatingReturnId(null);
-    }
+  /* =========================
+     REFUND ORDER
+  ========================= */
+  const refundOrder = async (orderId: string) => {
+    if (!confirm("Refund this order?")) return;
+    await fetch(`${API}/api/checkout/refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ orderId }),
+    });
+    fetchOrders();
   };
 
   /* =========================
      UI
   ========================= */
-
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">
-        Shipping & Logistics (S&L)
-      </h1>
+    <div className="p-6 space-y-8">
+      <h1 className="text-2xl font-bold">Shipping & Logistics (Admin)</h1>
 
-      <div className="flex gap-4 border-b pb-2">
-        <button onClick={() => setActiveTab("integration")}>
-          Integration & Labeling
-        </button>
-        <button onClick={() => setActiveTab("returns")}>
-          Return Management
+      {/* ================= COURIER FORM ================= */}
+      <div className="border rounded-xl p-4 bg-[var(--background-card)]">
+        <h2 className="font-semibold mb-3">Add / Update Courier</h2>
+
+        <div className="grid md:grid-cols-2 gap-3">
+          <input
+            placeholder="Courier Name"
+            className="border px-3 py-2 rounded"
+            value={form.name || ""}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+
+          <input
+            placeholder="Slug (dhl, fedex, custom)"
+            className="border px-3 py-2 rounded"
+            value={form.slug || ""}
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+
+          <input
+            placeholder="Sandbox Base URL"
+            className="border px-3 py-2 rounded"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                baseUrls: { ...form.baseUrls, sandbox: e.target.value },
+              })
+            }
+          />
+
+          <input
+            placeholder="Production Base URL"
+            className="border px-3 py-2 rounded"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                baseUrls: { ...form.baseUrls, production: e.target.value },
+              })
+            }
+          />
+
+          <select
+            className="border px-3 py-2 rounded"
+            value={form.auth?.type}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                auth: { ...form.auth, type: e.target.value as any },
+              })
+            }
+          >
+            <option value="apiKey">API Key</option>
+            <option value="bearer">Bearer</option>
+            <option value="basic">Basic</option>
+            <option value="oauth2">OAuth2</option>
+          </select>
+
+          <input
+            placeholder="API Key / Token"
+            className="border px-3 py-2 rounded"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                auth: { ...form.auth, apiKey: e.target.value },
+              })
+            }
+          />
+        </div>
+
+        <button
+          onClick={saveCourier}
+          disabled={saving}
+          className="mt-4 px-5 py-2 bg-green-600 text-white rounded"
+        >
+          {saving ? "Saving..." : "Save Courier"}
         </button>
       </div>
 
-      {/* ====================== INTEGRATION ====================== */}
-      {activeTab === "integration" && (
-        <>
-          {loadingSettings || !settings ? (
-            <p>Loading settings...</p>
-          ) : (
-            <>
-              <div>
-                <label>Default Carrier</label>
-                <select
-                  value={defaultCarrier}
-                  onChange={(e) =>
-                    setDefaultCarrier(e.target.value)
-                  }
-                >
-                  <option value="">None</option>
-                  <option value="ups">UPS</option>
-                  <option value="fedex">FedEx</option>
-                  <option value="dhl">DHL</option>
-                </select>
-              </div>
+      {/* ================= ORDERS ================= */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Orders & Shipments</h2>
 
-              <CarrierConfigForm
-                label="UPS"
-                config={settings.ups || {}}
-                onChange={(c) => handleCarrierChange("ups", c)}
-              />
-
-              <CarrierConfigForm
-                label="FedEx"
-                config={settings.fedex || {}}
-                onChange={(c) =>
-                  handleCarrierChange("fedex", c)
-                }
-              />
-
-              <CarrierConfigForm
-                label="DHL"
-                config={settings.dhl || {}}
-                onChange={(c) => handleCarrierChange("dhl", c)}
-              />
-
-              <button onClick={handleSaveSettings}>
-                {savingSettings
-                  ? "Saving..."
-                  : "Save Settings"}
-              </button>
-            </>
-          )}
-        </>
-      )}
-
-      {/* ====================== RETURNS ====================== */}
-      {activeTab === "returns" && (
-        <>
-          <select
-            value={returnsStatusFilter}
-            onChange={(e) =>
-              setReturnsStatusFilter(e.target.value)
-            }
+        {orders.map((o) => (
+          <div
+            key={o._id}
+            className="border rounded-xl p-4 bg-[var(--background-card)]"
           >
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="denied">Denied</option>
-            <option value="completed">Completed</option>
-            <option value="all">All</option>
-          </select>
+            <div className="flex justify-between">
+              <div>
+                <h3 className="font-semibold">Order #{o.orderId}</h3>
+                <p>Status: {o.status}</p>
+                <p>Amount: ${o.amount}</p>
 
-          {loadingReturns ? (
-            <p>Loading returns...</p>
-          ) : (
-            returns.map((r) => (
-              <div key={r._id} className="border p-3 my-2">
-                <p>Status: {r.status}</p>
-
-                {r.status === "pending" && (
+                {o.shipment?.trackingId && (
                   <>
-                    <button
-                      onClick={() =>
-                        updateReturnStatus(r._id, "approved", {
-                          restockItems: true,
-                        })
-                      }
-                    >
-                      Approve & Restock
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        updateReturnStatus(r._id, "denied")
-                      }
-                    >
-                      Deny
-                    </button>
+                    <p>
+                      Tracking ID: <b>{o.shipment.trackingId}</b>
+                    </p>
+                    <p>
+                      Shipment Status:{" "}
+                      <b>{o.shipment.status}</b>
+                    </p>
                   </>
                 )}
+              </div>
 
-                {r.status === "approved" && (
-                  <button
-                    onClick={() =>
-                      updateReturnStatus(
-                        r._id,
-                        "completed"
-                      )
+              <div className="space-y-2">
+                {!o.shipment?.trackingId && (
+                  <select
+                    className="border px-2 py-1 rounded"
+                    defaultValue=""
+                    onChange={(e) =>
+                      createShipment(o._id, e.target.value)
                     }
                   >
-                    Mark Completed
+                    <option value="" disabled>
+                      Assign Courier
+                    </option>
+                    {couriers
+                      .filter((c) => c.enabled)
+                      .map((c) => (
+                        <option key={c.slug} value={c.slug}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                )}
+
+                {o.status !== "cancelled" && (
+                  <button
+                    onClick={() => cancelOrder(o._id)}
+                    className="px-3 py-1 bg-red-600 text-white rounded"
+                  >
+                    Cancel Order
+                  </button>
+                )}
+
+                {o.paymentMethod === "ONLINE" && (
+                  <button
+                    onClick={() => refundOrder(o.orderId)}
+                    className="px-3 py-1 bg-yellow-400 text-black rounded"
+                  >
+                    Refund
                   </button>
                 )}
               </div>
-            ))
-          )}
-        </>
-      )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

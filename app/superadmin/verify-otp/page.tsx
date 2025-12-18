@@ -47,7 +47,7 @@ export default function VerifySuperAdminOTP() {
           </p>
         )}
         {success && (
-          <p className="bg-green-500/20 text-green-200 text-sm p-2 rounded mb-3 text-center">
+          <p className="bg-[var(--accent-green)] text-green-200 text-sm p-2 rounded mb-3 text-center">
             {success}
           </p>
         )}

@@ -32,6 +32,10 @@ export default function CMSComplete() {
     typeof window !== "undefined" ? localStorage.getItem("role") : "";
   const isSuperAdmin = role === "superadmin";
 
+  const [isEditing, setIsEditing] = useState(false);
+const [editingId, setEditingId] = useState(null);
+
+
   // =============================
   // POST FORM STATES
   // =============================
@@ -45,6 +49,28 @@ export default function CMSComplete() {
     metaDescription: "",
     keywords: "",
   });
+  const [bannerStyle, setBannerStyle] = useState({
+    titleColor: "#000000",
+    titleSize: "16pt",
+    descColor: "#EFBF04",
+    descSize: "14pt",
+    alignment: "center",
+    fontFamily: "inherit",
+  });
+
+
+  const [availableFonts, setAvailableFonts] = useState([]);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/cms/fonts`)
+      .then(res => res.json())
+      .then(data => {
+        setAvailableFonts(data.fonts || []);
+      })
+      .catch(err => console.error("Font load error:", err));
+  }, []);
+
+
 
   const [postsData, setPostsData] = useState([]);
 
@@ -61,6 +87,7 @@ export default function CMSComplete() {
   const [imageMetaTags, setImageMetaTags] = useState([]);
   const [imageMetaDescriptions, setImageMetaDescriptions] = useState([]);
   const [imageKeywords, setImageKeywords] = useState([]);
+const [enableSchedule, setEnableSchedule] = useState(false);
 
   // helper: determine if current display type expects multiple files
   const isGrid =
@@ -105,6 +132,7 @@ export default function CMSComplete() {
             type: item.displayTo || (item.heroVideoUrl ? "Video" : "Banner"),
             author: item.author || "System",
             status: item.status || "Pending",
+            visibleAt: item.visibleAt,
             lastModified: item.updatedAt
               ? new Date(item.updatedAt).toLocaleDateString()
               : "—",
@@ -156,14 +184,16 @@ export default function CMSComplete() {
   const processLocalAndPreview = (filesOrFile) => {
     const files = Array.isArray(filesOrFile) ? filesOrFile : [filesOrFile];
 
-    // video-only check for landing page
+    // ------------------------------------------
+    // 1️⃣ HOME LANDING VIDEO — ONLY VIDEO ALLOWED
+    // ------------------------------------------
     if (postData.displayTo === "home-landing-video") {
       const video = files.find((f) => f.type.startsWith("video/"));
       if (!video) {
         alert("Please upload a video for Home Landing Video.");
         return;
       }
-      // single video preview
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedMedia({
@@ -174,24 +204,22 @@ export default function CMSComplete() {
           rawFile: video,
           uploadedUrl: null,
         });
-        // clear multi-list if any
-        setUploadedMediaList([]);
+        setUploadedMediaList([]); // clear multi upload
       };
       reader.readAsDataURL(video);
       return;
     }
 
-    // If single-banner (bannerOne/bannerTwo/bannerToggle/post) -> only first image accepted
-    if (
-      ["bannerOne", "bannerTwo", "bannerToggle", "post"].includes(
-        postData.displayTo
-      )
-    ) {
+    // --------------------------------------------------------
+    // 2️⃣ SINGLE IMAGE UPLOAD (bannerOne, bannerTwo, post)
+    // --------------------------------------------------------
+    if (["bannerOne", "bannerTwo", "post"].includes(postData.displayTo)) {
       const image = files.find((f) => f.type.startsWith("image/"));
       if (!image) {
         alert("Please upload an image.");
         return;
       }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedMedia({
@@ -202,22 +230,23 @@ export default function CMSComplete() {
           rawFile: image,
           uploadedUrl: null,
         });
-        // clear multi-list if any
-        setUploadedMediaList([]);
+        setUploadedMediaList([]); // clear multi upload
       };
       reader.readAsDataURL(image);
       return;
     }
 
-    // If carousel or grid -> allow multiple images
-    if (isCarousel || isGrid) {
+    // --------------------------------------------------------
+    // 3️⃣ MULTIPLE IMAGES (GRID & CAROUSEL)
+    // --------------------------------------------------------
+    if (isGrid || isCarousel) {
       const imageFiles = files.filter((f) => f.type.startsWith("image/"));
       if (!imageFiles.length) {
         alert("Please upload image files.");
         return;
       }
 
-      // For grids: enforce exact count
+      // Exact count validation for grids
       if (isGrid && imageFiles.length !== expectedGridCount) {
         alert(
           `This grid requires exactly ${expectedGridCount} images. You selected ${imageFiles.length}.`
@@ -225,13 +254,13 @@ export default function CMSComplete() {
         return;
       }
 
-      // create previews
+      // generate previews for multi-images
       const previewPromises = imageFiles.map(
         (file) =>
-          new Promise((res) => {
+          new Promise((resolve) => {
             const reader = new FileReader();
             reader.onload = (e) =>
-              res({
+              resolve({
                 url: e.target.result,
                 name: file.name,
                 size: `${(file.size / 1024).toFixed(2)} KB`,
@@ -243,33 +272,38 @@ export default function CMSComplete() {
 
       Promise.all(previewPromises).then((previews) => {
         setUploadedMediaList(previews);
-        // initialize per-image meta arrays to match count
+        setUploadedMedia(null); // remove single preview
+
         const count = previews.length;
-        setImageTitles((t) =>
-          Array.from({ length: count }, (_, i) => t[i] || "")
+
+        // ensure metadata arrays match count
+        setImageTitles((prev) =>
+          Array.from({ length: count }, (_, i) => prev[i] || "")
         );
-        setImageDescriptions((d) =>
-          Array.from({ length: count }, (_, i) => d[i] || "")
+        setImageDescriptions((prev) =>
+          Array.from({ length: count }, (_, i) => prev[i] || "")
         );
-        setImageMetaTags((m) =>
-          Array.from({ length: count }, (_, i) => m[i] || "")
+        setImageMetaTags((prev) =>
+          Array.from({ length: count }, (_, i) => prev[i] || "")
         );
-        setImageMetaDescriptions((md) =>
-          Array.from({ length: count }, (_, i) => md[i] || "")
+        setImageMetaDescriptions((prev) =>
+          Array.from({ length: count }, (_, i) => prev[i] || "")
         );
-        setImageKeywords((k) =>
-          Array.from({ length: count }, (_, i) => k[i] || "")
+        setImageKeywords((prev) =>
+          Array.from({ length: count }, (_, i) => prev[i] || "")
         );
-        // clear single preview if any
-        setUploadedMedia(null);
       });
+
       return;
     }
 
-    // fallback: pick first image as single
+    // --------------------------------------------------------
+    // 4️⃣ FALLBACK — FIRST IMAGE OR VIDEO
+    // --------------------------------------------------------
     const fallback = files.find(
       (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
     );
+
     if (fallback) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -285,6 +319,7 @@ export default function CMSComplete() {
       reader.readAsDataURL(fallback);
     }
   };
+
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files || []);
@@ -312,88 +347,101 @@ export default function CMSComplete() {
   // =============================
   // SAVE POST (FORM + FILE)
   // =============================
-  const handleSavePost = async () => {
-    try {
-      if (!postData.title.trim()) {
-        alert("Please enter a title.");
-        return;
-      }
+const handleSavePost = async () => {
+  try {
+    if (!postData.title.trim()) {
+      alert("Please enter a title.");
+      return;
+    }
 
-      // Basic validations for multi
-      if (isGrid && uploadedMediaList.length !== expectedGridCount) {
-        alert(
-          `Please upload exactly ${expectedGridCount} images for this grid.`
-        );
-        return;
-      }
+    // Validation for grids
+    if (isGrid && uploadedMediaList.length !== expectedGridCount) {
+      alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
+      return;
+    }
 
-      if (
-        postData.displayTo === "home-landing-video" &&
-        !uploadedMedia?.rawFile
-      ) {
-        alert("Please upload a landing video.");
-        return;
-      }
+    if (
+      postData.displayTo === "home-landing-video" &&
+      !uploadedMedia?.rawFile &&
+      !isEditing // allow editing without new upload
+    ) {
+      alert("Please upload a landing video.");
+      return;
+    }
 
-      const formData = new FormData();
-      // append simple fields
-      Object.entries(postData).forEach(([key, value]) =>
-        formData.append(key, value)
-      );
+    const formData = new FormData();
 
-      // Append gridCount to help backend (optional)
-      if (isGrid) formData.append("gridCount", String(expectedGridCount));
+    // Append text fields
+    Object.entries(postData).forEach(([key, value]) =>
+      formData.append(key, value)
+    );
 
-      // Single-file flows (existing)
-      if (uploadedMedia?.rawFile && !isGrid && !isCarousel) {
+    // Banner styling
+    formData.append("bannerStyle", JSON.stringify(bannerStyle));
+
+    // Grid count
+    if (isGrid) formData.append("gridCount", String(expectedGridCount));
+    if (!isGrid && !isCarousel) {
+      if (uploadedMedia?.rawFile) {
         formData.append("file", uploadedMedia.rawFile);
       }
-
-      // Multi-file flows
-      if ((isGrid || isCarousel) && uploadedMediaList.length > 0) {
-        // append each file with the same key 'files' (backend upload.any() will pick up)
-        uploadedMediaList.forEach((m) => {
-          formData.append("files", m.rawFile);
-        });
-
-        // send per-image metadata as JSON arrays (backend expects titles/descriptions/metaTags etc)
-        formData.append("titles", JSON.stringify(imageTitles));
-        formData.append("descriptions", JSON.stringify(imageDescriptions));
-        formData.append("metaTags", JSON.stringify(imageMetaTags));
-        formData.append(
-          "metaDescriptions",
-          JSON.stringify(imageMetaDescriptions)
-        );
-        formData.append("imageKeywords", JSON.stringify(imageKeywords));
-      }
-
-      // If single image was set (e.g. bannerOne/bannerTwo/post) we already appended file above.
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/save`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save");
-
-      alert("✅ Sent for approval!");
-      setCurrentView("dashboard");
-      // clear states
-      setUploadedMedia(null);
-      setUploadedMediaList([]);
-      setImageTitles([]);
-      setImageDescriptions([]);
-      setImageMetaTags([]);
-      setImageMetaDescriptions([]);
-      setImageKeywords([]);
-    } catch (err) {
-      alert("❌ " + err.message);
     }
-  };
+    if (isGrid || isCarousel) {
+      uploadedMediaList.forEach((m) => {
+        // Only append if user uploaded a NEW file
+        if (m.rawFile) {
+          formData.append("files", m.rawFile);
+        } else {
+          // Keep existing image URLs during EDIT mode
+          formData.append("existingFiles", m.uploadedUrl || m.url);
+        }
+      });
+
+      formData.append("titles", JSON.stringify(imageTitles));
+      formData.append("descriptions", JSON.stringify(imageDescriptions));
+      formData.append("metaTags", JSON.stringify(imageMetaTags));
+      formData.append("metaDescriptions", JSON.stringify(imageMetaDescriptions));
+      formData.append("imageKeywords", JSON.stringify(imageKeywords));
+    }
+
+    // -----------------------------
+    // DECIDE SAVE vs UPDATE
+    // -----------------------------
+    const url = isEditing
+      ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/update/${editingId}`
+      : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/save`;
+
+    const method = isEditing ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to save");
+
+    alert("✅ Saved successfully!");
+    setCurrentView("dashboard");
+
+    // Reset EDITING mode
+    setIsEditing(false);
+    setEditingId(null);
+
+    // Clear media states
+    setUploadedMedia(null);
+    setUploadedMediaList([]);
+    setImageTitles([]);
+    setImageDescriptions([]);
+    setImageMetaTags([]);
+    setImageMetaDescriptions([]);
+    setImageKeywords([]);
+  } catch (err) {
+    alert("❌ " + err.message);
+  }
+};
+
+
 
   // =============================
   // SAVE DRAFT
@@ -458,22 +506,50 @@ export default function CMSComplete() {
     }
   };
 
-  const handleDeletePost = (postId) => {
-    if (!confirm("Delete this post?")) return;
-    setPostsData((prev) =>
-      prev.filter((p) => p._id !== postId && p.id !== postId)
+ const handleDeletePost = async (postId) => {
+  if (!confirm("Delete this post permanently?")) return;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/delete/${postId}`,
+      { method: "DELETE" }
     );
+
+    if (!res.ok) throw new Error("Delete failed");
+
+    setPostsData((prev) => prev.filter((p) => p._id !== postId));
+
+    alert("🗑️ Deleted successfully");
+  } catch (err) {
+    alert("❌ " + err.message);
+  }
+};
+const isLiveNow = (post) => {
+  if (!post.visibleAt) return false;
+
+  return new Date(post.visibleAt) <= new Date();
+};
+
+
+
+const getStatusColor = (status, post) => {
+  // 🔴 LIVE overrides Scheduled
+  if (status === "Scheduled" && isLiveNow(post)) {
+    return "bg-[var(--accent-green)] text-white"; // LIVE
+  }
+
+  const map = {
+    Approved: "bg-[var(--accent-green)] text-white",
+    Draft: "bg-gray-500 text-white",
+    "Pending Review": "bg-yellow-500 text-black",
+    Rejected: "bg-red-500 text-white",
+    Scheduled: "bg-blue-500 text-white",
   };
 
-  const getStatusColor = (status) => {
-    const map = {
-      Approved: "bg-green-500 text-white",
-      Draft: "bg-gray-500 text-white",
-      "Pending Review": "bg-yellow-500 text-black",
-      Rejected: "bg-red-500 text-white",
-    };
-    return map[status] || "bg-gray-500 text-white";
-  };
+  return map[status] || "bg-gray-500 text-white";
+};
+
+
   // ---------- UI helpers ----------
   const TopBar = ({ back, title, children }) => (
     <div className="px-6 py-4">
@@ -497,6 +573,89 @@ export default function CMSComplete() {
       </div>
     </div>
   );
+
+  const handleEditPost = async (postId) => {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/${postId}`
+    );
+    const data = await res.json();
+
+    if (!res.ok) throw new Error("Failed to load post for editing");
+
+    // Load basic post fields
+    setPostData({
+      title: data.title || "",
+      description: data.description || "",
+      displayTo: data.displayTo || "",
+      visibleDate: data.meta?.visibleDate || "",
+      visibleTime: data.meta?.visibleTime || "",
+      metaTag: data.meta?.tag || "",
+      metaDescription: data.meta?.description || "",
+      keywords: data.meta?.keywords || "",
+    });
+
+    // Load banner styling
+    if (data.bannerStyle) {
+      setBannerStyle({
+        titleColor: data.bannerStyle.titleColor || "#000000",
+        titleSize: data.bannerStyle.titleSize || "16pt",
+        descColor: data.bannerStyle.descColor || "#EFBF04",
+        descSize: data.bannerStyle.descSize || "14pt",
+        alignment: data.bannerStyle.alignment || "center",
+        fontFamily: data.bannerStyle.fontFamily || "inherit",
+      });
+    }
+
+    // ------------------------------
+    // LOAD MEDIA (single, 4-grid, 5-grid, carousel)
+    // ------------------------------
+
+// Single image or video (SAFE)
+if (data.media) {
+  const url =
+    typeof data.media === "string" ? data.media : data.media.url;
+
+  const type =
+    data.media?.kind ||
+    (typeof url === "string" && url.endsWith(".mp4") ? "video" : "image");
+
+  setUploadedMedia({
+    url,
+    uploadedUrl: url,
+    type,
+    name: data.media?.name || "",
+    rawFile: null,
+  });
+}
+
+
+    // Multi image (grid or carousel)
+    if (Array.isArray(data.mediaGroup)) {
+      setUploadedMediaList(
+        data.mediaGroup.map((img) => ({
+          url: img.imageUrl,
+          uploadedUrl: img.imageUrl,
+          rawFile: null,
+        }))
+      );
+
+      setImageTitles(data.mediaGroup.map((i) => i.title || ""));
+      setImageDescriptions(data.mediaGroup.map((i) => i.description || ""));
+      setImageMetaTags(data.mediaGroup.map((i) => i.metaTag || ""));
+      setImageMetaDescriptions(data.mediaGroup.map((i) => i.metaDescription || ""));
+      setImageKeywords(data.mediaGroup.map((i) => i.keywords || ""));
+    }
+
+    // Switch view → open editor
+    setEditingId(postId);
+    setIsEditing(true);
+    setCurrentView("createPost");
+  } catch (err) {
+    alert("❌ " + err.message);
+  }
+};
+
 
   // ---------- Create Post View ----------
   const renderCreatePost = () => (
@@ -572,7 +731,6 @@ export default function CMSComplete() {
                     rows={6}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                     Display To
@@ -585,17 +743,17 @@ export default function CMSComplete() {
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none transition-all bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
                   >
                     <option value="">Select place to display</option>
-                    <option value="post">Post (single image)</option>
+                    {/* <option value="post">Post (single image)</option> */}
                     <option value="home-landing-video">
                       Home Landing Video (video)
                     </option>
+                    <option value="bannerOne">Home Banner One (image)</option>
+                    <option value="bannerTwo">Home Banner Two (image)</option>
                     <option value="men-page-video">Men Page Video</option>
                     <option value="women-page-video">Women Page Video</option>
                     <option value="accessories-video">Accessories Video</option>
                     <option value="heritage-video">Heritage Video</option>
-
-                    <option value="bannerOne">Home Banner One (image)</option>
-                    <option value="bannerTwo">Home Banner Two (image)</option>
+                  
                     <option value="women-4grid">
                       Women Banner Grid (4 images)
                     </option>
@@ -778,11 +936,10 @@ export default function CMSComplete() {
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         onDragLeave={handleDragLeave}
-                        className={`mt-4 border-2 border-dashed rounded-lg p-8 text-center transition-all ${
-                          isDragging
-                            ? "border-green-500 bg-green-50/20"
-                            : "border-[var(--sidebar-border)] bg-[var(--background)]"
-                        }`}
+                        className={`mt-4 border-2 border-dashed rounded-lg p-8 text-center transition-all ${isDragging
+                          ? "border-green-500 bg-[var(--accent-green)]"
+                          : "border-[var(--sidebar-border)] bg-[var(--background)]"
+                          }`}
                       >
                         <div className="flex flex-col items-center">
                           <Upload
@@ -851,54 +1008,230 @@ export default function CMSComplete() {
                 Post Settings
               </h3>
 
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                    Visible Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={postData.visibleDate}
-                      onChange={(e) =>
-                        setPostData((p) => ({
-                          ...p,
-                          visibleDate: e.target.value,
-                        }))
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none transition bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
-                    />
-                    <Calendar
-                      size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-                    />
+            <div className="grid grid-cols-2 gap-4">
+  {/* Date */}
+  <div className="relative">
+    <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+    <input
+      type="date"
+      value={postData.visibleDate}
+      onChange={(e) =>
+        setPostData((p) => ({ ...p, visibleDate: e.target.value }))
+      }
+      className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
+    />
+  </div>
+
+  {/* Time */}
+  <div className="relative">
+    <Clock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+    <input
+      type="time"
+      value={postData.visibleTime}
+      onChange={(e) =>
+        setPostData((p) => ({ ...p, visibleTime: e.target.value }))
+      }
+      className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
+    />
+  </div>
+</div>
+
+
+            </div>
+
+            {/* ---------------- TEXT STYLING (ADDED HERE) ---------------- */}
+            {[
+              "bannerOne",
+              "bannerTwo",
+              "women-4grid",
+              "men-4grid",
+              "women-grid",
+              "men-grid",
+            ].includes(postData.displayTo) && (
+
+                <div className="bg-[var(--background-card)] rounded-xl shadow-sm border border-[var(--sidebar-border)] p-6">
+                  <h3 className="text-lg font-semibold mb-5 text-[var(--text-primary)]">
+                    Text Styling
+                  </h3>
+                  <div className="space-y-6">
+                    {/* ================= Title Color ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        Title Color
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={bannerStyle.titleColor}
+                          onChange={(e) =>
+                            setBannerStyle((prev) => ({ ...prev, titleColor: e.target.value }))
+                          }
+                          className="w-10 h-10 rounded-full border border-[var(--sidebar-border)] cursor-pointer"
+                        />
+
+                        <input
+                          type="text"
+                          value={bannerStyle.titleColor}
+                          onChange={(e) =>
+                            setBannerStyle((prev) => ({ ...prev, titleColor: e.target.value }))
+                          }
+                          className="flex-1 px-3 py-2 rounded-lg bg-[var(--background)] border border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ================= Title Size ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        Title Font Size (Pt)
+                      </label>
+
+                      <input
+                        type="number"
+                        min="10"
+                        max="120"
+                        value={parseInt(bannerStyle.titleSize)}
+                        onChange={(e) =>
+                          setBannerStyle((prev) => ({
+                            ...prev,
+                            titleSize: `${e.target.value}px`,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+
+                    {/* ================= Description Color ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        Description Color
+                      </label>
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={bannerStyle.descColor}
+                          onChange={(e) =>
+                            setBannerStyle((prev) => ({ ...prev, descColor: e.target.value }))
+                          }
+                          className="w-10 h-10 rounded-full border border-[var(--sidebar-border)] cursor-pointer"
+                        />
+
+                        <input
+                          type="text"
+                          value={bannerStyle.descColor}
+                          onChange={(e) =>
+                            setBannerStyle((prev) => ({ ...prev, descColor: e.target.value }))
+                          }
+                          className="flex-1 px-3 py-2 rounded-lg bg-[var(--background)] border border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+
+                    {/* ================= Description Size ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        Description Font Size (px)
+                      </label>
+
+                      <input
+                        type="number"
+                        min="10"
+                        max="120"
+                        value={parseInt(bannerStyle.descSize)}
+                        onChange={(e) =>
+                          setBannerStyle((prev) => ({
+                            ...prev,
+                            descSize: `${e.target.value}px`,
+                          }))
+                        }
+                        className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                      />
+                    </div>
+
+                    {/* ================= Alignment ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                        Text Alignment
+                      </label>
+
+                      <select
+                        value={bannerStyle.alignment}
+                        onChange={(e) =>
+                          setBannerStyle((prev) => ({ ...prev, alignment: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
+                      >
+                        <option value="left">Left</option>
+                        <option value="center">Center</option>
+                        <option value="right">Right</option>
+                      </select>
+                    </div>
+
+                    {/* ================= Font Family ================= */}
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                        Font Family
+                      </label>
+
+                      <select
+                        value={bannerStyle.fontFamily || ""}
+                        onChange={(e) =>
+                          setBannerStyle((prev) => ({ ...prev, fontFamily: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-sm"
+                      >
+                        <option value="">Default</option>
+
+                        {availableFonts.length === 0 && (
+                          <option disabled>No fonts uploaded</option>
+                        )}
+
+                        {availableFonts.map((font, idx) => (
+                          <option key={idx} value={font.name}>
+                            {font.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+
+                    {/* ================= Live Preview ================= */}
+                    <div className="mt-6 p-4 border rounded-lg bg-[var(--background)]">
+                      <h4 className="text-sm font-semibold mb-2 text-[var(--text-primary)]">
+                        Live Preview
+                      </h4>
+
+                      <div style={{ textAlign: bannerStyle.alignment }}>
+                        <div
+                          style={{
+                            color: bannerStyle.titleColor,
+                            fontSize: bannerStyle.titleSize,
+                            fontFamily: bannerStyle.fontFamily,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {postData.title || "Title Preview"}
+                        </div>
+
+                        <div
+                          style={{
+                            color: bannerStyle.descColor,
+                            fontSize: bannerStyle.descSize,
+                            fontFamily: bannerStyle.fontFamily,
+                            marginTop: "5px",
+                          }}
+                        >
+                          {postData.description || "Description Preview"}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                    Visible Time
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="time"
-                      value={postData.visibleTime}
-                      onChange={(e) =>
-                        setPostData((p) => ({
-                          ...p,
-                          visibleTime: e.target.value,
-                        }))
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none transition bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)] text-sm"
-                    />
-                    <Clock
-                      size={18}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+              )}
 
             <div className="bg-[var(--background-card)] rounded-xl shadow-sm border border-[var(--sidebar-border)] p-6">
               <h3 className="text-lg font-semibold mb-5 text-[var(--text-primary)]">
@@ -973,6 +1306,9 @@ export default function CMSComplete() {
                 </div>
               </div>
             </div>
+
+
+
           </div>
         </div>
       </div>
@@ -1044,34 +1380,22 @@ export default function CMSComplete() {
           <div className="flex gap-4 border-b border-[var(--sidebar-border)] w-full sm:w-auto overflow-x-auto">
             <button
               onClick={() => setActiveTab("pagesAndPosts")}
-              className={`pb-3 px-4 font-medium text-sm ${
-                activeTab === "pagesAndPosts"
-                  ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
-                  : "text-[var(--text-secondary)]"
-              }`}
+              className={`pb-3 px-4 font-medium text-sm ${activeTab === "pagesAndPosts"
+                ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)]"
+                }`}
             >
               Posts
             </button>
-            <button
-              onClick={() => setActiveTab("categories")}
-              className={`pb-3 px-4 font-medium text-sm ${
-                activeTab === "categories"
-                  ? "text-[var(--accent-green)]border-b-2 !border-[var(--accent-green)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
-            >
-              Categories
-            </button>
-            <button
+            {/* <button
               onClick={() => setActiveTab("scheduled")}
-              className={`pb-3 px-4 font-medium text-sm ${
-                activeTab === "scheduled"
-                  ? "text-[var(--accent-green)]border-b-2 !border-[var(--accent-green)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
+              className={`pb-3 px-4 font-medium text-sm ${activeTab === "scheduled"
+                ? "text-[var(--accent-green)]border-b-2 !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
             >
               Scheduled Content
-            </button>
+            </button> */}
           </div>
 
           <div className="flex gap-3 w-full sm:w-auto">
@@ -1086,16 +1410,6 @@ export default function CMSComplete() {
               </button>
             )}
 
-            {activeTab === "categories" && (
-              <button
-                onClick={() => setShowAddCategoryModal(true)}
-                className="px-5 py-2 text-sm rounded-lg font-medium flex items-center gap-2"
-                style={{ backgroundColor: "var(--accent-green)" }}
-              >
-                <Plus size={18} className="flex-shrink-0" />
-                Add Category
-              </button>
-            )}
           </div>
         </div>
 
@@ -1142,18 +1456,23 @@ export default function CMSComplete() {
                         {post.lastModified}
                       </td>
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                            post.status
-                          )}`}
-                        >
-                          {post.status}
-                        </span>
+                       <span
+  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+    post.status,
+    post
+  )}`}
+>
+  {post.status === "Scheduled" && isLiveNow(post)
+    ? "Live"
+    : post.status}
+</span>
+
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           {isSuperAdmin && post.status === "Pending Review" && (
                             <>
+
                               <button
                                 onClick={() => handleApprovePost(post._id)}
                                 className="px-3 py-1 text-sm rounded"
@@ -1177,7 +1496,13 @@ export default function CMSComplete() {
                               </button>
                             </>
                           )}
-
+                          <button
+                            onClick={() => handleEditPost(post._id)}
+                            className="p-1 hover:opacity-90"
+                            title="Edit"
+                          >
+                            <Edit size={16} className="text-blue-500" />
+                          </button>
                           <button
                             onClick={() => handleDeletePost(post._id)}
                             className="p-1 hover:opacity-90"
@@ -1192,14 +1517,6 @@ export default function CMSComplete() {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-
-        {activeTab === "categories" && (
-          <div className="bg-[var(--background-card)] rounded-xl shadow-sm p-8 text-center border border-[var(--sidebar-border)]">
-            <p className="text-[var(--text-secondary)]">
-              Categories content coming soon
-            </p>
           </div>
         )}
 
@@ -1254,7 +1571,7 @@ export default function CMSComplete() {
                     value={
                       "" /* placeholder - your original state was not included in the provided file */
                     }
-                    onChange={() => {}}
+                    onChange={() => { }}
                     className="w-full px-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)] text-[var(--text-primary)]"
                     placeholder="Enter category name"
                   />

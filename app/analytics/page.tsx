@@ -137,28 +137,28 @@ const AnalyticsPage = () => {
     setTopProducts(data.products || []);
   };
 
-const fetchCountryTraffic = async () => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/traffic/country`
-  );
-  const data = await res.json();
+  const fetchCountryTraffic = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/analytics/traffic/country`
+    );
+    const data = await res.json();
 
-  const safeData = (data.countries || []).map((c: any) => ({
-    country: c.country || "Unknown",
-    code: c.code || "",
-    visitors: Number(c.visitors || 0),
-  }));
+    const safeData = (data.countries || []).map((c: any) => ({
+      country: c.country || "Unknown",
+      code: c.code || "",
+      visitors: Number(c.visitors || 0),
+    }));
 
-  setCountryTraffic(safeData);
-};
+    setCountryTraffic(safeData);
+  };
 
 
-  const COLORS = ["#6DE784", "#D2BD50", "#1C64F2", "#FF6B6B", "#A855F7"];
+  const COLORS = ["#6DE784", "#EFBF04", "#1C64F2", "#FF6B6B", "#A855F7"];
 
   return (
-    <div className="p-6">
+    <div className="p-0">
       {/* HEADER */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-6 mb-6">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 mb-6">
         <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
           Advanced Analytics
         </h1>
@@ -257,7 +257,7 @@ const fetchCountryTraffic = async () => {
               <XAxis dataKey="_id" stroke="var(--textSecondary)" />
               <YAxis stroke="var(--textSecondary)" />
               <Tooltip />
-              <Bar dataKey="total" fill="#D2BD50" />
+              <Bar dataKey="total" fill="#EFBF04" />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -280,12 +280,13 @@ const fetchCountryTraffic = async () => {
           <ul className="space-y-3">
             {topProducts.map((p, i) => (
               <li
-                key={p._id}
+                key={p.productId}
                 className="flex justify-between bg-[var(--background-card)] dark:bg-[var(--bgCard)] p-3 rounded-lg"
               >
                 <span className="text-[var(--textPrimary)] font-medium">
-                  #{i + 1} {p._id}
+                  #{i + 1} {p.name}   {/* ✅ PRODUCT NAME */}
                 </span>
+
                 <span className="text-[var(--accent-green)] font-bold">
                   {p.sold} sold
                 </span>

@@ -23,12 +23,9 @@ export default function SystemConfigurationPage() {
   const [maintenance, setMaintenance] = useState({
     autoBackup: true,
     developerAccess: false,
-
-    // ✅ NEW
     maintenanceMode: false,
     maintenanceMessage: "We are under scheduled maintenance.",
     maintenanceEta: "",
-
     clearCache: false,
     rebuildIndex: false,
     forceLogoutAll: false,
@@ -55,6 +52,48 @@ export default function SystemConfigurationPage() {
 
   const runAdvancedAction = (action: string) => {
     alert(`${action} executed successfully`);
+  };
+
+  /* =========================
+      FONT MANAGER STATE
+  ========================= */
+  const [fontName, setFontName] = useState("");
+  const [fontFile, setFontFile] = useState<any>(null);
+  const [fontPreviewUrl, setFontPreviewUrl] = useState("");
+
+  const handleFontUpload = (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFontFile(file);
+    setFontPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const saveFontToServer = async () => {
+    if (!fontName || !fontFile) {
+      alert("Please enter font name and upload font file");
+      return;
+    }
+
+    const form = new FormData();
+    form.append("fontName", fontName);
+    form.append("fontFile", fontFile);
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/cms/font/add`, {
+      method: "POST",
+      body: form,
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Font uploaded successfully!");
+      setFontName("");
+      setFontFile(null);
+      setFontPreviewUrl("");
+    } else {
+      alert("Font upload failed.");
+    }
   };
 
   return (
@@ -92,97 +131,155 @@ export default function SystemConfigurationPage() {
         </button>
       </div>
 
-      {/* ================= GENERAL SETTINGS ================= */}
+      {/* ========================= GENERAL TAB ========================= */}
       {activeTab === "general" && (
-        <div className="border rounded-xl p-6 space-y-6 max-w-3xl">
-          <h3 className="font-semibold text-lg">General Settings</h3>
+        <div className="space-y-6 max-w-3xl">
+          
+          {/* ---------- GENERAL SETTINGS CARD ---------- */}
+          <div className="border rounded-xl p-6 space-y-6">
+            <h3 className="font-semibold text-lg">General Settings</h3>
 
-          <div>
-            <label className="block text-sm mb-1">Site Title</label>
-            <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              value={general.siteTitle}
-              onChange={(e) =>
-                setGeneral({ ...general, siteTitle: e.target.value })
-              }
-            />
-          </div>
+            <div>
+              <label className="block text-sm mb-1">Site Title</label>
+              <input
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={general.siteTitle}
+                onChange={(e) =>
+                  setGeneral({ ...general, siteTitle: e.target.value })
+                }
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm mb-1">Time Zone</label>
-            <select
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-              value={general.timeZone}
-              onChange={(e) =>
-                setGeneral({ ...general, timeZone: e.target.value })
-              }
+            <div>
+              <label className="block text-sm mb-1">Time Zone</label>
+              <select
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                value={general.timeZone}
+                onChange={(e) =>
+                  setGeneral({ ...general, timeZone: e.target.value })
+                }
+              >
+                <option value="Asia/Kolkata">Asia / Kolkata</option>
+                <option value="America/New_York">America / New York</option>
+                <option value="America/Los_Angeles">
+                  America / Los Angeles
+                </option>
+                <option value="UTC">UTC</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm mb-1">Primary Color</label>
+                <input
+                  type="color"
+                  value={general.primaryColor}
+                  onChange={(e) =>
+                    setGeneral({ ...general, primaryColor: e.target.value })
+                  }
+                  className="w-full h-10 border rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">Secondary Color</label>
+                <input
+                  type="color"
+                  value={general.secondaryColor}
+                  onChange={(e) =>
+                    setGeneral({
+                      ...general,
+                      secondaryColor: e.target.value,
+                    })
+                  }
+                  className="w-full h-10 border rounded-lg"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">Site Logo</label>
+              <input
+                type="file"
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+
+            <button
+              onClick={saveGeneralSettings}
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
             >
-              <option value="Asia/Kolkata">Asia / Kolkata</option>
-              <option value="America/New_York">America / New York</option>
-              <option value="America/Los_Angeles">
-                America / Los Angeles
-              </option>
-              <option value="UTC">UTC</option>
-            </select>
+              Save General Settings
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* ---------- FONT MANAGER CARD ---------- */}
+          <div className="border rounded-xl p-6 space-y-6">
+            <h3 className="font-semibold text-lg">Font Manager</h3>
+
+            {/* Font Name */}
             <div>
-              <label className="block text-sm mb-1">Primary Color</label>
+              <label className="block text-sm mb-1">Font Name</label>
               <input
-                type="color"
-                value={general.primaryColor}
-                onChange={(e) =>
-                  setGeneral({
-                    ...general,
-                    primaryColor: e.target.value,
-                  })
-                }
-                className="w-full h-10 border rounded-lg"
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                placeholder="e.g. Poppins, CustomFont"
+                value={fontName}
+                onChange={(e) => setFontName(e.target.value)}
               />
             </div>
 
+            {/* Font Upload */}
             <div>
-              <label className="block text-sm mb-1">Secondary Color</label>
+              <label className="block text-sm mb-1">Upload Font File</label>
               <input
-                type="color"
-                value={general.secondaryColor}
-                onChange={(e) =>
-                  setGeneral({
-                    ...general,
-                    secondaryColor: e.target.value,
-                  })
-                }
-                className="w-full h-10 border rounded-lg"
+                type="file"
+                accept=".ttf,.woff,.woff2"
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                onChange={handleFontUpload}
               />
+              <p className="text-xs text-gray-500 pt-1">
+                Supported formats: .ttf, .woff, .woff2
+              </p>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm mb-1">Site Logo</label>
-            <input
-              type="file"
-              className="w-full border rounded-lg px-3 py-2 text-sm"
-            />
-          </div>
+            {/* Live Preview */}
+            {fontPreviewUrl && (
+              <div className="p-4 rounded-lg border">
+                <style>
+                  {`
+                    @font-face {
+                      font-family: '${fontName}';
+                      src: url('${fontPreviewUrl}');
+                    }
+                  `}
+                </style>
 
-          <button
-            onClick={saveGeneralSettings}
-            className="bg-green-500 text-white px-6 py-2 rounded-lg"
-          >
-            Save General Settings
-          </button>
+                <p
+                  style={{ fontFamily: fontName, fontSize: "20px" }}
+                  className="font-medium"
+                >
+                  The quick brown fox jumps over the lazy dog.
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={saveFontToServer}
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
+            >
+              Save Font
+            </button>
+          </div>
         </div>
       )}
 
-      {/* ================= MAINTENANCE & ADVANCED ================= */}
+      {/* ========================= MAINTENANCE TAB ========================= */}
       {activeTab === "maintenance" && (
         <div className="space-y-6 max-w-4xl">
-          {/* ===== MAINTENANCE MODE ===== */}
+
+          {/* Maintenance Mode */}
           <div className="border rounded-xl p-6 space-y-4">
-            <h3 className="font-semibold text-lg">
-              Website Under Maintenance
-            </h3>
+            <h3 className="font-semibold text-lg">Website Under Maintenance</h3>
 
             <div className="flex justify-between items-center">
               <span>Enable Maintenance Mode</span>
@@ -232,7 +329,7 @@ export default function SystemConfigurationPage() {
             </div>
           </div>
 
-          {/* ===== BACKUPS ===== */}
+          {/* Backups */}
           <div className="border rounded-xl p-6 space-y-4">
             <h3 className="font-semibold text-lg">Backups</h3>
 
@@ -258,7 +355,7 @@ export default function SystemConfigurationPage() {
             </button>
           </div>
 
-          {/* ===== ADVANCED SYSTEM CONTROLS ===== */}
+          {/* Advanced Controls */}
           <div className="border rounded-xl p-6 space-y-4">
             <h3 className="font-semibold text-lg">Advanced Controls</h3>
 
@@ -298,11 +395,9 @@ export default function SystemConfigurationPage() {
             </div>
           </div>
 
-          {/* ===== DEVELOPER ACCESS ===== */}
+          {/* Developer Access */}
           <div className="border rounded-xl p-6 space-y-4">
-            <h3 className="font-semibold text-lg">
-              Developer & Database Access
-            </h3>
+            <h3 className="font-semibold text-lg">Developer & Database Access</h3>
 
             <div className="flex justify-between items-center">
               <span>Advanced Database Tools</span>
@@ -319,9 +414,7 @@ export default function SystemConfigurationPage() {
             </div>
 
             <div>
-              <label className="block text-sm mb-1">
-                Admin IP Whitelist
-              </label>
+              <label className="block text-sm mb-1">Admin IP Whitelist</label>
               <input
                 placeholder="e.g. 192.168.1.1, 103.21.244.0"
                 className="w-full border rounded px-3 py-2 text-sm"
@@ -337,7 +430,7 @@ export default function SystemConfigurationPage() {
 
             <button
               onClick={saveMaintenanceSettings}
-              className="bg-green-500 text-white px-6 py-2 rounded-lg"
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
             >
               Save Maintenance & Advanced Settings
             </button>

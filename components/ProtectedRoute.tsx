@@ -2,53 +2,69 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import useAuth from "@/app/hooks/useAuth"; // ✅ Import refresh hook
+import useAuth from "@/app/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  roles?: string[];
+  permissions?: string[]; // ✅ permission-based
 }
 
-export default function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
+export default function ProtectedRoute({
+  children,
+  permissions,
+}: ProtectedRouteProps) {
   const router = useRouter();
 
-  // 🔥 This activates refresh token every 14 min
+  // 🔁 handles refresh token silently
   const { token, loading } = useAuth();
 
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (loading) return; // wait until token loads
+    if (loading) return;
 
-    const token_super = localStorage.getItem("superadmin_token");
-    const token_admin = localStorage.getItem("admin_token");
+    // 🔐 Tokens
+    const superToken = localStorage.getItem("superadmin_token");
+    const adminToken = localStorage.getItem("admin_token");
 
-    let role = null;
-
-    if (token_super) {
-      role = "superadmin";
-    } else if (token_admin) {
-      role = localStorage.getItem("admin_role");
-    }
-
-    // ❌ No token → redirect
-    if (!role) {
-      router.push("/");
+    // ❌ Not logged in
+    if (!superToken && !adminToken) {
+      router.replace("/");
       return;
     }
 
-    // Store role globally
-    localStorage.setItem("role", role);
+    // 🔥 SUPERADMIN = full access
+    if (superToken) {
+      localStorage.setItem("role", "superadmin");
+      setAuthorized(true);
+      return;
+    }
 
-    // ❌ Role not allowed for this page
-    if (roles && !roles.includes(role)) {
-      router.push("/unauthorized");
+    // 👤 Normal admin/staff
+    const storedPermissions = localStorage.getItem("permissions");
+    const userPermissions: string[] = storedPermissions
+      ? JSON.parse(storedPermissions)
+      : [];
+
+    // ❌ Permissions missing
+    if (!permissions || permissions.length === 0) {
+      setAuthorized(true);
+      return;
+    }
+
+    const hasPermission = permissions.some((p) =>
+      userPermissions.includes(p)
+    );
+
+    if (!hasPermission) {
+      router.replace("/unauthorized");
       return;
     }
 
     setAuthorized(true);
-  }, [loading, router, roles]); // added "loading"
+  }, [loading, permissions, router]);
 
+  // ⏳ Loading UI
   if (authorized === null) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">

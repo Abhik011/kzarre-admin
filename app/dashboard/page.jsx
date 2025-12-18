@@ -68,42 +68,54 @@ export default function Dashboard() {
   const [trafficData, setTrafficData] = useState([]);
   const [usersType, setUsersType] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [topOrders, setTopOrders] = useState([]);
 
   useEffect(() => {
     setRole(localStorage.getItem("role"));
 
-    const fetchAnalytics = async () => {
-      try {
-        const base = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+   const fetchAnalytics = async () => {
+  try {
+    const base = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-        const [summaryRes, trafficRes, usersTypeRes] = await Promise.all([
-          fetch(`${base}/api/analytics/summary`),
-          fetch(`${base}/api/analytics/traffic/daily`),
-          fetch(`${base}/api/analytics/users/type`),
-        ]);
+    const [
+      summaryRes,
+      trafficRes,
+      usersTypeRes,
+      topOrdersRes,
+    ] = await Promise.all([
+      fetch(`${base}/api/analytics/summary`),
+      fetch(`${base}/api/analytics/traffic/daily`),
+      fetch(`${base}/api/analytics/users/type`),
+      fetch(`${base}/api/orders/top?limit=5`),
+    ]);
 
-        const s = await summaryRes.json();
-        const t = await trafficRes.json();
-        const u = await usersTypeRes.json();
+    const s = await summaryRes.json();
+    const t = await trafficRes.json();
+    const u = await usersTypeRes.json();
+    const o = await topOrdersRes.json();
 
-        if (s.success) setSummary(s.summary);
+    if (s.success) setSummary(s.summary);
 
-        if (t.success)
-          setTrafficData(
-            t.traffic.map((x) => ({
-              name: x._id,
-              value: x.visits,
-            }))
-          );
+    if (t.success) {
+      setTrafficData(
+        t.traffic.map((x) => ({
+          name: x._id,
+          value: x.visits,
+        }))
+      );
+    }
 
-        if (u.success) setUsersType(u);
+    if (u.success) setUsersType(u);
 
-      } catch (err) {
-        console.error("❌ Analytics failed:", err);
-      }
+    if (o.success) setTopOrders(o.orders);
 
-      setLoading(false);
-    };
+  } catch (err) {
+    console.error("❌ Analytics failed:", err);
+  }
+
+  setLoading(false);
+};
+
 
     fetchAnalytics();
   }, []);
@@ -126,7 +138,7 @@ export default function Dashboard() {
         {/* Top Title Row */}
         <div className="pb-6 flex justify-between items-center">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <span className="text-sm text-[var(--text-secondary)]">Role: {role}</span>
+          {/* <span className="text-sm text-[var(--text-secondary)]">Role: {role}</span> */}
         </div>
 
         <div className="px-4 sm:px-6 lg:px-8 pb-12">
@@ -224,70 +236,76 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        {/* Deals Table */}
-{/* {canViewDeals && (
-  <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow">
-
+{/* Top Orders */}
+{canViewSales && (
+  <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow mb-12">
+    
     <div className="flex justify-between items-center mb-6">
-      <h3 className="text-lg font-bold">Deals Details</h3>
-      <button className="px-4 py-2 border border-[var(--sidebar-border)] text-[var(--text-primary)] rounded-lg bg-[var(--background-card)] hover:bg-[var(--background)]">
-        October ▼
-      </button>
+      <h3 className="text-lg font-bold">Top Orders</h3>
+      <span className="text-sm text-[var(--text-secondary)]">
+        Latest 5 orders
+      </span>
     </div>
 
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-[var(--sidebar-border)] bg-[var(--background)]">
-            {["Product Name", "Location", "Date - Time", "Piece", "Amount", "Status"].map((head) => (
-              <th key={head}
-                className="px-6 py-3 text-left text-sm font-semibold text-[var(--text-primary)]"
+          <tr className="border-b border-[var(--sidebar-border)]">
+            {["Order ID", "Customer", "Amount", "Status", "Date"].map((h) => (
+              <th
+                key={h}
+                className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-secondary)]"
               >
-                {head}
+                {h}
               </th>
             ))}
           </tr>
         </thead>
 
         <tbody>
-          {dealsData.map((deal) => (
-            <tr key={deal.id}
-              className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background)]"
+          {topOrders.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-secondary)]">
+                No recent orders
+              </td>
+            </tr>
+          )}
+
+          {topOrders.map((order) => (
+            <tr
+              key={order._id}
+              className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background)] transition"
             >
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-lg" />
-                  <span>{deal.product}</span>
-                </div>
+              <td className="px-4 py-3 font-medium">{order._id}</td>
+              <td className="px-4 py-3">{order.customer}</td>
+              <td className="px-4 py-3 font-semibold">
+                ₹{order.amount}
               </td>
-
-              <td className="px-6 py-4 text-[var(--text-secondary)] hidden sm:table-cell">
-                {deal.location}
-              </td>
-
-              <td className="px-6 py-4 text-[var(--text-secondary)] hidden md:table-cell">
-                {deal.date}
-              </td>
-
-              <td className="px-6 py-4 hidden lg:table-cell">
-                {deal.piece}
-              </td>
-
-              <td className="px-6 py-4">{deal.amount}</td>
-
-              <td className="px-6 py-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${deal.statusColor}`}>
-                  {deal.status}
+              <td className="px-4 py-3">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold
+                    ${
+                      order.status === "paid"
+                        ? "bg-green-500/20 text-green-600"
+                        : order.status === "pending"
+                        ? "bg-yellow-500/20 text-yellow-600"
+                        : "bg-red-500/20 text-red-600"
+                    }`}
+                >
+                  {order.status}
                 </span>
+              </td>
+              <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                {new Date(order.createdAt).toLocaleDateString()}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-
   </div>
-)} */}
+)}
+
 
       </div>
     </ProtectedRoute>

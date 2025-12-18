@@ -88,7 +88,7 @@ export default function SuperAdminLogin() {
           </p>
         )}
         {message && (
-          <p className="bg-green-500/20 text-green-200 text-sm p-2 rounded mb-3 text-center">
+          <p className="bg-[var(--accent-green)] text-green-200 text-sm p-2 rounded mb-3 text-center">
             {message}
           </p>
         )}

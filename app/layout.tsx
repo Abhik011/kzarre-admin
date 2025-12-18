@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-
+import NotificationProvider from "@/components/NotificationProvider";
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   },
   keywords: ["Admin Dashboard", "KZARRÈ", "Management", "Next.js"],
   authors: [{ name: "Creonox Technologies", url: "https://www.creonox.in" }],
-  themeColor: "#000000",
   openGraph: {
     title: "KZARRÈ Admin",
     description: "Admin Dashboard Platform",
@@ -37,6 +36,7 @@ export const metadata: Metadata = {
   },
 };
 
+
 export default function RootLayout({
   children,
 }: {
@@ -45,6 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
+         <NotificationProvider />
         {children}
         <SpeedInsights />
       </body>

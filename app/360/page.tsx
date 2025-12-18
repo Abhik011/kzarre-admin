@@ -493,7 +493,7 @@ export default function MiniCRMPage() {
                                                     <span
                                                        className={`px-2 py-1 rounded text-xs font-medium
   ${p.status === "fulfilled"
-    ? "bg-green-100 text-black dark:bg-green-900 dark:text-green-200"
+    ? "bg-[var(--accent-green)] text-black dark:bg-[var(--accent-green)] dark:text-green-200"
     : p.status === "breached"
     ? "bg-red-900 text-black dark:bg-red-100 dark:text-red-200"
     : "bg-yellow-900 text-black dark:bg-yellow-100 dark:text-yellow-200"

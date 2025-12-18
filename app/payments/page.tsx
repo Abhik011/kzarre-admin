@@ -63,7 +63,7 @@ export default function PaymentsFinancePage() {
 
   const badge = (type: string) => {
     if (type === "paid")
-      return "bg-green-100 text-green-700";
+      return "bg-[var(--accent-green)] text-green-700";
     if (type === "pending")
       return "bg-yellow-100 text-yellow-700";
     if (type === "failed")
@@ -170,7 +170,7 @@ export default function PaymentsFinancePage() {
               type="month"
               className="border rounded px-3 py-2 text-sm"
             />
-            <button className="bg-green-500 text-white px-4 py-2 rounded">
+            <button className="bg-[var(--accent-green)] text-white px-4 py-2 rounded">
               Generate
             </button>
             <button className="border px-4 py-2 rounded">

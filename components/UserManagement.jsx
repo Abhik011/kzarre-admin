@@ -1,488 +1,191 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { MoreVertical, Plus, X, Shield } from "lucide-react";
+import { Plus, X, Shield } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-// ===== Constants =====
-const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/usersadmin`;
 
-const roleGroups = [
-  "sales_manager",
-  "inventory_manager",
-  "hr_manager",
-  "finance_manager",
-];
+const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_API_URL}`;
 
-const samplePermissions = [
-  "create_user",
-  "delete_user",
-  "update_user",
-  "view_reports",
-  "manage_inventory",
-  "view_dashboard",
-];
-
-// ===================================================
-// ✅ User List
-// ===================================================
-// ===================================================
-// ✅ User List (Dark-Mode Updated)
-// ===================================================
-const UserList = ({ refreshKey, onEditPermissions }) => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+/* ===================================================
+   DATA HOOKS
+=================================================== */
+const useRoles = () => {
+  const [roles, setRoles] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const token =
-          localStorage.getItem("superadmin_token") ||
-          localStorage.getItem("admin_token");
-
-        const res = await fetch(`${API_BASE}/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || `Error ${res.status}`);
-        }
-
-        const data = await res.json();
-        setUsers(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error fetching users:", err.message);
-        setUsers([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [refreshKey]);
-
-  const toggleActive = async (id) => {
-    try {
-      const token =
-        localStorage.getItem("superadmin_token") ||
-        localStorage.getItem("admin_token");
-
-      const res = await fetch(`${API_BASE}/toggle-active/${id}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-      alert(data.message);
-    } catch (err) {
-      alert("Failed to toggle user status");
-    }
-  };
-
-  return (
-    <div
-      className="
-      bg-[var(--background-card)] 
-      dark:bg-[var(--bgCard)]
-      border border-[var(--borderColor)]
-      rounded-2xl p-4 sm:p-6 shadow-sm
-    "
-    >
-      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
-        User List
-      </h3>
-      <p className="text-sm text-[var(--textSecondary)] mb-4">
-        Manage system users
-      </p>
-
-      {/* Loading */}
-      {loading ? (
-        <p className="text-[var(--textSecondary)] text-sm">Loading users...</p>
-      ) : users.length === 0 ? (
-        <p className="text-[var(--textSecondary)] text-sm">No users found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--borderColor)]">
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Role
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Group
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-[var(--textSecondary)]">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {users.map((u) => (
-                <tr
-                  key={u._id}
-                  className="
-                    border-b border-[var(--borderColor)]
-                  "
-                >
-                  <td className="px-4 py-3 text-[var(--textPrimary)]">
-                    {u.name}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {u.email}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {u.role}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {u.group}
-                  </td>
-
-                  {/* STATUS BADGE */}
-                  <td className="px-4 py-3">
-                    <span
-                      className="px-3 py-1 text-xs font-medium rounded"
-                      style={
-                        u.isActive
-                          ? {
-                              background: "rgba(34,197,94,0.08)",
-                              color: "rgb(34, 197, 94)",
-                            }
-                          : {
-                              background: "rgba(239, 68, 68, 0.08)",
-                              color: "rgb(239, 68, 68)",
-                            }
-                      }
-                    >
-                      {u.isActive ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-
-                  {/* ACTIONS */}
-                  <td className="px-4 py-3 flex items-center gap-2">
-                    <button
-                      onClick={() => onEditPermissions(u)}
-                      className="text-green-600 dark:text-green-400 hover:underline text-xs flex items-center gap-1"
-                    >
-                      <Shield size={14} /> Edit
-                    </button>
-
-                    <button
-                      onClick={() => toggleActive(u._id)}
-                      className={`
-                        text-xs 
-                        ${
-                          u.isActive
-                            ? "text-red-600 dark:text-red-400 hover:underline"
-                            : "text-green-600 dark:text-green-400 hover:underline"
-                        }
-                      `}
-                    >
-                      {u.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-};
-// ===================================================
-// ✅ Add User Modal
-// ===================================================
-// ===================================================
-// ✅ Add User Modal (Dark Mode Updated)
-// ===================================================
-const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    group: "",
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     const token =
       localStorage.getItem("superadmin_token") ||
       localStorage.getItem("admin_token");
 
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/create-user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
-          role: "admin",
-          group: form.group,
-        }),
-      });
+    if (!token) return;
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+    fetch(`${API_BASE}/api/usersadmin/roles`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then(data => setRoles(data.roles || []))
+      .catch(err => console.error("Roles error:", err.message));
+  }, []);
 
-      alert("✅ User created successfully");
-      onUserAdded();
-      onClose();
-    } catch (err) {
-      alert("❌ " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  return roles;
+};
 
-  if (!isOpen) return null;
+
+const usePermissions = () => {
+  const [permissions, setPermissions] = useState([]);
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("superadmin_token") ||
+      localStorage.getItem("admin_token");
+
+    fetch(`${API_BASE}/api/usersadmin/permissions`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then(data => setPermissions(data.permissions || []))
+      .catch(err => console.error("Permissions error:", err));
+  }, []);
+
+  return permissions;
+};
+
+
+/* ===================================================
+   USER LIST
+=================================================== */
+const UserList = ({ refreshKey, onEditPermissions }) => {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("superadmin_token") ||
+      localStorage.getItem("admin_token");
+
+    fetch(`${API_BASE}/api/usersadmin/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => setUsers(Array.isArray(data) ? data : []));
+  }, [refreshKey]);
 
   return (
-    <div
-      className="
-      fixed inset-0 bg-black/40 dark:bg-black/60 
-      backdrop-blur-md flex items-center justify-center 
-      z-50 p-4
-    "
-    >
-      <div
-        className="
-        bg-[var(--background-card)] 
-        dark:bg-[var(--bgCard)]
-        border border-[var(--borderColor)]
-        rounded-xl max-w-2xl w-full shadow-xl p-6 sm:p-8
-      "
-      >
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[var(--textPrimary)]">
-            Add New User
-          </h2>
+    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
+      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-4">
+        User List
+      </h3>
 
-          <button
-            onClick={onClose}
-            className="text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* NAME FIELDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              placeholder="First name"
-              required
-              className="
-                border border-[var(--borderColor)]
-                bg-transparent text-[var(--textPrimary)]
-                rounded-lg p-2 focus:ring-2 focus:ring-green-500
-              "
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            />
-
-            <input
-              placeholder="Last name"
-              required
-              className="
-                border border-[var(--borderColor)]
-                bg-transparent text-[var(--textPrimary)]
-                rounded-lg p-2 focus:ring-2 focus:ring-green-500
-              "
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-            />
-          </div>
-
-          {/* EMAIL */}
-          <input
-            type="email"
-            placeholder="Email address"
-            required
-            className="
-              w-full border border-[var(--borderColor)]
-              bg-transparent text-[var(--textPrimary)]
-              rounded-lg p-2 focus:ring-2 focus:ring-green-500
-            "
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-
-          {/* GROUP SELECT */}
-          <select
-            className="
-              w-full border border-[var(--borderColor)]
-              bg-transparent text-[var(--textPrimary)]
-              rounded-lg p-2 focus:ring-2 focus:ring-green-500
-            "
-            required
-            onChange={(e) => setForm({ ...form, group: e.target.value })}
-          >
-            <option value="" className="text-black">
-              Select Role Group
-            </option>
-            {roleGroups.map((r) => (
-              <option
-                key={r}
-                value={r}
-                className="text-black dark:text-white dark:bg-[#111]"
-              >
-                {r}
-              </option>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[var(--borderColor)]">
+              <th className="px-4 py-3 text-left">Name</th>
+              <th className="px-4 py-3 text-left">Email</th>
+              <th className="px-4 py-3 text-left">Role</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(u => (
+              <tr key={u._id} className="border-b border-[var(--borderColor)]">
+                <td className="px-4 py-3">{u.name}</td>
+                <td className="px-4 py-3">{u.email}</td>
+                <td className="px-4 py-3">{u.roleGroup?.name || "—"}</td>
+                <td className="px-4 py-3">
+                  {u.isActive ? "Active" : "Inactive"}
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => onEditPermissions(u)}
+                    className="text-green-500 text-xs flex items-center gap-1"
+                  >
+                    <Shield size={14} /> Edit
+                  </button>
+                </td>
+              </tr>
             ))}
-          </select>
-
-          {/* ACTION BUTTONS */}
-          <div className="flex justify-end gap-3 mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="
-                px-5 py-2 border border-[var(--borderColor)]
-                rounded-lg text-sm text-[var(--textSecondary)]
-              "
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="
-                px-5 py-2 bg-green-500 text-white rounded-lg 
-                hover:bg-green-600 text-sm
-              "
-            >
-              {loading ? "Creating..." : "Create User"}
-            </button>
-          </div>
-        </form>
+          </tbody>
+        </table>
       </div>
     </div>
   );
 };
 
+/* ===================================================
+   EDIT PERMISSIONS MODAL
+=================================================== */
 const EditPermissionsModal = ({ user, onClose }) => {
-  const [selected, setSelected] = useState(user?.permissions || []);
+  const permissions = usePermissions();
+  const [selected, setSelected] = useState(user.permissions || []);
 
-  const handleToggle = (p) => {
-    setSelected((prev) =>
-      prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+  const toggle = key =>
+    setSelected(prev =>
+      prev.includes(key)
+        ? prev.filter(x => x !== key)
+        : [...prev, key]
     );
-  };
 
-  const handleSave = async () => {
-    try {
-      const token =
-        localStorage.getItem("superadmin_token") ||
-        localStorage.getItem("admin_token");
+  const save = async () => {
+    const token =
+      localStorage.getItem("superadmin_token") ||
+      localStorage.getItem("admin_token");
 
-      const res = await fetch(`${API_BASE}/update-permissions/${user._id}`, {
+    await fetch(
+      `${API_BASE}/api/usersadmin/update-permissions/${user._id}`,
+      {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ permissions: selected }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      alert("✅ Permissions updated");
-      onClose();
-    } catch (err) {
-      alert("❌ " + err.message);
-    }
+      }
+    );
+    onClose();
   };
 
   return (
-    <div
-      className="
-        fixed inset-0 bg-black/40 dark:bg-black/60
-        backdrop-blur-md flex items-center justify-center
-        z-50 p-4
-      "
-    >
-      <div
-        className="
-          bg-[var(--background-card)]
-          dark:bg-[var(--bgCard)]
-          border border-[var(--borderColor)]
-          rounded-xl w-full max-w-lg shadow-lg p-6
-        "
-      >
-        {/* HEADER */}
-        <div className="flex justify-between mb-6">
-          <h2 className="text-lg font-bold text-[var(--textPrimary)]">
-            Edit Permissions – {user.name}
-          </h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-xl w-full max-w-lg p-6">
+        <h3 className="text-lg font-bold mb-4 text-[var(--textPrimary)]">
+          Edit Permissions – {user.name}
+        </h3>
 
-          <button onClick={onClose}>
-            <X
-              size={22}
-              className="text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
-            />
-          </button>
-        </div>
-
-        {/* PERMISSIONS GRID */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-          {samplePermissions.map((perm) => (
-            <label
-              key={perm}
-              className="
-                flex items-center gap-2 text-sm
-                text-[var(--textPrimary)]
-              "
-            >
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {permissions.map(p => (
+            <label key={p.key} className="flex gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={selected.includes(perm)}
-                onChange={() => handleToggle(perm)}
-                className="
-                  accent-green-500
-                  h-4 w-4
-                "
+                checked={selected.includes(p.key)}
+                onChange={() => toggle(p.key)}
+                className="accent-green-500"
               />
-              {perm}
+              {p.label}
             </label>
           ))}
         </div>
 
-        {/* ACTION BUTTONS */}
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="
-              px-5 py-2 border border-[var(--borderColor)]
-              rounded-lg text-sm text-[var(--textSecondary)]
-            "
+            className="px-4 py-2 text-sm border border-[var(--borderColor)] rounded-lg"
           >
             Cancel
           </button>
-
           <button
-            onClick={handleSave}
-            className="
-              px-5 py-2 bg-green-500 text-white rounded-lg text-sm 
-              hover:bg-green-600 transition-all
-            "
+            onClick={save}
+            className="px-4 py-2 text-sm bg-[var(--accent-green)] rounded-lg"
           >
             Save
           </button>
@@ -492,249 +195,241 @@ const EditPermissionsModal = ({ user, onClose }) => {
   );
 };
 
-// ===================================================
-// ✅ Activity Log
-// ===================================================
-// ===================================================
-// ✅ Activity Log (Dark Mode Updated)
-// ===================================================
-const ActivityLog = () => {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+/* ===================================================
+   CREATE ROLE MODAL
+=================================================== */
+const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
+  const [name, setName] = useState("");
+  const [selected, setSelected] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const permissions = usePermissions();
 
-  const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-  const token = localStorage.getItem("superadmin_token");
+  const toggle = key =>
+    setSelected(prev =>
+      prev.includes(key)
+        ? prev.filter(x => x !== key)
+        : [...prev, key]
+    );
 
-  useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/activity`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const create = async () => {
+    if (!name.trim()) return alert("Role name required");
 
-        const data = await res.json();
-        if (!res.ok) return;
+    try {
+      setSaving(true);
+      const token =
+        localStorage.getItem("superadmin_token") ||
+        localStorage.getItem("admin_token");
 
-        const formatted = data.logs.map((log, index) => ({
-          id: index + 1,
-          user: log.user,
-          action: log.action,
-          ip: log.ip || "Unknown IP",
-          time: log.timestamp
-            ? new Date(log.timestamp).toLocaleString()
-            : "Unknown",
-        }));
+      const res = await fetch(`${API_BASE}/api/usersadmin/roles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name, permissions: selected }),
+      });
 
-        setLogs(formatted);
-      } catch (err) {
-        console.error("Activity Log Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
 
-    fetchLogs();
-  }, []);
+      onCreated?.();
+      onClose();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div
-      className="
-        bg-[var(--background-card)]
-        dark:bg-[var(--bgCard)]
-        border border-[var(--borderColor)]
-        rounded-2xl p-4 sm:p-6 shadow-sm
-      "
-    >
-      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
-        Activity Log
-      </h3>
-      <p className="text-sm text-[var(--textSecondary)] mb-4">
-        Recent administrative actions
-      </p>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-xl w-full max-w-xl p-6">
+        <div className="flex justify-between mb-6">
+          <h2 className="text-lg font-bold text-[var(--textPrimary)]">
+            Create Role
+          </h2>
+          <button onClick={onClose}>
+            <X size={22} />
+          </button>
+        </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[var(--borderColor)]">
-              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
-                User
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
-                Action
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
-                IP
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-[var(--textPrimary)]">
-                Timestamp
-              </th>
-            </tr>
-          </thead>
+        <input
+          placeholder="Role name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          className="w-full mb-5 border border-[var(--borderColor)] bg-transparent rounded-lg px-3 py-2"
+        />
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="text-center py-4 text-[var(--textSecondary)]"
-                >
-                  Loading activity...
-                </td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="text-center py-4 text-[var(--textSecondary)]"
-                >
-                  No activity found.
-                </td>
-              </tr>
-            ) : (
-              logs.map((log) => (
-                <tr
-                  key={log.id}
-                  className="
-                    border-b border-[var(--borderColor)]
-                    hover:bg-gray-100 dark:hover:bg-[var(--hoverRow)]
-                    transition
-                  "
-                >
-                  <td className="px-4 py-3 text-[var(--textPrimary)]">
-                    {log.user}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {log.action}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {log.ip}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--textSecondary)]">
-                    {log.time}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          {permissions.map(p => (
+            <label key={p.key} className="flex gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.includes(p.key)}
+                onChange={() => toggle(p.key)}
+                className="accent-green-500"
+              />
+              {p.label}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-[var(--borderColor)] rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={create}
+            disabled={saving}
+            className="px-4 py-2 bg-[var(--accent-green)] rounded-lg"
+          >
+            {saving ? "Creating..." : "Create Role"}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-// ===================================================
-// ✅ Main User Management Page
-// ===================================================
-// ===================================================
-// ✅ Main User Management Page (Dark Mode Updated)
-// ===================================================
+/* ===================================================
+   ROLES & PERMISSIONS
+=================================================== */
+const RolesPermissions = () => {
+  const roles = useRoles();
+
+  return (
+    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--borderColor)]">
+            <th className="px-4 py-3 text-left">Role</th>
+            <th className="px-4 py-3 text-left">Permissions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {roles.map(r => (
+            <tr key={r._id} className="border-b border-[var(--borderColor)]">
+              <td className="px-4 py-3 font-medium">{r.name}</td>
+              <td className="px-4 py-3 text-xs">
+                {r.permissions?.join(", ") || "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+/* ===================================================
+   ACTIVITY LOG
+=================================================== */
+const ActivityLog = () => {
+  const [logs, setLogs] = useState([]);
+  const token = localStorage.getItem("superadmin_token");
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/activity`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => res.json())
+      .then(data => setLogs(data.logs || []));
+  }, []);
+
+  return (
+    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--borderColor)]">
+            <th className="px-4 py-3 text-left">User</th>
+            <th className="px-4 py-3 text-left">Action</th>
+            <th className="px-4 py-3 text-left">IP</th>
+            <th className="px-4 py-3 text-left">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {logs.map((l, i) => (
+            <tr key={i} className="border-b border-[var(--borderColor)]">
+              <td className="px-4 py-3">{l.userName}</td>
+              <td className="px-4 py-3">{l.action}</td>
+              <td className="px-4 py-3">{l.ip}</td>
+              <td className="px-4 py-3">
+                {new Date(l.timestamp).toLocaleString()}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+/* ===================================================
+   MAIN PAGE
+=================================================== */
 export default function UserManagement() {
-  const [activeTab, setActiveTab] = useState("userList");
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [tab, setTab] = useState("users");
   const [editUser, setEditUser] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCreateRole, setShowCreateRole] = useState(false);
 
   return (
     <ProtectedRoute roles={["superadmin", "hr_manager"]}>
       <div className="min-h-screen">
-        {/* HEADER */}
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--textPrimary)]">
-            User Management
-          </h1>
+        <h1 className="text-3xl font-bold mb-6 text-[var(--textPrimary)]">
+          User Management
+        </h1>
 
-          <p className="text-sm sm:text-base text-[var(--textSecondary)] mt-1">
-            Manage and control system users
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mb-6">
-          <div
-            className="
-              flex gap-4 sm:gap-8 
-              border-b border-[var(--borderColor)]
-              w-full sm:w-auto overflow-x-auto
-            "
-          >
-            {["userList", "rolesPermissions", "activityLog"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
-                  pb-3 px-1 font-medium text-sm transition
-                  ${
-                    activeTab === tab
-                      ? "text-green-500 border-b-2 border-green-500"
-                      : "text-[var(--textSecondary)] hover:text-[var(--textPrimary)]"
-                  }
-                `}
-              >
-                {tab === "userList"
-                  ? "User List"
-                  : tab === "rolesPermissions"
-                  ? "Roles & Permissions"
-                  : "Activity Log"}
-              </button>
-            ))}
-          </div>
-
-          {/* ADD USER BUTTON */}
-          {activeTab === "userList" && (
+        <div className="flex gap-6 border-b border-[var(--borderColor)] mb-6">
+          {["users", "roles", "activity"].map(t => (
             <button
-              onClick={() => setShowAddModal(true)}
-              className="
-                w-full sm:w-auto px-4 py-2 
-                bg-green-400 text-black rounded-lg 
-                hover:bg-green-500 active:scale-95 
-                flex items-center justify-center gap-2 font-medium text-sm
-              "
+              key={t}
+              onClick={() => setTab(t)}
+              className={`pb-3 text-sm font-medium ${
+                tab === t
+                  ? "text-green-500 border-b-2 border-green-500"
+                  : "text-[var(--textSecondary)]"
+              }`}
             >
-              <Plus size={18} /> Add User
+              {t === "users"
+                ? "User List"
+                : t === "roles"
+                ? "Roles & Permissions"
+                : "Activity Log"}
             </button>
-          )}
+          ))}
         </div>
 
-        {/* CONTENT AREA */}
-        {activeTab === "userList" && (
+        {tab === "users" && (
           <UserList
             refreshKey={refreshKey}
-            onEditPermissions={(u) => setEditUser(u)}
+            onEditPermissions={setEditUser}
           />
         )}
 
-        {activeTab === "rolesPermissions" && (
-          <div
-            className="
-              bg-[var(--background-card)]
-              dark:bg-[var(--bgCard)]
-              border border-[var(--borderColor)]
-              rounded-2xl p-4 sm:p-6 shadow-sm
-            "
-          >
-            <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-2">
-              Roles & Permissions
-            </h3>
-            <p className="text-sm text-[var(--textSecondary)] mb-4">
-              Manage system-level access groups
-            </p>
-            <p className="text-sm text-[var(--textSecondary)]">
-              (Coming soon — backend integration pending)
-            </p>
-          </div>
+        {tab === "roles" && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-[var(--textPrimary)]">
+                Roles & Permissions
+              </h2>
+              <button
+                onClick={() => setShowCreateRole(true)}
+                className="px-4 py-2 bg-[var(--accent-green)] rounded-lg text-sm flex items-center gap-2"
+              >
+                <Plus size={16} /> Create Role
+              </button>
+            </div>
+            <RolesPermissions />
+          </>
         )}
 
-        {activeTab === "activityLog" && <ActivityLog />}
-
-        {/* MODALS */}
-        <AddUserModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onUserAdded={() => setRefreshKey((k) => k + 1)}
-        />
+        {tab === "activity" && <ActivityLog />}
 
         {editUser && (
           <EditPermissionsModal
@@ -742,6 +437,12 @@ export default function UserManagement() {
             onClose={() => setEditUser(null)}
           />
         )}
+
+        <CreateRoleModal
+          isOpen={showCreateRole}
+          onClose={() => setShowCreateRole(false)}
+          onCreated={() => setRefreshKey(k => k + 1)}
+        />
       </div>
     </ProtectedRoute>
   );

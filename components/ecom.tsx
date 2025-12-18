@@ -107,7 +107,7 @@ const getStockBadgeColor = (statusText: string) => {
     case "Low Stock":
       return "bg-yellow-500 badge-text-white";
     case "In Stock":
-      return "bg-green-500 badge-text-white";
+      return "bg-[var(--accent-green)] badge-text-white";
     default:
       return "bg-gray-500 badge-text-white";
   }
@@ -161,10 +161,10 @@ const ECommerceSection: React.FC = () => {
       const productsArray: Product[] = Array.isArray(data.products)
         ? data.products
         : Array.isArray(data.data)
-        ? data.data
-        : Array.isArray(data)
-        ? data
-        : [];
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
 
       setProducts(productsArray);
     } catch (err: any) {
@@ -187,10 +187,9 @@ const ECommerceSection: React.FC = () => {
   const [newStatus, setNewStatus] = useState("pending");
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
-  // ===============================
-  // UPDATE ORDER STATUS (ADMIN)
-  // ===============================
+
   const updateStatus = async (status: string) => {
     if (!statusOrderId) return;
 
@@ -245,13 +244,13 @@ const ECommerceSection: React.FC = () => {
       const ordersArray: Order[] = Array.isArray(data.orders)
         ? data.orders
         : Array.isArray(data.data)
-        ? data.data
-        : Array.isArray(data)
-        ? data
-        : [];
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
       setOrders(ordersArray);
     } catch (err) {
-      console.error("❌ Error fetching orders:", err);
+      console.error("Error fetching orders:", err);
       setOrders([]);
     }
   };
@@ -311,28 +310,30 @@ const ECommerceSection: React.FC = () => {
   };
 
   // Stats
-  const stats = {
-    totalProducts: products.length,
-    totalStock: products.reduce(
-      (sum, p) => sum + (Number(p.stockQuantity ?? p.stock ?? 0) || 0),
-      0
-    ),
+const stats = {
+  totalProducts: products.length,
 
-    // ✅ FIXED: safely counts all order items
-  sold: orders.reduce((sum, order) => {
-  if (order.status !== "CONFORM" && order.status !== "delivered") return sum;
-
-  const totalQty = order.items?.reduce(
-    (itemSum, item) => itemSum + (Number(item.qty) || 0),
+  totalStock: products.reduce(
+    (sum, p) => sum + (Number(p.stockQuantity ?? p.stock ?? 0) || 0),
     0
-  );
+  ),
 
-  return sum + totalQty;
-}, 0),
+  sold: orders.reduce((sum, order) => {
+    if (order.status !== "paid" && order.status !== "delivered") return sum;
+
+    return (
+      sum +
+      (order.items?.reduce(
+        (itemSum, item) => itemSum + (Number(item.qty) || 0),
+        0
+      ) || 0)
+    );
+  }, 0),
 
 
-    returns: 0,
-  };
+  returns: orders.filter((o) => o.status === "cancelled").length,
+};
+
 
   // -------------------- Product Form (extended) --------------------
   type ProductForm = {
@@ -625,66 +626,68 @@ const ECommerceSection: React.FC = () => {
   const generateBarcode = () =>
     Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("");
 
-  // -------------------- handleEditProduct (populate form) --------------------
-  const handleEditProduct = (product: Product) => {
-    setProductForm((prev) => ({
-      ...prev,
-      name: product.name || "",
-      description: product.description || "",
-      tags: product.tags || [],
-      gender: product.gender || [],
-      sku: product.sku || prev.sku,
-      vendor: product.vendor || prev.vendor,
-      category: product.category || prev.category,
-      sellPrice: String(product.price ?? prev.sellPrice),
-      basePrice: String(product.purchase ?? prev.basePrice),
 
-      // extras
-      highlights: product.highlights || "",
-      materialDetails: product.materialDetails || "",
-      careInstructions: product.careInstructions || "",
-      notes: product.notes || "",
-      terms: product.terms || "",
-      specifications: {
-        material: product.specifications?.material || "",
-        fit: product.specifications?.fit || "",
-        washCare: product.specifications?.washCare || "",
-        pattern: product.specifications?.pattern || "",
-        origin: product.specifications?.origin || "",
-        brand: product.specifications?.brand || "",
-        others: product.specifications?.others || "",
-      },
-      faq: product.faq?.length
-        ? product.faq.map((f) => ({
-            question: f.question || "",
-            answer: f.answer || "",
-          }))
-        : [],
-    }));
+const handleEditProduct = (product: Product) => {
+  setProductForm((prev) => ({
+    ...prev,
+    name: product.name || "",
+    description: product.description || "",
+    tags: product.tags || [],
+    gender: product.gender || [],
+    sku: product.sku || prev.sku,
+    vendor: product.vendor || prev.vendor,
+    category: product.category || prev.category,
+    sellPrice: String(product.price ?? prev.sellPrice),
+    basePrice: String(product.purchase ?? prev.basePrice),
 
-    setVariants(product.variants || []);
+    // extras
+    highlights: product.highlights || "",
+    materialDetails: product.materialDetails || "",
+    careInstructions: product.careInstructions || "",
+    notes: product.notes || "",
+    terms: product.terms || "",
+    specifications: {
+      material: product.specifications?.material || "",
+      fit: product.specifications?.fit || "",
+      washCare: product.specifications?.washCare || "",
+      pattern: product.specifications?.pattern || "",
+      origin: product.specifications?.origin || "",
+      brand: product.specifications?.brand || "",
+      others: product.specifications?.others || "",
+    },
+    faq: product.faq?.length
+      ? product.faq.map((f) => ({
+          question: f.question || "",
+          answer: f.answer || "",
+        }))
+      : [],
+  }));
 
-    // populate existingImages (S3 URLs)
-    setExistingImages(product.gallery || []);
-    // create previews for existing images
-    const existingPreviews = (product.gallery || []).map((g) => ({
+  setVariants(product.variants || []);
+  setExistingImages(product.gallery || []);
+  setImagePreviews(
+    (product.gallery || []).map((g) => ({
       id: Date.now() + Math.random(),
       url: g,
       name: g.split("/").slice(-1)[0] || g,
-    }));
-    setImagePreviews(existingPreviews);
+    }))
+  );
 
-    // customer photos
-    setExistingCustomerPhotos(product.customerPhotos || []);
-    const custPreviews = (product.customerPhotos || []).map((g) => ({
+  setExistingCustomerPhotos(product.customerPhotos || []);
+  setCustomerPhotosPreview(
+    (product.customerPhotos || []).map((g) => ({
       id: Date.now() + Math.random(),
       url: g,
       name: g.split("/").slice(-1)[0] || g,
-    }));
-    setCustomerPhotosPreview(custPreviews);
+    }))
+  );
 
-    setCurrentView("addProduct");
-  };
+  setEditingProductId(String(product._id)); // ✅ THIS FIXES UPDATE VS CREATE
+  setCurrentView("addProduct");
+};
+
+
+
   // Part 2/3 (continued)
   // -------------------- Save product (uploads to backend) --------------------
   const handleSaveProduct = async () => {
@@ -701,6 +704,7 @@ const ECommerceSection: React.FC = () => {
         );
         return;
       }
+
 
       const formData = new FormData();
       formData.append("name", productForm.name);
@@ -744,9 +748,10 @@ const ECommerceSection: React.FC = () => {
 
       // If editing an existing product we should send product id; your UI currently doesn't track "editing id" separately.
       // We'll infer: if productForm.sku matches an existing product's SKU OR if selectedProduct exists, send selectedProduct._id
-      if (selectedProduct?._id) {
-        formData.append("productId", String(selectedProduct._id));
+      if (editingProductId) {
+        formData.append("productId", editingProductId); // ✅ ALWAYS RELIABLE
       }
+
 
       const token =
         typeof window !== "undefined"
@@ -802,12 +807,11 @@ const ECommerceSection: React.FC = () => {
                   threshold: 20,
                   purchase: `$${productForm.basePrice}`,
                   price: `$${productForm.sellPrice}`,
-                  valuation: `${
-                    variants.reduce(
-                      (sum, v) => sum + (Number(v.stock) || 0),
-                      0
-                    ) * (Number(productForm.sellPrice) || 0)
-                  }`,
+                  valuation: `${variants.reduce(
+                    (sum, v) => sum + (Number(v.stock) || 0),
+                    0
+                  ) * (Number(productForm.sellPrice) || 0)
+                    }`,
                   vendor: productForm.vendor || "Unknown",
                   category: productForm.category,
                   sku: productForm.sku,
@@ -900,7 +904,7 @@ const ECommerceSection: React.FC = () => {
       return { text: "Critical", color: "text-red-600 bg-red-50" };
     if (stock <= threshold)
       return { text: "Low Stock", color: "text-yellow-600 bg-yellow-50" };
-    return { text: "In Stock", color: "text-green-600 bg-green-50" };
+    return { text: "In Stock", color: "text-green-600 bg-[var(--accent-green)]" };
   };
 
   // -------------------- TABS (vertical sidebar) UI state --------------------
@@ -1122,7 +1126,7 @@ const ECommerceSection: React.FC = () => {
                               setSelectedProduct(product);
                               setShowProductModal(true);
                             }}
-                            className="p-2 rounded-lg hover:bg-green-50 text-green-600"
+                            className="p-2 rounded-lg hover:bg-[var(--accent-green)] text-green-600"
                             title="View Details"
                           >
                             <FileText size={18} />
@@ -1245,11 +1249,10 @@ const ECommerceSection: React.FC = () => {
                     <li>
                       <strong>Status:</strong>{" "}
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          selectedProduct.inStock
-                            ? "bg-green-600 text-white"
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${selectedProduct.inStock
+                            ? "bg-[var(--accent-green)] text-white"
                             : "bg-red-600 text-white"
-                        }`}
+                          }`}
                       >
                         {selectedProduct.inStock ? "In Stock" : "Out of Stock"}
                       </span>
@@ -1793,11 +1796,10 @@ const ECommerceSection: React.FC = () => {
                 <button
                   key={img.id}
                   onClick={() => setSelectedImage(index)}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${
-                    selectedImage === index
+                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === index
                       ? "border-green-500"
                       : "border-[var(--borderColor)]"
-                  }`}
+                    }`}
                 >
                   <img
                     src={String(img.url)}
@@ -1841,61 +1843,55 @@ const ECommerceSection: React.FC = () => {
           <div className="w-36 border-r border-[var(--borderColor)] pr-3">
             <button
               onClick={() => setDetailsTab("details")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "details"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "details"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               Details
             </button>
             <button
               onClick={() => setDetailsTab("specs")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "specs"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "specs"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               Specifications
             </button>
             <button
               onClick={() => setDetailsTab("faq")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "faq"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "faq"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               FAQ
             </button>
             <button
               onClick={() => setDetailsTab("customer")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "customer"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "customer"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               Customer Photos
             </button>
             <button
               onClick={() => setDetailsTab("notes")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "notes"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "notes"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               Notes
             </button>
             <button
               onClick={() => setDetailsTab("terms")}
-              className={`w-full text-left py-2 px-2 rounded ${
-                detailsTab === "terms"
-                  ? "bg-green-50"
+              className={`w-full text-left py-2 px-2 rounded ${detailsTab === "terms"
+                  ? "bg-[var(--accent-green)]"
                   : "hover:bg-[var(--background)]"
-              }`}
+                }`}
             >
               Terms
             </button>
@@ -2485,9 +2481,8 @@ const ECommerceSection: React.FC = () => {
         <div class="info">
           ${order.address?.name}<br/>
           ${order.address?.line1}<br/>
-          ${order.address?.city}, ${order.address?.state} ${
-      order.address?.pincode
-    }<br/>
+          ${order.address?.city}, ${order.address?.state} ${order.address?.pincode
+      }<br/>
           Phone: ${order.address?.phone}
         </div>
       </div>
@@ -2637,13 +2632,12 @@ const ECommerceSection: React.FC = () => {
               <strong>Total Amount:</strong> ${order.amount} <br />
               <strong>Status:</strong>{" "}
               <span
-                className={`px-2 py-1 rounded text-xs ${
-                  order.status === "paid"
-                    ? "bg-green-200 text-green-800"
+                className={`px-2 py-1 rounded text-xs ${order.status === "paid"
+                    ? "bg-[var(--accent-green)]text-green-800"
                     : order.status === "failed"
-                    ? "bg-red-200 text-red-800"
-                    : "bg-yellow-200 text-yellow-800"
-                }`}
+                      ? "bg-red-200 text-red-800"
+                      : "bg-yellow-200 text-yellow-800"
+                  }`}
               >
                 {order.status}
               </span>
@@ -2762,15 +2756,14 @@ const ECommerceSection: React.FC = () => {
                 <td className="px-6 py-4">
                   <span
                     className={`px-3 py-1 text-xs font-semibold rounded-full
-                  ${
-                    order.status === "delivered"
-                      ? "bg-green-100 text-green-800"
-                      : order.status === "shipped"
-                      ? "bg-blue-100 text-blue-800"
-                      : order.status === "cancelled"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
+                  ${order.status === "delivered"
+                        ? "bg-[var(--accent-green)] text-green-800"
+                        : order.status === "shipped"
+                          ? "bg-blue-100 text-blue-800"
+                          : order.status === "cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                      }`}
                   >
                     {order.status}
                   </span>
@@ -2946,11 +2939,10 @@ const ECommerceSection: React.FC = () => {
               setActiveTab("inventory");
               setCurrentView("inventory");
             }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "inventory"
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
                 ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
                 : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-            }`}
+              }`}
           >
             Inventory
           </button>
@@ -2959,21 +2951,19 @@ const ECommerceSection: React.FC = () => {
               setActiveTab("order");
               setCurrentView("orders");
             }}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "order"
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
                 ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
                 : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-            }`}
+              }`}
           >
             Order
           </button>
           <button
             onClick={() => setActiveTab("discounts")}
-            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "discounts"
+            className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
                 ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
                 : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
-            }`}
+              }`}
           >
             Discounts & Coupons
           </button>

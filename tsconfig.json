@@ -37,7 +37,7 @@
     "**/*.mts",
     ".next\\dev/types/**/*.ts",
     ".next\\dev/types/**/*.ts"
-, "../Ecommercesection.tsx"  ],
+, "../Ecommercesection.tsx", "components/NotificationProvider.jsx"  ],
   "exclude": [
     "node_modules"
   ]

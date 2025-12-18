@@ -19,6 +19,7 @@ import {
   Menu,
   Handshake,
   X,
+  Newspaper,
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -32,21 +33,81 @@ export default function Sidebar() {
   const isActive = (href) =>
     pathname === href || pathname.startsWith(href + '/');
 
-  const menuItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    { label: 'User Management', icon: Users, href: '/user-management' },
-    { label: 'CMS', icon: Layers, href: '/cms' },
-    { label: 'Analytics', icon: BarChart3, href: '/analytics' },
-    { label: 'E-Commerce', icon: ShoppingCart, href: '/ecom' },
-    { label: 'S&L', icon: Truck, href: '/s&l' },
-    { label: '360', icon: Handshake, href: '/360' },
-    { label: 'Marketing', icon: TrendingUp, href: '/marketing' },
-    { label: 'Payments & Finance', icon: DollarSign, href: '/payments' },
-    { label: 'Security & Compliance', icon: Shield, href: '/security' },
-    { label: 'Website Settings', icon: Settings, href: '/settings' },
-  ];
-    
-   // Load role from localStorage
+const menuItems = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
+    permission: "view_dashboard",
+  },
+  {
+    label: "User Management",
+    icon: Users,
+    href: "/user-management",
+    permission: "manage_users",
+  },
+  {
+    label: "CMS",
+    icon: Layers,
+    href: "/cms",
+    permission: "manage_cms",
+  },
+  {
+    label: "Analytics",
+    icon: BarChart3,
+    href: "/analytics",
+    permission: "view_analytics",
+  },
+  {
+    label: "E-Commerce",
+    icon: ShoppingCart,
+    href: "/ecom",
+    permission: "manage_orders",
+  },
+  {
+    label: "Stories",
+    icon: Newspaper,
+    href: "/stories",
+    permission: "manage_stories",
+  },
+  {
+    label: "S&L",
+    icon: Truck,
+    href: "/s&l",
+    permission: "manage_shipping",
+  },
+  {
+    label: "360",
+    icon: Handshake,
+    href: "/360",
+    permission: "view_crm",
+  },
+  {
+    label: "Marketing",
+    icon: TrendingUp,
+    href: "/marketing",
+    permission: "manage_marketing",
+  },
+  {
+    label: "Payments & Finance",
+    icon: DollarSign,
+    href: "/payments",
+    permission: "view_finance",
+  },
+  {
+    label: "Security & Compliance",
+    icon: Shield,
+    href: "/security",
+    permission: "manage_security",
+  },
+  {
+    label: "Website Settings",
+    icon: Settings,
+    href: "/settings",
+    permission: "manage_settings",
+  },
+];
+// Load role from localStorage
 const [role, setRole] = useState("");
 
 React.useEffect(() => {
@@ -56,33 +117,20 @@ React.useEffect(() => {
 }, []);
 
 // Define role-wise menu visibility
-const roleAccess = {
-  superadmin: [
-    "Dashboard",
-    "User Management",
-    "CMS",
-    "Analytics",
-    "E-Commerce",
-    "S&L",
-    "Marketing",
-    "Payments & Finance",
-    "Security & Compliance",
-    "Website Settings",
-    "360",
-  ],
-  admin: [
-    "Dashboard",
-    "E-Commerce",
-    "CMS",
-    "Analytics",
-    "360",
-  ],
-  staff: [
-    "Dashboard",
-    "E-Commerce",
-  ],
-  viewer: ["Dashboard"],
+const [permissions, setPermissions] = useState([]);
+
+React.useEffect(() => {
+  if (typeof window !== "undefined") {
+    const perms = localStorage.getItem("permissions");
+    setPermissions(perms ? JSON.parse(perms) : []);
+  }
+}, []);
+
+const hasPermission = (permission) => {
+  if (role === "superadmin") return true; // 🔥 bypass
+  return permissions.includes(permission);
 };
+
 
 
 
@@ -125,7 +173,7 @@ const roleAccess = {
             className="flex items-center gap-3 hover:opacity-80 transition"
             onClick={() => setIsMobileOpen(false)}
           >
-            <div className="w-9 h-9 bg-green-900 rounded-full flex items-center justify-center">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center">
              <span className="text-[var(--logo-color)] !text-[var(--logo-color)] font-bold text-sm">KZ</span>
             </div>
 
@@ -139,41 +187,37 @@ const roleAccess = {
 
         {/* Menu Items */}
         <nav className="flex-1 p-4">
-          <ul className="space-y-2 ">
-           {menuItems
-  .filter((item) =>
-    roleAccess[role]?.includes(item.label)
-  )
-  .map((item) => {
+       <ul className="space-y-2">
+  {menuItems
+    .filter(item => hasPermission(item.permission))
+    .map(item => {
+      const Icon = item.icon;
+      const active = isActive(item.href);
 
-              const Icon = item.icon;
-              const active = isActive(item.href);
+      return (
+        <li key={item.label}>
+          <Link
+            href={item.href}
+            className={`
+              w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+              transition-all
+              ${
+                active
+                  ? "bg-[var(--accent-green)] text-black font-semibold"
+                  : "hover:bg-[var(--background-card)]"
+              }
+            `}
+          >
+            <Icon size={22} />
+            {isOpen && (
+              <span className="text-sm font-medium">{item.label}</span>
+            )}
+          </Link>
+        </li>
+      );
+    })}
+</ul>
 
-              return (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsMobileOpen(false)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-lg 
-                      transition-all duration-200 
-                      ${
-                        active
-                          ? 'bg-[var(--accent-green)] text-black font-semibold'
-                          : 'text-[var(--text-primary)] hover:bg-[var(--background-card)]'
-                      }
-                    `}
-                  >
-                   <Icon size={22} className="min-w-[22px]" />
-
-                    {isOpen && (
-                      <span className="text-sm font-medium ">{item.label}</span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
         </nav>
 
         {/* User Section */}

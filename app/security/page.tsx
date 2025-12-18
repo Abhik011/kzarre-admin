@@ -173,7 +173,7 @@ export default function SecurityCompliancePage() {
 
             <button
               onClick={saveProtectionSettings}
-              className="bg-green-500 text-white px-6 py-2 rounded-lg"
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
             >
               Save Protection Settings
             </button>
@@ -230,7 +230,7 @@ export default function SecurityCompliancePage() {
 
             <button
               onClick={submitDataRequest}
-              className="bg-green-500 text-white px-6 py-2 rounded-lg"
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
             >
               Submit Request
             </button>
@@ -267,7 +267,7 @@ export default function SecurityCompliancePage() {
 
             <button
               onClick={saveAuditSettings}
-              className="bg-green-500 text-white px-6 py-2 rounded-lg"
+              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
             >
               Save Audit Settings
             </button>
