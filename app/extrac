@@ -243,15 +243,11 @@ export default function ShippingAndLogisticsPage() {
             placeholder="API Token"
             className="border px-3 py-2 rounded"
             value={form.auth?.token || ""}
-          onChange={(e) =>
-  setForm({
-    ...form,
-    auth: {
-      type: form.auth?.type ?? "bearer", // ✅ ALWAYS PRESENT
-      token: e.target.value,
-    },
-  })
-
+            onChange={(e) =>
+              setForm({
+                ...form,
+                auth: { ...form.auth, token: e.target.value },
+              })
             }
           />
         </div>

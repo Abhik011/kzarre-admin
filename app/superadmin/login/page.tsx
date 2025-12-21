@@ -124,9 +124,21 @@ export default function SuperAdminLogin() {
         </div>
 
         {/* Conditional Register Button */}
-        <button
+        {/* <button
           onClick={handleRegister}
-          disabled={!canRegister}
+          // disabled={!canRegister}
+          className={`w-full py-3 rounded-xl font-medium transition-all duration-300 ${
+            canRegister
+              ? "bg-transparent border border-[#A0EDA8]/40 text-white hover:bg-[#A0EDA8]/20"
+              : "bg-gray-700/60 text-gray-400 cursor-not-allowed border border-gray-600"
+          }`}
+        >
+          {canRegister ? " Register as Super Admin" : "Registration Disabled"}
+        </button> */}
+
+         <button
+          onClick={handleRegister}
+          // disabled={!canRegister}
           className={`w-full py-3 rounded-xl font-medium transition-all duration-300 ${
             canRegister
               ? "bg-transparent border border-[#A0EDA8]/40 text-white hover:bg-[#A0EDA8]/20"
@@ -136,6 +148,7 @@ export default function SuperAdminLogin() {
           {canRegister ? " Register as Super Admin" : "Registration Disabled"}
         </button>
       </div>
+
     </div>
   );
 }

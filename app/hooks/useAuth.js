@@ -11,7 +11,7 @@ const API_BASE =
 const getRefreshRoute = () => {
   if (typeof window === "undefined") return "/api/superadmin/refresh";
 
-  const role = localStorage.getItem("role");
+  const role = localStorage.getItem("admin_role");
   const adminRole = localStorage.getItem("kzarre-token");
 
   if (role === "superadmin") return "/api/superadmin/refresh";

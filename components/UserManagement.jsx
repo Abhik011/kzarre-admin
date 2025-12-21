@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Plus, X, Shield } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-
+import { Eye, Pencil, Trash2 } from "lucide-react";
 const API_BASE = `${process.env.NEXT_PUBLIC_BACKEND_API_URL}`;
 
 /* ===================================================
@@ -36,6 +36,175 @@ const useRoles = () => {
 };
 
 
+const useMyRole = () => {
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("role") || "");
+    }
+  }, []);
+
+  return role;
+};
+
+const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
+  const roles = useRoles(); // ✅ backend roles
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    roleId: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const selectedRole = roles.find(r => r._id === form.roleId);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!form.roleId) {
+      alert("Please select a role");
+      return;
+    }
+
+    const token =
+      localStorage.getItem("superadmin_token") ||
+      localStorage.getItem("admin_token");
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `${API_BASE}/api/usersadmin/create-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            roleId: form.roleId, // ✅ ONLY ROLE
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      alert("✅ User created successfully");
+      onUserAdded();
+      onClose();
+    } catch (err) {
+      alert("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-xl max-w-2xl w-full shadow-xl p-6 sm:p-8">
+
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-[var(--textPrimary)]">
+            Add New User
+          </h2>
+          <button onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              placeholder="First name"
+              required
+              className="input"
+              onChange={(e) =>
+                setForm({ ...form, firstName: e.target.value })
+              }
+            />
+            <input
+              placeholder="Last name"
+              required
+              className="input"
+              onChange={(e) =>
+                setForm({ ...form, lastName: e.target.value })
+              }
+            />
+          </div>
+
+          <input
+            type="email"
+            placeholder="Email"
+            required
+            className="input"
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
+
+          {/* ROLE SELECT */}
+          <select
+            required
+            className="input"
+            value={form.roleId}
+            onChange={(e) =>
+              setForm({ ...form, roleId: e.target.value })
+            }
+          >
+            <option value="">Select Role</option>
+            {roles.map(role => (
+              <option key={role._id} value={role._id}>
+                {role.name}
+              </option>
+            ))}
+          </select>
+
+          {/* PERMISSION PREVIEW (READ ONLY) */}
+          {selectedRole && (
+            <div className="text-xs bg-black/5 p-3 rounded">
+              <strong>Permissions:</strong>{" "}
+              {selectedRole.permissions?.join(", ") || "—"}
+            </div>
+          )}
+
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary"
+            >
+              {loading ? "Creating..." : "Create User"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
+
 const usePermissions = () => {
   const [permissions, setPermissions] = useState([]);
 
@@ -61,9 +230,7 @@ const usePermissions = () => {
 };
 
 
-/* ===================================================
-   USER LIST
-=================================================== */
+
 const UserList = ({ refreshKey, onEditPermissions }) => {
   const [users, setUsers] = useState([]);
 
@@ -92,25 +259,39 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Email</th>
               <th className="px-4 py-3 text-left">Role</th>
+              <th className="px-4 py-3 text-left">Permissions</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {users.map(u => (
               <tr key={u._id} className="border-b border-[var(--borderColor)]">
                 <td className="px-4 py-3">{u.name}</td>
                 <td className="px-4 py-3">{u.email}</td>
-                <td className="px-4 py-3">{u.roleGroup?.name || "—"}</td>
+
+                {/* ✅ ROLE */}
+                <td className="px-4 py-3 font-medium">
+                  {u.roleId?.name || "—"}
+                </td>
+
+                {/* ✅ ROLE-BASED PERMISSIONS */}
+                <td className="px-4 py-3 text-xs text-[var(--textSecondary)]">
+                  {u.roleId?.permissions?.join(", ") || "—"}
+                </td>
+
                 <td className="px-4 py-3">
                   {u.isActive ? "Active" : "Inactive"}
                 </td>
+
                 <td className="px-4 py-3">
                   <button
                     onClick={() => onEditPermissions(u)}
                     className="text-green-500 text-xs flex items-center gap-1"
                   >
-                    <Shield size={14} /> Edit
+                    <Shield size={14} />
+                    Edit
                   </button>
                 </td>
               </tr>
@@ -122,9 +303,9 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
   );
 };
 
-/* ===================================================
-   EDIT PERMISSIONS MODAL
-=================================================== */
+
+
+
 const EditPermissionsModal = ({ user, onClose }) => {
   const permissions = usePermissions();
   const [selected, setSelected] = useState(user.permissions || []);
@@ -195,9 +376,6 @@ const EditPermissionsModal = ({ user, onClose }) => {
   );
 };
 
-/* ===================================================
-   CREATE ROLE MODAL
-=================================================== */
 const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
   const [name, setName] = useState("");
   const [selected, setSelected] = useState([]);
@@ -296,39 +474,134 @@ const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
   );
 };
 
-/* ===================================================
-   ROLES & PERMISSIONS
-=================================================== */
-const RolesPermissions = () => {
+const RolesPermissions = ({
+  onViewRole,
+  onEditRole,
+  onDeleteRole,
+}) => {
   const roles = useRoles();
 
   return (
     <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-[var(--borderColor)]">
-            <th className="px-4 py-3 text-left">Role</th>
-            <th className="px-4 py-3 text-left">Permissions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {roles.map(r => (
-            <tr key={r._id} className="border-b border-[var(--borderColor)]">
-              <td className="px-4 py-3 font-medium">{r.name}</td>
-              <td className="px-4 py-3 text-xs">
-                {r.permissions?.join(", ") || "—"}
-              </td>
+      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-4">
+        Roles & Permissions
+      </h3>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[var(--borderColor)]">
+              <th className="px-4 py-3 text-left">Role</th>
+              <th className="px-4 py-3 text-left">Permissions</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {roles.length === 0 ? (
+              <tr>
+
+                <td
+                  colSpan={3}
+                  className="px-4 py-6 text-center text-[var(--textSecondary)]"
+                >
+                  No roles found
+                </td>
+              </tr>
+            ) : (
+              roles.map((r) => (
+                <tr
+                  key={r._id}
+                  className="
+                    border-b border-[var(--borderColor)]
+                    hover:bg-black/5 dark:hover:bg-white/5 transition
+                  "
+                >
+                  {/* ROLE NAME */}
+                  <td className="px-4 py-3 font-medium text-[var(--textPrimary)]">
+                    {r.name}
+                  </td>
+
+                  {/* PERMISSIONS */}
+                  <td className="px-4 py-3 text-xs text-[var(--textSecondary)]">
+                    {r.permissions?.length
+                      ? r.permissions.join(", ")
+                      : "—"}
+                  </td>
+
+                  {/* ACTIONS */}
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-3">
+                      {/* VIEW */}
+                      <button
+                        onClick={() => onViewRole?.(r)}
+                        className="
+                          text-blue-500 hover:text-blue-600 
+                          flex items-center gap-1 text-xs
+                        "
+                      >
+                        <Eye size={14} /> View
+                      </button>
+
+                      {/* EDIT */}
+                      <button
+                        onClick={() => onEditRole?.(r)}
+                        className="
+                          text-green-500 hover:text-green-600 
+                          flex items-center gap-1 text-xs
+                        "
+                      >
+                        <Pencil size={14} /> Edit
+                      </button>
+
+                      {/* DELETE */}
+                      <button
+                        onClick={() => onDeleteRole?.(r)}
+                        className="
+                          text-red-500 hover:text-red-600 
+                          flex items-center gap-1 text-xs
+                        "
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
 
-/* ===================================================
-   ACTIVITY LOG
-=================================================== */
+const deleteRole = async (roleId) => {
+  const token =
+    localStorage.getItem("superadmin_token") ||
+    localStorage.getItem("admin_token");
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/usersadmin/roles/${roleId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Delete failed");
+
+    alert("✅ Role deleted successfully");
+    setRefreshKey((k) => k + 1); // refresh list
+  } catch (err) {
+    alert("❌ " + err.message);
+  }
+};
+
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
   const token = localStorage.getItem("superadmin_token");
@@ -369,49 +642,77 @@ const ActivityLog = () => {
   );
 };
 
-/* ===================================================
-   MAIN PAGE
-=================================================== */
 export default function UserManagement() {
   const [tab, setTab] = useState("users");
   const [editUser, setEditUser] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showCreateRole, setShowCreateRole] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [viewRole, setViewRole] = useState(null);
+  const [editRole, setEditRole] = useState(null);
 
   return (
-    <ProtectedRoute roles={["superadmin", "hr_manager"]}>
-      <div className="min-h-screen">
-        <h1 className="text-3xl font-bold mb-6 text-[var(--textPrimary)]">
-          User Management
-        </h1>
+    <ProtectedRoute permissions={["manage_users"]}>
+      <div className="min-h-screen p-1 space-y-8">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--textPrimary)]">
+            User Management
+          </h1>
 
-        <div className="flex gap-6 border-b border-[var(--borderColor)] mb-6">
-          {["users", "roles", "activity"].map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`pb-3 text-sm font-medium ${
-                tab === t
-                  ? "text-green-500 border-b-2 border-green-500"
+          <p className="text-sm sm:text-base text-[var(--textSecondary)] mt-1">
+            Manage and control system users
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 mb-6">
+          <div
+            className="
+              flex gap-4 sm:gap-8 
+              border-b border-[var(--borderColor)]
+              w-full sm:w-auto overflow-x-auto
+            "
+          >
+            {["users", "roles", "activity"].map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`pb-3 text-sm font-medium ${tab === t
+                  ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
                   : "text-[var(--textSecondary)]"
-              }`}
-            >
-              {t === "users"
-                ? "User List"
-                : t === "roles"
-                ? "Roles & Permissions"
-                : "Activity Log"}
-            </button>
-          ))}
+                  }`}
+
+              >
+                {t === "users"
+                  ? "User List"
+                  : t === "roles"
+                    ? "Roles & Permissions"
+                    : "Activity Log"}
+              </button>
+            ))}
+          </div>
+
+
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="
+                w-full sm:w-auto px-4 py-2 
+                bg-green-400 text-black rounded-lg 
+                hover:bg-green-500 active:scale-95 
+                flex items-center justify-center gap-2 font-medium text-sm
+              "
+          >
+            <Plus size={18} /> Add User
+          </button>
+
         </div>
 
         {tab === "users" && (
+
           <UserList
             refreshKey={refreshKey}
             onEditPermissions={setEditUser}
           />
         )}
-
         {tab === "roles" && (
           <>
             <div className="flex justify-between items-center mb-4">
@@ -425,7 +726,15 @@ export default function UserManagement() {
                 <Plus size={16} /> Create Role
               </button>
             </div>
-            <RolesPermissions />
+            <RolesPermissions
+              onViewRole={(role) => setViewRole(role)}
+              onEditRole={(role) => setEditRole(role)}
+              onDeleteRole={(role) => {
+                if (!confirm(`Delete role "${role.name}"?`)) return;
+                deleteRole(role._id);
+              }}
+            />
+
           </>
         )}
 
@@ -437,6 +746,11 @@ export default function UserManagement() {
             onClose={() => setEditUser(null)}
           />
         )}
+        <AddUserModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onUserAdded={() => setRefreshKey((k) => k + 1)}
+        />
 
         <CreateRoleModal
           isOpen={showCreateRole}

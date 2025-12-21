@@ -98,7 +98,7 @@ export default function SecurityCompliancePage() {
           onClick={() => setActiveTab("protection")}
           className={`text-sm font-medium ${
             activeTab === "protection"
-              ? "border-b-2 border-green-500 text-green-600"
+              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
           }`}
         >
@@ -109,7 +109,7 @@ export default function SecurityCompliancePage() {
           onClick={() => setActiveTab("data-requests")}
           className={`text-sm font-medium ${
             activeTab === "data-requests"
-              ? "border-b-2 border-green-500 text-green-600"
+              ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
           }`}
         >
@@ -120,7 +120,7 @@ export default function SecurityCompliancePage() {
           onClick={() => setActiveTab("audit")}
           className={`text-sm font-medium ${
             activeTab === "audit"
-              ? "border-b-2 border-green-500 text-green-600"
+              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
           }`}
         >

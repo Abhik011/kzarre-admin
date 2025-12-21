@@ -92,7 +92,7 @@ export default function PaymentsFinancePage() {
               onClick={() => setActiveTab(tab as TabType)}
               className={`text-sm font-medium ${
                 activeTab === tab
-                  ? "border-b-2 border-green-500 text-green-600"
+                  ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
                   : "text-gray-500"
               }`}
             >

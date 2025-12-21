@@ -45,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
-         <NotificationProvider />
+         <NotificationProvider onClose={undefined} />
         {children}
         <SpeedInsights />
       </body>

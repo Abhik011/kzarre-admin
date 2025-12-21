@@ -73,56 +73,54 @@ export default function Dashboard() {
   useEffect(() => {
     setRole(localStorage.getItem("role"));
 
-   const fetchAnalytics = async () => {
-  try {
-    const base = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+    const fetchAnalytics = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-    const [
-      summaryRes,
-      trafficRes,
-      usersTypeRes,
-      topOrdersRes,
-    ] = await Promise.all([
-      fetch(`${base}/api/analytics/summary`),
-      fetch(`${base}/api/analytics/traffic/daily`),
-      fetch(`${base}/api/analytics/users/type`),
-      fetch(`${base}/api/orders/top?limit=5`),
-    ]);
+        const [
+          summaryRes,
+          trafficRes,
+          usersTypeRes,
+          topOrdersRes,
+        ] = await Promise.all([
+          fetch(`${base}/api/analytics/summary`),
+          fetch(`${base}/api/analytics/traffic/daily`),
+          fetch(`${base}/api/analytics/users/type`),
+          fetch(`${base}/api/orders/top?limit=5`),
+        ]);
 
-    const s = await summaryRes.json();
-    const t = await trafficRes.json();
-    const u = await usersTypeRes.json();
-    const o = await topOrdersRes.json();
+        const s = await summaryRes.json();
+        const t = await trafficRes.json();
+        const u = await usersTypeRes.json();
+        const o = await topOrdersRes.json();
 
-    if (s.success) setSummary(s.summary);
+        if (s.success) setSummary(s.summary);
 
-    if (t.success) {
-      setTrafficData(
-        t.traffic.map((x) => ({
-          name: x._id,
-          value: x.visits,
-        }))
-      );
-    }
+        if (t.success) {
+          setTrafficData(
+            t.traffic.map((x) => ({
+              name: x._id,
+              value: x.visits,
+            }))
+          );
+        }
 
-    if (u.success) setUsersType(u);
+        if (u.success) setUsersType(u);
 
-    if (o.success) setTopOrders(o.orders);
+        if (o.success) setTopOrders(o.orders);
 
-  } catch (err) {
-    console.error("❌ Analytics failed:", err);
-  }
+      } catch (err) {
+        console.error("❌ Analytics failed:", err);
+      }
 
-  setLoading(false);
-};
+      setLoading(false);
+    };
 
 
     fetchAnalytics();
   }, []);
 
-  const canViewSales = role === "superadmin" || role === "admin";
-  const canViewDeals = role === "superadmin" || role === "admin";
-  const canViewUsers = role === "superadmin" || role === "admin";
+
 
   if (loading)
     return (
@@ -132,7 +130,7 @@ export default function Dashboard() {
     );
 
   return (
-    <ProtectedRoute roles={["admin", "superadmin"]}>
+    <ProtectedRoute permissions={["view_dashboard"]}>
       <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] transition">
 
         {/* Top Title Row */}
@@ -145,7 +143,7 @@ export default function Dashboard() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            
+
             {/* Users */}
             <StatCard
               title="Total Users"
@@ -157,7 +155,7 @@ export default function Dashboard() {
             />
 
             {/* Orders */}
-            {canViewUsers && (
+
               <StatCard
                 title="Total Orders"
                 value={summary?.totalOrders || 0}
@@ -166,10 +164,10 @@ export default function Dashboard() {
                 isPositive={true}
                 bgColor="bg-yellow-300/20"
               />
-            )}
+            
 
             {/* Sales */}
-            {canViewSales && (
+       
               <StatCard
                 title="Total Revenue"
                 value={`$${summary?.totalRevenue || 0}`}
@@ -178,7 +176,7 @@ export default function Dashboard() {
                 isPositive={true}
                 bgColor="bg-green-300/20"
               />
-            )}
+          
 
             {/* Pending */}
             <StatCard
@@ -209,7 +207,7 @@ export default function Dashboard() {
             </div>
 
             {/* New vs Returning Users */}
-            {canViewUsers && (
+        
               <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow">
                 <h3 className="text-lg font-bold mb-4">New vs Returning Users</h3>
 
@@ -233,78 +231,77 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            )}
+            
           </div>
         </div>
-{/* Top Orders */}
-{canViewSales && (
-  <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow mb-12">
-    
-    <div className="flex justify-between items-center mb-6">
-      <h3 className="text-lg font-bold">Top Orders</h3>
-      <span className="text-sm text-[var(--text-secondary)]">
-        Latest 5 orders
-      </span>
-    </div>
+        {/* Top Orders */}
 
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-[var(--sidebar-border)]">
-            {["Order ID", "Customer", "Amount", "Status", "Date"].map((h) => (
-              <th
-                key={h}
-                className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-secondary)]"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
+          <div className="bg-[var(--background-card)] border border-[var(--sidebar-border)] rounded-2xl p-6 shadow mb-12">
 
-        <tbody>
-          {topOrders.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-secondary)]">
-                No recent orders
-              </td>
-            </tr>
-          )}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold">Top Orders</h3>
+              <span className="text-sm text-[var(--text-secondary)]">
+                Latest 5 orders
+              </span>
+            </div>
 
-          {topOrders.map((order) => (
-            <tr
-              key={order._id}
-              className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background)] transition"
-            >
-              <td className="px-4 py-3 font-medium">{order._id}</td>
-              <td className="px-4 py-3">{order.customer}</td>
-              <td className="px-4 py-3 font-semibold">
-                ₹{order.amount}
-              </td>
-              <td className="px-4 py-3">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold
-                    ${
-                      order.status === "paid"
-                        ? "bg-green-500/20 text-green-600"
-                        : order.status === "pending"
-                        ? "bg-yellow-500/20 text-yellow-600"
-                        : "bg-red-500/20 text-red-600"
-                    }`}
-                >
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
-                {new Date(order.createdAt).toLocaleDateString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[var(--sidebar-border)]">
+                    {["Order ID", "Customer", "Amount", "Status", "Date"].map((h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-secondary)]"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {topOrders.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-[var(--text-secondary)]">
+                        No recent orders
+                      </td>
+                    </tr>
+                  )}
+
+                  {topOrders.map((order) => (
+                    <tr
+                      key={order._id}
+                      className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background)] transition"
+                    >
+                      <td className="px-4 py-3 font-medium">{order._id}</td>
+                      <td className="px-4 py-3">{order.customer}</td>
+                      <td className="px-4 py-3 font-semibold">
+                        ₹{order.amount}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold
+                    ${order.status === "paid"
+                              ? "bg-green-500/20 text-green-600"
+                              : order.status === "pending"
+                                ? "bg-yellow-500/20 text-yellow-600"
+                                : "bg-red-500/20 text-red-600"
+                            }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        
 
 
       </div>

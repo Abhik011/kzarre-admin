@@ -1,87 +1,116 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+/* ================= TYPES ================= */
+interface Profile {
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
+  const API = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
-  const name =
-    typeof window !== "undefined"
-      ? localStorage.getItem("superadmin_name") ||
-        localStorage.getItem("admin_name") ||
-        "User"
-      : "User";
+  const [profile, setProfile] = useState<Profile>({
+    name: "User",
+    email: "user@system.com",
+    role: "Admin",
+  });
 
-  const email =
-    typeof window !== "undefined"
-      ? localStorage.getItem("superadmin_email") ||
-        localStorage.getItem("admin_email") ||
-        "user@system.com"
-      : "user@system.com";
+  const [loading, setLoading] = useState(true);
 
-  const role =
-    typeof window !== "undefined"
-      ? localStorage.getItem("role") || "Admin"
-      : "Admin";
+  /* ================= LOAD PROFILE ================= */
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        // ✅ Primary source: backend
+        const res = await fetch(`${API}/api/profile/me`, {
+          credentials: "include",
+        });
 
-  // 🔥 Logout function
+        if (res.ok) {
+          const data = await res.json();
+          setProfile({
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          });
+          return;
+        }
+
+        throw new Error("Backend failed");
+      } catch {
+        // ✅ Fallback: localStorage (safe)
+        const name =
+          localStorage.getItem("superadmin_name") ||
+          localStorage.getItem("admin_name") ||
+          "User";
+
+        const email =
+          localStorage.getItem("superadmin_email") ||
+          localStorage.getItem("admin_email") ||
+          "user@system.com";
+
+        const role = localStorage.getItem("role") || "Admin";
+
+        setProfile({ name, email, role });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [API]);
+
+  /* ================= LOGOUT ================= */
   const handleLogout = () => {
-    // Clear local storage
-    localStorage.removeItem("superadmin_token");
-    localStorage.removeItem("superadmin_name");
-    localStorage.removeItem("superadmin_email");
-
-    localStorage.removeItem("admin_token");
-    localStorage.removeItem("admin_name");
-    localStorage.removeItem("admin_email");
-
-    localStorage.removeItem("role");
-
-    // Redirect to login
+    localStorage.clear();
     router.push("/");
   };
 
+  /* ================= UI ================= */
   return (
-    <div className="p-6">
-      {/* Header Row with Logout */}
+    <div className=" mx-auto">
+
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
 
         <button
           onClick={handleLogout}
-          className="px-7 py-2 bg-red-600 badge-text-white rounded-lg hover:bg-red-700 transition"
+          className="px-7 py-2 bg-green-300 text-white rounded-lg hover:bg-green-400 transition"
         >
           Logout
         </button>
       </div>
 
+      {/* PROFILE CARD */}
       <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">Account Details</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className="text-sm text-gray-500">Full Name</label>
-            <p className="mt-1 text-gray-800 font-medium">{name}</p>
+        {loading ? (
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-1/3" />
+            <div className="h-4 bg-gray-200 rounded w-1/2" />
+            <div className="h-4 bg-gray-200 rounded w-1/4" />
           </div>
-
-          <div>
-            <label className="text-sm text-gray-500">Email</label>
-            <p className="mt-1 text-gray-800 font-medium">{email}</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Info label="Full Name" value={profile.name} />
+            <Info label="Email" value={profile.email} />
+            <Info label="Role" value={profile.role} />
           </div>
-
-          <div>
-            <label className="text-sm text-gray-500">Role</label>
-            <p className="mt-1 text-gray-800 font-medium">{role}</p>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Change Password Card */}
+      {/* CHANGE PASSWORD */}
       <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-200 mt-6">
         <h2 className="text-lg font-semibold mb-4">Change Password</h2>
 
-        <form className="space-y-4">
+        <form className="space-y-4 max-w-md">
           <input
             type="password"
             placeholder="Current Password"
@@ -100,11 +129,24 @@ export default function ProfilePage() {
             className="w-full px-4 py-3 border rounded-lg focus:ring-black"
           />
 
-          <button className="px-6 py-3 bg-black badge-text-white rounded-lg hover:bg-gray-800">
+          <button
+            type="button"
+            className="px-6 py-3 bg-green-300 text-white rounded-lg hover:bg-green-400 transition"
+          >
             Update Password
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+/* ================= COMPONENT ================= */
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <label className="text-sm text-gray-500">{label}</label>
+      <p className="mt-1 text-gray-800 font-medium">{value}</p>
     </div>
   );
 }

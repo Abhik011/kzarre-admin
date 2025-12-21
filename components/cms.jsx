@@ -524,6 +524,7 @@ const handleSavePost = async () => {
     alert("❌ " + err.message);
   }
 };
+
 const isLiveNow = (post) => {
   if (!post.visibleAt) return false;
 
@@ -1366,7 +1367,7 @@ if (data.media) {
   // ---------- Dashboard (list) ----------
   const renderDashboard = () => (
     <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-      <div className="mx-auto max-w-7xl px-4 pb-8">
+<div className="min-h-screen p-1 space-y-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2 text-[var(--text-primary)]">
             Content Management

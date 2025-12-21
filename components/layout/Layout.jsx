@@ -1,7 +1,6 @@
 'use client';
-
 import React from 'react';
-import Sidebar from './Sidebar';
+import Sidebar from './Sidebar.tsx';
 import Header from './Header';
 
 export default function Layout({ children }) {

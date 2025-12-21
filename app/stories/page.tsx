@@ -35,7 +35,7 @@ type Story = {
   images?: string[];
   published: boolean;
   createdAt: string;
-  type?: "story" | "about"; 
+  type?: "story" | "about";
 };
 
 
@@ -142,55 +142,55 @@ export default function AdminStories() {
   }, []);
 
   useEffect(() => {
-  document.execCommand("defaultParagraphSeparator", false, "p");
-}, []);
+    document.execCommand("defaultParagraphSeparator", false, "p");
+  }, []);
 
 
   /* ================= EDIT ================= */
-const openEditStory = (story: Story & { style?: any }) => {
-  // open form + set mode
-  setEditingStory(story);
-  setShowForm(true);
+  const openEditStory = (story: Story & { style?: any }) => {
+    // open form + set mode
+    setEditingStory(story);
+    setShowForm(true);
 
-  // basic fields
-  setTitle(story.title || "");
-  setSubtitle(story.subtitle || "");
-  setContent(story.content || "");
+    // basic fields
+    setTitle(story.title || "");
+    setSubtitle(story.subtitle || "");
+    setContent(story.content || "");
 
-  // ✅ IMPORTANT: set editor content ONCE (no cursor jump)
-  requestAnimationFrame(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = story.content || "";
+    // ✅ IMPORTANT: set editor content ONCE (no cursor jump)
+    requestAnimationFrame(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = story.content || "";
+      }
+    });
+
+    // style (fallback to default if missing)
+    if (story.style) {
+      setStyle(story.style);
     }
-  });
 
-  // style (fallback to default if missing)
-  if (story.style) {
-    setStyle(story.style);
-  }
-
-  // cover image
-  setCoverImage(
-    story.coverImage
-      ? {
+    // cover image
+    setCoverImage(
+      story.coverImage
+        ? {
           id: crypto.randomUUID(),
           file: null as any, // existing image (not re-uploaded)
           preview: story.coverImage,
         }
-      : null
-  );
+        : null
+    );
 
-  // gallery images
-  setGalleryImages(
-    story.images?.length
-      ? story.images.map((url) => ({
+    // gallery images
+    setGalleryImages(
+      story.images?.length
+        ? story.images.map((url) => ({
           id: crypto.randomUUID(),
           file: null as any, // existing image
           preview: url,
         }))
-      : []
-  );
-};
+        : []
+    );
+  };
 
 
 
@@ -285,8 +285,6 @@ const openEditStory = (story: Story & { style?: any }) => {
     setGalleryImages([]);
   };
 
-
-
   /* ================= DELETE ================= */
   const deleteStory = async (id: string) => {
     if (!confirm("Delete this story?")) return;
@@ -304,7 +302,11 @@ const openEditStory = (story: Story & { style?: any }) => {
   };
 
   return (
-    <ProtectedRoute roles={["superadmin", "admin"]}>
+    <ProtectedRoute
+roles={["superadmin", "admin"]}
+  permissions={["manage_stories"]}
+>
+
       <div className="min-h-screen">
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
@@ -639,14 +641,14 @@ const openEditStory = (story: Story & { style?: any }) => {
             </div>
 
             {/* ================= EDITOR ================= */}
-           <div
-  ref={editorRef}
-  contentEditable
-  className="min-h-[260px] border rounded-lg p-3 outline-none"
-  onInput={(e) =>
-    setContent((e.target as HTMLDivElement).innerHTML)
-  }
-/>
+            <div
+              ref={editorRef}
+              contentEditable
+              className="min-h-[260px] border rounded-lg p-3 outline-none"
+              onInput={(e) =>
+                setContent((e.target as HTMLDivElement).innerHTML)
+              }
+            />
 
 
 

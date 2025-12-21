@@ -2880,7 +2880,7 @@ const handleEditProduct = (product: Product) => {
   // -------------------- Main Render --------------------
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] px-6 py-4">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] p-1 space-y-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[var(--textPrimary)]">

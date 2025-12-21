@@ -39,6 +39,11 @@ export default function VerifySuperAdminLogin() {
       localStorage.setItem("admin_token", data.accessToken); // ✅ SAME AS ADMIN
       localStorage.setItem("admin_role", "superadmin");     // ✅ ROLE KEY FIXED
       localStorage.removeItem("superadmin_email");
+      localStorage.setItem(
+  "permissions",
+  JSON.stringify(data.permissions || [])
+);
+
 
       console.log("✅ Superadmin verified:", data);
 

@@ -21,7 +21,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await fetch(`${API_BASE}/api/usersadmin/login`, {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,11 +35,15 @@ export default function AdminLogin() {
         throw new Error(data.message || "Invalid credentials");
       }
 
-      // Store token
       localStorage.setItem("admin_token", data.accessToken);
-      localStorage.setItem("admin_role", data.admin.role);
+      localStorage.setItem("admin_role", data.admin.role || "");
+      localStorage.setItem(
+        "permissions",
+        JSON.stringify(data.admin.permissions || [])
+      );
 
       window.location.href = "/dashboard";
+
     } catch (err: any) {
       const errorMessage =
         err instanceof Error ? err.message : "Something went wrong";
@@ -52,7 +56,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
-        
+
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">

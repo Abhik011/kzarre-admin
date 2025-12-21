@@ -43,9 +43,11 @@ interface CategorySalesItem {
 }
 
 interface TopProductItem {
-  _id: string;
+  productId: string;
+  name: string;
   sold: number;
 }
+
 
 interface SummaryItem {
   totalOrders?: number;
@@ -156,9 +158,10 @@ const AnalyticsPage = () => {
   const COLORS = ["#6DE784", "#EFBF04", "#1C64F2", "#FF6B6B", "#A855F7"];
 
   return (
-    <div className="p-0">
+     <div className="min-h-screen p-1 space-y-8">
       {/* HEADER */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 mb-6">
+   
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl ">
         <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
           Advanced Analytics
         </h1>

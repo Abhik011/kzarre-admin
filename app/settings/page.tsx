@@ -112,7 +112,7 @@ export default function SystemConfigurationPage() {
           onClick={() => setActiveTab("general")}
           className={`text-sm font-medium ${
             activeTab === "general"
-              ? "border-b-2 border-green-500 text-green-600"
+              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
           }`}
         >
@@ -123,7 +123,7 @@ export default function SystemConfigurationPage() {
           onClick={() => setActiveTab("maintenance")}
           className={`text-sm font-medium ${
             activeTab === "maintenance"
-              ? "border-b-2 border-green-500 text-green-600"
+              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
           }`}
         >
