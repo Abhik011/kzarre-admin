@@ -28,12 +28,12 @@ export default function CMSComplete() {
 
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
-  const role =
-    typeof window !== "undefined" ? localStorage.getItem("role") : "";
-  const isSuperAdmin = role === "superadmin";
+  const admin_role =
+    typeof window !== "undefined" ? localStorage.getItem("admin_role") : "";
+  const isSuperAdmin = admin_role === "superadmin";
 
   const [isEditing, setIsEditing] = useState(false);
-const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
 
   // =============================
@@ -87,7 +87,7 @@ const [editingId, setEditingId] = useState(null);
   const [imageMetaTags, setImageMetaTags] = useState([]);
   const [imageMetaDescriptions, setImageMetaDescriptions] = useState([]);
   const [imageKeywords, setImageKeywords] = useState([]);
-const [enableSchedule, setEnableSchedule] = useState(false);
+  const [enableSchedule, setEnableSchedule] = useState(false);
 
   // helper: determine if current display type expects multiple files
   const isGrid =
@@ -131,7 +131,7 @@ const [enableSchedule, setEnableSchedule] = useState(false);
               item.title || (item.heroVideoUrl ? "Hero Video" : "CMS Item"),
             type: item.displayTo || (item.heroVideoUrl ? "Video" : "Banner"),
             author: item.author || "System",
-            status: item.status || "Pending",
+            status: item.status || "Pending Review",
             visibleAt: item.visibleAt,
             lastModified: item.updatedAt
               ? new Date(item.updatedAt).toLocaleDateString()
@@ -347,99 +347,99 @@ const [enableSchedule, setEnableSchedule] = useState(false);
   // =============================
   // SAVE POST (FORM + FILE)
   // =============================
-const handleSavePost = async () => {
-  try {
-    if (!postData.title.trim()) {
-      alert("Please enter a title.");
-      return;
-    }
-
-    // Validation for grids
-    if (isGrid && uploadedMediaList.length !== expectedGridCount) {
-      alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
-      return;
-    }
-
-    if (
-      postData.displayTo === "home-landing-video" &&
-      !uploadedMedia?.rawFile &&
-      !isEditing // allow editing without new upload
-    ) {
-      alert("Please upload a landing video.");
-      return;
-    }
-
-    const formData = new FormData();
-
-    // Append text fields
-    Object.entries(postData).forEach(([key, value]) =>
-      formData.append(key, value)
-    );
-
-    // Banner styling
-    formData.append("bannerStyle", JSON.stringify(bannerStyle));
-
-    // Grid count
-    if (isGrid) formData.append("gridCount", String(expectedGridCount));
-    if (!isGrid && !isCarousel) {
-      if (uploadedMedia?.rawFile) {
-        formData.append("file", uploadedMedia.rawFile);
+  const handleSavePost = async () => {
+    try {
+      if (!postData.title.trim()) {
+        alert("Please enter a title.");
+        return;
       }
-    }
-    if (isGrid || isCarousel) {
-      uploadedMediaList.forEach((m) => {
-        // Only append if user uploaded a NEW file
-        if (m.rawFile) {
-          formData.append("files", m.rawFile);
-        } else {
-          // Keep existing image URLs during EDIT mode
-          formData.append("existingFiles", m.uploadedUrl || m.url);
+
+      // Validation for grids
+      if (isGrid && uploadedMediaList.length !== expectedGridCount) {
+        alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
+        return;
+      }
+
+      if (
+        postData.displayTo === "home-landing-video" &&
+        !uploadedMedia?.rawFile &&
+        !isEditing // allow editing without new upload
+      ) {
+        alert("Please upload a landing video.");
+        return;
+      }
+
+      const formData = new FormData();
+
+      // Append text fields
+      Object.entries(postData).forEach(([key, value]) =>
+        formData.append(key, value)
+      );
+
+      // Banner styling
+      formData.append("bannerStyle", JSON.stringify(bannerStyle));
+
+      // Grid count
+      if (isGrid) formData.append("gridCount", String(expectedGridCount));
+      if (!isGrid && !isCarousel) {
+        if (uploadedMedia?.rawFile) {
+          formData.append("file", uploadedMedia.rawFile);
         }
+      }
+      if (isGrid || isCarousel) {
+        uploadedMediaList.forEach((m) => {
+          // Only append if user uploaded a NEW file
+          if (m.rawFile) {
+            formData.append("files", m.rawFile);
+          } else {
+            // Keep existing image URLs during EDIT mode
+            formData.append("existingFiles", m.uploadedUrl || m.url);
+          }
+        });
+
+        formData.append("titles", JSON.stringify(imageTitles));
+        formData.append("descriptions", JSON.stringify(imageDescriptions));
+        formData.append("metaTags", JSON.stringify(imageMetaTags));
+        formData.append("metaDescriptions", JSON.stringify(imageMetaDescriptions));
+        formData.append("imageKeywords", JSON.stringify(imageKeywords));
+      }
+
+      // -----------------------------
+      // DECIDE SAVE vs UPDATE
+      // -----------------------------
+      const url = isEditing
+        ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/update/${editingId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/save`;
+
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        body: formData,
       });
 
-      formData.append("titles", JSON.stringify(imageTitles));
-      formData.append("descriptions", JSON.stringify(imageDescriptions));
-      formData.append("metaTags", JSON.stringify(imageMetaTags));
-      formData.append("metaDescriptions", JSON.stringify(imageMetaDescriptions));
-      formData.append("imageKeywords", JSON.stringify(imageKeywords));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save");
+
+      alert("✅ Saved successfully!");
+      setCurrentView("dashboard");
+
+      // Reset EDITING mode
+      setIsEditing(false);
+      setEditingId(null);
+
+      // Clear media states
+      setUploadedMedia(null);
+      setUploadedMediaList([]);
+      setImageTitles([]);
+      setImageDescriptions([]);
+      setImageMetaTags([]);
+      setImageMetaDescriptions([]);
+      setImageKeywords([]);
+    } catch (err) {
+      alert("❌ " + err.message);
     }
-
-    // -----------------------------
-    // DECIDE SAVE vs UPDATE
-    // -----------------------------
-    const url = isEditing
-      ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/update/${editingId}`
-      : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/save`;
-
-    const method = isEditing ? "PUT" : "POST";
-
-    const res = await fetch(url, {
-      method,
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to save");
-
-    alert("✅ Saved successfully!");
-    setCurrentView("dashboard");
-
-    // Reset EDITING mode
-    setIsEditing(false);
-    setEditingId(null);
-
-    // Clear media states
-    setUploadedMedia(null);
-    setUploadedMediaList([]);
-    setImageTitles([]);
-    setImageDescriptions([]);
-    setImageMetaTags([]);
-    setImageMetaDescriptions([]);
-    setImageKeywords([]);
-  } catch (err) {
-    alert("❌ " + err.message);
-  }
-};
+  };
 
 
 
@@ -506,49 +506,49 @@ const handleSavePost = async () => {
     }
   };
 
- const handleDeletePost = async (postId) => {
-  if (!confirm("Delete this post permanently?")) return;
+  const handleDeletePost = async (postId) => {
+    if (!confirm("Delete this post permanently?")) return;
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/delete/${postId}`,
-      { method: "DELETE" }
-    );
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/delete/${postId}`,
+        { method: "DELETE" }
+      );
 
-    if (!res.ok) throw new Error("Delete failed");
+      if (!res.ok) throw new Error("Delete failed");
 
-    setPostsData((prev) => prev.filter((p) => p._id !== postId));
+      setPostsData((prev) => prev.filter((p) => p._id !== postId));
 
-    alert("🗑️ Deleted successfully");
-  } catch (err) {
-    alert("❌ " + err.message);
-  }
-};
-
-const isLiveNow = (post) => {
-  if (!post.visibleAt) return false;
-
-  return new Date(post.visibleAt) <= new Date();
-};
-
-
-
-const getStatusColor = (status, post) => {
-  // 🔴 LIVE overrides Scheduled
-  if (status === "Scheduled" && isLiveNow(post)) {
-    return "bg-[var(--accent-green)] text-white"; // LIVE
-  }
-
-  const map = {
-    Approved: "bg-[var(--accent-green)] text-white",
-    Draft: "bg-gray-500 text-white",
-    "Pending Review": "bg-yellow-500 text-black",
-    Rejected: "bg-red-500 text-white",
-    Scheduled: "bg-blue-500 text-white",
+      alert("🗑️ Deleted successfully");
+    } catch (err) {
+      alert("❌ " + err.message);
+    }
   };
 
-  return map[status] || "bg-gray-500 text-white";
-};
+  const isLiveNow = (post) => {
+    if (!post.visibleAt) return false;
+
+    return new Date(post.visibleAt) <= new Date();
+  };
+
+
+
+  const getStatusColor = (status, post) => {
+    // 🔴 LIVE overrides Scheduled
+    if (status === "Scheduled" && isLiveNow(post)) {
+      return "bg-[var(--accent-green)] text-white"; // LIVE
+    }
+
+    const map = {
+      Approved: "bg-[var(--accent-green)] text-white",
+      Draft: "bg-gray-500 text-white",
+      "Pending Review": "bg-yellow-500 text-black",
+      Rejected: "bg-red-500 text-white",
+      Scheduled: "bg-blue-500 text-white",
+    };
+
+    return map[status] || "bg-gray-500 text-white";
+  };
 
 
   // ---------- UI helpers ----------
@@ -576,86 +576,86 @@ const getStatusColor = (status, post) => {
   );
 
   const handleEditPost = async (postId) => {
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/${postId}`
-    );
-    const data = await res.json();
-
-    if (!res.ok) throw new Error("Failed to load post for editing");
-
-    // Load basic post fields
-    setPostData({
-      title: data.title || "",
-      description: data.description || "",
-      displayTo: data.displayTo || "",
-      visibleDate: data.meta?.visibleDate || "",
-      visibleTime: data.meta?.visibleTime || "",
-      metaTag: data.meta?.tag || "",
-      metaDescription: data.meta?.description || "",
-      keywords: data.meta?.keywords || "",
-    });
-
-    // Load banner styling
-    if (data.bannerStyle) {
-      setBannerStyle({
-        titleColor: data.bannerStyle.titleColor || "#000000",
-        titleSize: data.bannerStyle.titleSize || "16pt",
-        descColor: data.bannerStyle.descColor || "#EFBF04",
-        descSize: data.bannerStyle.descSize || "14pt",
-        alignment: data.bannerStyle.alignment || "center",
-        fontFamily: data.bannerStyle.fontFamily || "inherit",
-      });
-    }
-
-    // ------------------------------
-    // LOAD MEDIA (single, 4-grid, 5-grid, carousel)
-    // ------------------------------
-
-// Single image or video (SAFE)
-if (data.media) {
-  const url =
-    typeof data.media === "string" ? data.media : data.media.url;
-
-  const type =
-    data.media?.kind ||
-    (typeof url === "string" && url.endsWith(".mp4") ? "video" : "image");
-
-  setUploadedMedia({
-    url,
-    uploadedUrl: url,
-    type,
-    name: data.media?.name || "",
-    rawFile: null,
-  });
-}
-
-
-    // Multi image (grid or carousel)
-    if (Array.isArray(data.mediaGroup)) {
-      setUploadedMediaList(
-        data.mediaGroup.map((img) => ({
-          url: img.imageUrl,
-          uploadedUrl: img.imageUrl,
-          rawFile: null,
-        }))
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/${postId}`
       );
+      const data = await res.json();
 
-      setImageTitles(data.mediaGroup.map((i) => i.title || ""));
-      setImageDescriptions(data.mediaGroup.map((i) => i.description || ""));
-      setImageMetaTags(data.mediaGroup.map((i) => i.metaTag || ""));
-      setImageMetaDescriptions(data.mediaGroup.map((i) => i.metaDescription || ""));
-      setImageKeywords(data.mediaGroup.map((i) => i.keywords || ""));
+      if (!res.ok) throw new Error("Failed to load post for editing");
+
+      // Load basic post fields
+      setPostData({
+        title: data.title || "",
+        description: data.description || "",
+        displayTo: data.displayTo || "",
+        visibleDate: data.meta?.visibleDate || "",
+        visibleTime: data.meta?.visibleTime || "",
+        metaTag: data.meta?.tag || "",
+        metaDescription: data.meta?.description || "",
+        keywords: data.meta?.keywords || "",
+      });
+
+      // Load banner styling
+      if (data.bannerStyle) {
+        setBannerStyle({
+          titleColor: data.bannerStyle.titleColor || "#000000",
+          titleSize: data.bannerStyle.titleSize || "16pt",
+          descColor: data.bannerStyle.descColor || "#EFBF04",
+          descSize: data.bannerStyle.descSize || "14pt",
+          alignment: data.bannerStyle.alignment || "center",
+          fontFamily: data.bannerStyle.fontFamily || "inherit",
+        });
+      }
+
+      // ------------------------------
+      // LOAD MEDIA (single, 4-grid, 5-grid, carousel)
+      // ------------------------------
+
+      // Single image or video (SAFE)
+      if (data.media) {
+        const url =
+          typeof data.media === "string" ? data.media : data.media.url;
+
+        const type =
+          data.media?.kind ||
+          (typeof url === "string" && url.endsWith(".mp4") ? "video" : "image");
+
+        setUploadedMedia({
+          url,
+          uploadedUrl: url,
+          type,
+          name: data.media?.name || "",
+          rawFile: null,
+        });
+      }
+
+
+      // Multi image (grid or carousel)
+      if (Array.isArray(data.mediaGroup)) {
+        setUploadedMediaList(
+          data.mediaGroup.map((img) => ({
+            url: img.imageUrl,
+            uploadedUrl: img.imageUrl,
+            rawFile: null,
+          }))
+        );
+
+        setImageTitles(data.mediaGroup.map((i) => i.title || ""));
+        setImageDescriptions(data.mediaGroup.map((i) => i.description || ""));
+        setImageMetaTags(data.mediaGroup.map((i) => i.metaTag || ""));
+        setImageMetaDescriptions(data.mediaGroup.map((i) => i.metaDescription || ""));
+        setImageKeywords(data.mediaGroup.map((i) => i.keywords || ""));
+      }
+
+      // Switch view → open editor
+      setEditingId(postId);
+      setIsEditing(true);
+      setCurrentView("createPost");
+    } catch (err) {
+      alert("❌ " + err.message);
     }
-
-    // Switch view → open editor
-    setEditingId(postId);
-    setIsEditing(true);
-    setCurrentView("createPost");
-  } catch (err) {
-    alert("❌ " + err.message);
-  }
-};
+  };
 
 
   // ---------- Create Post View ----------
@@ -754,7 +754,7 @@ if (data.media) {
                     <option value="women-page-video">Women Page Video</option>
                     <option value="accessories-video">Accessories Video</option>
                     <option value="heritage-video">Heritage Video</option>
-                  
+
                     <option value="women-4grid">
                       Women Banner Grid (4 images)
                     </option>
@@ -1009,33 +1009,33 @@ if (data.media) {
                 Post Settings
               </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-  {/* Date */}
-  <div className="relative">
-    <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-    <input
-      type="date"
-      value={postData.visibleDate}
-      onChange={(e) =>
-        setPostData((p) => ({ ...p, visibleDate: e.target.value }))
-      }
-      className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
-    />
-  </div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Date */}
+                <div className="relative">
+                  <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+                  <input
+                    type="date"
+                    value={postData.visibleDate}
+                    onChange={(e) =>
+                      setPostData((p) => ({ ...p, visibleDate: e.target.value }))
+                    }
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
+                  />
+                </div>
 
-  {/* Time */}
-  <div className="relative">
-    <Clock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
-    <input
-      type="time"
-      value={postData.visibleTime}
-      onChange={(e) =>
-        setPostData((p) => ({ ...p, visibleTime: e.target.value }))
-      }
-      className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
-    />
-  </div>
-</div>
+                {/* Time */}
+                <div className="relative">
+                  <Clock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
+                  <input
+                    type="time"
+                    value={postData.visibleTime}
+                    onChange={(e) =>
+                      setPostData((p) => ({ ...p, visibleTime: e.target.value }))
+                    }
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg bg-[var(--background)] border-[var(--sidebar-border)]"
+                  />
+                </div>
+              </div>
 
 
             </div>
@@ -1367,7 +1367,7 @@ if (data.media) {
   // ---------- Dashboard (list) ----------
   const renderDashboard = () => (
     <div className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
-<div className="min-h-screen p-1 space-y-8">
+      <div className="min-h-screen p-1 space-y-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2 text-[var(--text-primary)]">
             Content Management
@@ -1457,46 +1457,48 @@ if (data.media) {
                         {post.lastModified}
                       </td>
                       <td className="px-6 py-4">
-                       <span
-  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-    post.status,
-    post
-  )}`}
->
-  {post.status === "Scheduled" && isLiveNow(post)
-    ? "Live"
-    : post.status}
-</span>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                            post.status,
+                            post
+                          )}`}
+                        >
+                          {post.status === "Scheduled" && isLiveNow(post)
+                            ? "Live"
+                            : post.status}
+                        </span>
 
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          {isSuperAdmin && post.status === "Pending Review" && (
-                            <>
+                          {isSuperAdmin &&
+                            ["Pending Review", "Pending"].includes(post.status) && (
 
-                              <button
-                                onClick={() => handleApprovePost(post._id)}
-                                className="px-3 py-1 text-sm rounded"
-                                style={{
-                                  background: "rgba(34,197,94,0.08)",
-                                  color: "rgb(34, 197, 94)",
-                                }}
-                              >
-                                Approve
-                              </button>
+                              <>
 
-                              <button
-                                onClick={() => handleRejectPost(post._id)}
-                                className="px-3 py-1 text-sm rounded"
-                                style={{
-                                  background: "rgba(239,68,68,0.08)",
-                                  color: "rgb(239, 68, 68)",
-                                }}
-                              >
-                                Reject
-                              </button>
-                            </>
-                          )}
+                                <button
+                                  onClick={() => handleApprovePost(post._id)}
+                                  className="px-3 py-1 text-sm rounded"
+                                  style={{
+                                    background: "rgba(34,197,94,0.08)",
+                                    color: "rgb(34, 197, 94)",
+                                  }}
+                                >
+                                  Approve
+                                </button>
+
+                                <button
+                                  onClick={() => handleRejectPost(post._id)}
+                                  className="px-3 py-1 text-sm rounded"
+                                  style={{
+                                    background: "rgba(239,68,68,0.08)",
+                                    color: "rgb(239, 68, 68)",
+                                  }}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
                           <button
                             onClick={() => handleEditPost(post._id)}
                             className="p-1 hover:opacity-90"

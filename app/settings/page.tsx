@@ -4,18 +4,20 @@ import React, { useState } from "react";
 
 type TabType = "general" | "maintenance";
 
+const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
+const getToken = () =>
+  typeof window !== "undefined"
+    ? localStorage.getItem("admin_token") ||
+    localStorage.getItem("superadmin_token")
+    : null;
+
+
 export default function SystemConfigurationPage() {
   const [activeTab, setActiveTab] = useState<TabType>("general");
 
   /* =========================
      GENERAL SETTINGS STATE
   ========================= */
-  const [general, setGeneral] = useState({
-    siteTitle: "My Admin Panel",
-    timeZone: "Asia/Kolkata",
-    primaryColor: "#22c55e",
-    secondaryColor: "#0f172a",
-  });
 
   /* =========================
      MAINTENANCE STATE
@@ -36,23 +38,59 @@ export default function SystemConfigurationPage() {
   /* =========================
      SAVE HANDLERS
   ========================= */
-  const saveGeneralSettings = () => {
-    console.log("General Settings:", general);
-    alert("General settings saved successfully");
+
+  const saveMaintenanceSettings = async () => {
+    try {
+
+      await fetch(`${API}/api/admin/system/maintenance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maintenance }),
+      });
+
+
+      alert("Maintenance & Advanced settings saved successfully");
+    } catch (err) {
+      alert("Failed to save maintenance settings");
+    }
   };
 
-  const saveMaintenanceSettings = () => {
-    console.log("Maintenance Settings:", maintenance);
-    alert("Maintenance & Advanced settings saved successfully");
+
+  const triggerManualBackup = async () => {
+    try {
+      const token = getToken();
+
+      await fetch(`${API}/api/system/backup/manual`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      alert("Manual backup triggered successfully");
+    } catch {
+      alert("Backup failed");
+    }
   };
 
-  const triggerManualBackup = () => {
-    alert("Manual backup triggered successfully");
+
+  const runAdvancedAction = async (action: string) => {
+    try {
+      const token = getToken();
+
+      await fetch(`${API}/api/system/action/${action}`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      alert(`${action} executed successfully`);
+    } catch {
+      alert("Action failed");
+    }
   };
 
-  const runAdvancedAction = (action: string) => {
-    alert(`${action} executed successfully`);
-  };
 
   /* =========================
       FONT MANAGER STATE
@@ -110,22 +148,20 @@ export default function SystemConfigurationPage() {
       <div className="flex gap-6 border-b pb-2">
         <button
           onClick={() => setActiveTab("general")}
-          className={`text-sm font-medium ${
-            activeTab === "general"
-              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
+          className={`text-sm font-medium ${activeTab === "general"
+              ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
-          }`}
+            }`}
         >
           GENERAL SETTINGS
         </button>
 
         <button
           onClick={() => setActiveTab("maintenance")}
-          className={`text-sm font-medium ${
-            activeTab === "maintenance"
-              ?  "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
+          className={`text-sm font-medium ${activeTab === "maintenance"
+              ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
               : "text-gray-500"
-          }`}
+            }`}
         >
           MAINTENANCE & ADVANCED
         </button>
@@ -134,85 +170,6 @@ export default function SystemConfigurationPage() {
       {/* ========================= GENERAL TAB ========================= */}
       {activeTab === "general" && (
         <div className="space-y-6 max-w-3xl">
-          
-          {/* ---------- GENERAL SETTINGS CARD ---------- */}
-          <div className="border rounded-xl p-6 space-y-6">
-            <h3 className="font-semibold text-lg">General Settings</h3>
-
-            <div>
-              <label className="block text-sm mb-1">Site Title</label>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-                value={general.siteTitle}
-                onChange={(e) =>
-                  setGeneral({ ...general, siteTitle: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1">Time Zone</label>
-              <select
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-                value={general.timeZone}
-                onChange={(e) =>
-                  setGeneral({ ...general, timeZone: e.target.value })
-                }
-              >
-                <option value="Asia/Kolkata">Asia / Kolkata</option>
-                <option value="America/New_York">America / New York</option>
-                <option value="America/Los_Angeles">
-                  America / Los Angeles
-                </option>
-                <option value="UTC">UTC</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">Primary Color</label>
-                <input
-                  type="color"
-                  value={general.primaryColor}
-                  onChange={(e) =>
-                    setGeneral({ ...general, primaryColor: e.target.value })
-                  }
-                  className="w-full h-10 border rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">Secondary Color</label>
-                <input
-                  type="color"
-                  value={general.secondaryColor}
-                  onChange={(e) =>
-                    setGeneral({
-                      ...general,
-                      secondaryColor: e.target.value,
-                    })
-                  }
-                  className="w-full h-10 border rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1">Site Logo</label>
-              <input
-                type="file"
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-
-            <button
-              onClick={saveGeneralSettings}
-              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
-            >
-              Save General Settings
-            </button>
-          </div>
-
           {/* ---------- FONT MANAGER CARD ---------- */}
           <div className="border rounded-xl p-6 space-y-6">
             <h3 className="font-semibold text-lg">Font Manager</h3>
@@ -429,11 +386,19 @@ export default function SystemConfigurationPage() {
             </div>
 
             <button
-              onClick={saveMaintenanceSettings}
-              className="bg-[var(--accent-green)] text-white px-6 py-2 rounded-lg"
+              onClick={async () => {
+                await saveMaintenanceSettings();
+              }}
+              className={`px-6 py-2 rounded-lg text-white ${maintenance.maintenanceMode
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-[var(--accent-green)] hover:opacity-90"
+                }`}
             >
-              Save Maintenance & Advanced Settings
+              {maintenance.maintenanceMode
+                ? "End Maintenance"
+                : "Start Maintenance"}
             </button>
+
           </div>
         </div>
       )}

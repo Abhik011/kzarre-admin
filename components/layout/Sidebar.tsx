@@ -119,12 +119,12 @@ useEffect(() => {
       href: "/marketing",
       permission: "manage_marketing",
     },
-    {
-      label: "Payments & Finance",
-      icon: DollarSign,
-      href: "/payments",
-      permission: "view_finance",
-    },
+    // {
+    //   label: "Payments & Finance",
+    //   icon: DollarSign,
+    //   href: "/payments",
+    //   permission: "view_finance",
+    // },
     {
       label: "Security & Compliance",
       icon: Shield,

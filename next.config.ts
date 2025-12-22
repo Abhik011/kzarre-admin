@@ -17,10 +17,10 @@ const nextConfig = {
     ],
   },
 
-  // // 🔥 For the admin app we don't want to hit 192.168 directly from the browser
-  // env: {
-  //   NEXT_PUBLIC_BACKEND_API_URL: "http://localhost:5500", // admin should use relative `/api`
-  // },
+  // 🔥 For the admin app we don't want to hit 192.168 directly from the browser
+  env: {
+    NEXT_PUBLIC_BACKEND_API_URL: "http://localhost:5500", // admin should use relative `/api`
+  },
 
   experimental: {
     serverActions: {
