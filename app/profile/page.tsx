@@ -24,44 +24,51 @@ export default function ProfilePage() {
 
   /* ================= LOAD PROFILE ================= */
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        // ✅ Primary source: backend
-        const res = await fetch(`${API}/api/profile/me`, {
-          credentials: "include",
-        });
+  const loadProfile = async () => {
+  try {
+    const token =
+      localStorage.getItem("admin_token") ||
+      localStorage.getItem("superadmin_token");
 
-        if (res.ok) {
-          const data = await res.json();
-          setProfile({
-            name: data.name,
-            email: data.email,
-            role: data.role,
-          });
-          return;
-        }
+    if (!token) throw new Error("No token");
 
-        throw new Error("Backend failed");
-      } catch {
-        // ✅ Fallback: localStorage (safe)
-        const name =
-          localStorage.getItem("superadmin_name") ||
-          localStorage.getItem("admin_name") ||
-          "User";
+    const res = await fetch(`${API}/api/profile/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-        const email =
-          localStorage.getItem("superadmin_email") ||
-          localStorage.getItem("admin_email") ||
-          "user@system.com";
+    if (!res.ok) throw new Error("Unauthorized");
 
-        const role = localStorage.getItem("role") || "Admin";
+    const data = await res.json();
 
-        setProfile({ name, email, role });
-      } finally {
-        setLoading(false);
-      }
-    };
+    setProfile({
+      name: data.name,
+      email: data.email,
+      role: data.role,
+    });
+  } catch (err) {
+    console.warn("Profile API failed, using fallback");
 
+    // ✅ fallback stays
+    const name =
+      localStorage.getItem("superadmin_name") ||
+      localStorage.getItem("admin_name") ||
+      "User";
+
+    const email =
+      localStorage.getItem("superadmin_email") ||
+      localStorage.getItem("admin_email") ||
+      "user@system.com";
+
+    const role = localStorage.getItem("role") || "Admin";
+
+    setProfile({ name, email, role });
+  } finally {
+    setLoading(false);
+  }
+};
     loadProfile();
   }, [API]);
 
