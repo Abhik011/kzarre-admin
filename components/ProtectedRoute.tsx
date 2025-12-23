@@ -7,13 +7,11 @@ import useAuth from "@/app/hooks/useAuth";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   permissions?: string[];
-  roles?: string[];
 }
 
 export default function ProtectedRoute({
   children,
   permissions = [],
-  roles = [],
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { loading } = useAuth();
@@ -23,7 +21,6 @@ export default function ProtectedRoute({
     if (loading) return;
 
     const token = localStorage.getItem("admin_token");
-    const role = localStorage.getItem("admin_role");
     const storedPermissions = localStorage.getItem("permissions");
 
     const userPermissions: string[] = storedPermissions
@@ -36,25 +33,13 @@ export default function ProtectedRoute({
       return;
     }
 
-    // 🔥 SUPERADMIN = FULL ACCESS
-    if (role === "superadmin") {
-      setAuthorized(true);
-      return;
-    }
-
-    // 🔐 ROLE CHECK (FIRST)
-    if (roles.length > 0 && !roles.includes(role || "")) {
-      router.replace("/unauthorized");
-      return;
-    }
-
     // 🔓 No permission required
     if (permissions.length === 0) {
       setAuthorized(true);
       return;
     }
 
-    // 🔐 PERMISSION CHECK
+    // 🔐 Permission check
     const allowed = permissions.some(p =>
       userPermissions.includes(p)
     );
@@ -65,9 +50,9 @@ export default function ProtectedRoute({
     }
 
     setAuthorized(true);
-  }, [loading, permissions, roles, router]);
+  }, [loading, permissions, router]);
 
-  // ⏳ Loading spinner
+  // ⏳ Loading
   if (authorized === null) {
     return (
       <div className="flex items-center justify-center h-screen">

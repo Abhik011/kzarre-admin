@@ -39,12 +39,14 @@ const isActive = (href: string) =>
     role: "Admin",
   });
 
-  const initials = profile.name
-    .split(" ")
-    .map(n => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+const initials =
+  profile?.name
+    ?.split(" ")
+    ?.map(n => n[0])
+    ?.join("")
+    ?.slice(0, 2)
+    ?.toUpperCase() || "U";
+
 
 useEffect(() => {
  const token = localStorage.getItem("admin_token");

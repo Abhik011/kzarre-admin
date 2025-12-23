@@ -15,43 +15,45 @@ export default function AdminLogin() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 🔥 REQUIRED
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(form),
+    });
 
-      if (!res.ok) {
-        throw new Error(data.message || "Invalid credentials");
-      }
-
-      localStorage.setItem("admin_token", data.accessToken);
-      localStorage.setItem("admin_role", data.admin.role || "");
-      localStorage.setItem(
-        "permissions",
-        JSON.stringify(data.admin.permissions || [])
-      );
-
-      window.location.href = "/dashboard";
-
-    } catch (err: any) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Something went wrong";
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Invalid credentials");
     }
-  };
+
+    // ✅ STORE ACCESS TOKEN
+    localStorage.setItem("admin_token", data.accessToken);
+
+    // ✅ STORE PERMISSIONS ONLY
+    localStorage.setItem(
+      "permissions",
+      JSON.stringify(data.admin.permissions || [])
+    );
+
+    // ✅ AVOID REFRESH RACE
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 100);
+
+  } catch (err: any) {
+    setError(err?.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
