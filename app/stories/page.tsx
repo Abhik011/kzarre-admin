@@ -303,7 +303,6 @@ export default function AdminStories() {
 
   return (
     <ProtectedRoute
-roles={["superadmin", "admin"]}
   permissions={["manage_stories"]}
 >
 
