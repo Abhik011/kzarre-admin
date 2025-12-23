@@ -26,9 +26,9 @@ export default function AdminLogin() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // 🔥 REQUIRED
         body: JSON.stringify(form),
       });
-
       const data = await res.json();
 
       if (!res.ok) {

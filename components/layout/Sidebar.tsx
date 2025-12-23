@@ -47,8 +47,13 @@ const isActive = (href: string) =>
     .toUpperCase();
 
 useEffect(() => {
+ const token = localStorage.getItem("admin_token");
+  if (!token) return;
+
   fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/profile/me`, {
-    credentials: "include", // ✅ sends kzarre_token automatically
+    headers: {
+      Authorization: `Bearer ${token}`, // ✅ ACCESS TOKEN ONLY
+    },
   })
     .then(res => (res.ok ? res.json() : null))
     .then(data => {

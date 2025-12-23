@@ -24,51 +24,49 @@ export default function ProfilePage() {
 
   /* ================= LOAD PROFILE ================= */
   useEffect(() => {
-  const loadProfile = async () => {
-  try {
-    const token =
-      localStorage.getItem("admin_token") ||
-      localStorage.getItem("superadmin_token");
+    const loadProfile = async () => {
+      try {
+        // ✅ Primary source: backend
+          const token = localStorage.getItem("admin_token");
+        if (!token) throw new Error("No access token");
+        
+         const res = await fetch(`${API}/api/profile/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // 🔥 REQUIRED
+          },
+        });
 
-    if (!token) throw new Error("No token");
+        if (res.ok) {
+          const data = await res.json();
+          setProfile({
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          });
+          return;
+        }
 
-    const res = await fetch(`${API}/api/profile/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+        throw new Error("Backend failed");
+      } catch {
+        // ✅ Fallback: localStorage (safe)
+        const name =
+          localStorage.getItem("superadmin_name") ||
+          localStorage.getItem("admin_name") ||
+          "User";
 
-    if (!res.ok) throw new Error("Unauthorized");
+        const email =
+          localStorage.getItem("superadmin_email") ||
+          localStorage.getItem("admin_email") ||
+          "user@system.com";
 
-    const data = await res.json();
+        const role = localStorage.getItem("role") || "Admin";
 
-    setProfile({
-      name: data.name,
-      email: data.email,
-      role: data.role,
-    });
-  } catch (err) {
-    console.warn("Profile API failed, using fallback");
+        setProfile({ name, email, role });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // ✅ fallback stays
-    const name =
-      localStorage.getItem("superadmin_name") ||
-      localStorage.getItem("admin_name") ||
-      "User";
-
-    const email =
-      localStorage.getItem("superadmin_email") ||
-      localStorage.getItem("admin_email") ||
-      "user@system.com";
-
-    const role = localStorage.getItem("role") || "Admin";
-
-    setProfile({ name, email, role });
-  } finally {
-    setLoading(false);
-  }
-};
     loadProfile();
   }, [API]);
 

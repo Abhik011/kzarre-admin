@@ -1,80 +1,41 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
-
-// -------------------------------------------------------
-// 🔍 Choose refresh API depending on logged-in role
-// -------------------------------------------------------
-const getRefreshRoute = () => {
-  if (typeof window === "undefined") return "/api/superadmin/refresh";
-
-  const role = localStorage.getItem("admin_role");
-  const adminRole = localStorage.getItem("kzarre-token");
-
-  if (role === "superadmin") return "/api/superadmin/refresh";
-  if (adminRole === "admin") return "/api/usersadmin/refresh";
-
-  return "/api/superadmin/refresh"; // fallback
-};
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
 
 export default function useAuth() {
+  const pathname = usePathname();
+
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // -------------------------------------------------------
-  // ⛔ Skip on login pages
-  // -------------------------------------------------------
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const skipRoutes = [
-      "/superadmin/login",
-      "/superadmin/verify-login",
-      "/admin/login",
-    ];
-
-    if (skipRoutes.includes(window.location.pathname)) {
-      console.log("⛔ Skipping useAuth on auth page");
-      setLoading(false);
-    }
-  }, []);
-
-  // -------------------------------------------------------
-  // 🔁 Refresh access token using cookie
-  // -------------------------------------------------------
+  /* -------------------------------------------------------
+     🔁 Refresh access token using cookie
+  ------------------------------------------------------- */
   const refreshAccessToken = useCallback(async () => {
-    if (typeof window === "undefined") return null;
-
-    const refreshRoute = getRefreshRoute();
-    console.log("🔄 Refresh Endpoint:", refreshRoute);
-
     try {
-      const res = await fetch(`${API_BASE}${refreshRoute}`, {
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
         method: "POST",
-        credentials: "include", // 🔥 VERY IMPORTANT
+        credentials: "include",
       });
 
-      console.log("📡 Refresh Response Status:", res.status);
-
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("❌ Refresh failed:", errorText);
+        console.warn("🔐 Refresh failed — clearing auth");
+        localStorage.removeItem("admin_token");
+        setToken(null);
         return null;
       }
 
       const data = await res.json();
 
-      if (data.accessToken) {
+      if (data && data.accessToken) {
         localStorage.setItem("admin_token", data.accessToken);
         setToken(data.accessToken);
-        console.log("✅ Token refreshed");
         return data.accessToken;
       }
 
-      console.warn("⚠️ Backend returned no accessToken");
       return null;
     } catch (err) {
       console.error("🔥 Refresh error:", err);
@@ -82,36 +43,44 @@ export default function useAuth() {
     }
   }, []);
 
-  // -------------------------------------------------------
-  // 🔐 Load token on first load
-  // -------------------------------------------------------
+  /* -------------------------------------------------------
+     ⛔ Skip refresh on auth pages
+  ------------------------------------------------------- */
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const skipRoutes = [
+      "/admin/login",
+      "/superadmin/login",
+      "/superadmin/verify-login",
+    ];
 
-    const stored = localStorage.getItem("admin_token");
-
-    if (!stored) {
-      console.log("⚠️ No token found. Trying refresh...");
-      refreshAccessToken().finally(() => setLoading(false));
+    if (skipRoutes.includes(pathname)) {
+      setLoading(false);
       return;
     }
 
-    setToken(stored);
+    const stored = localStorage.getItem("admin_token");
+    if (stored) setToken(stored);
 
-    // Try refreshing in background anyway
     refreshAccessToken().finally(() => setLoading(false));
-  }, [refreshAccessToken]);
+  }, [pathname, refreshAccessToken]);
 
-  // -------------------------------------------------------
-  // ⏱ Auto-refresh every 14 min
-  // -------------------------------------------------------
+  /* -------------------------------------------------------
+     ⏱ Auto refresh every 14 minutes
+  ------------------------------------------------------- */
   useEffect(() => {
+    if (!token) return;
+
     const interval = setInterval(() => {
       refreshAccessToken();
     }, 14 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [refreshAccessToken]);
+  }, [token, refreshAccessToken]);
 
-  return { token, setToken, refreshAccessToken, loading };
+  return {
+    token,
+    setToken,
+    refreshAccessToken,
+    loading,
+  };
 }
