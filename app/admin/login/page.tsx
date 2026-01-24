@@ -18,28 +18,119 @@ export default function AdminLogin() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
- const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+//  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+//   e.preventDefault();
+//   setLoading(true);
+//   setError("");
+
+//   try {
+//     console.log("Admin Login: Starting login process");
+//     // const response = await fetch(`${API_BASE}/api/admin/login`, {
+//     //   method: "POST",
+//     //   headers: { "Content-Type": "application/json" },
+//     //   credentials: "include",
+//     //   body: JSON.stringify(form),
+//     // });
+
+//     const response = await fetch(`${API_BASE}/api/admin/login`, {
+      
+//   method: "POST",
+//   headers: { "Content-Type": "application/json" },
+//   body: JSON.stringify(form),
+// });
+
+//     const data = await response.json();
+//     console.log("FULL LOGIN RESPONSE:", data);
+
+//     if (!response.ok) {
+//       throw new Error(data.message || "Invalid credentials");
+//     }
+
+//     console.log("Admin Login: API response received", data);
+    
+
+//     // Store authentication data securely using Zustand store
+//     const userPermissions = data.admin.permissions || [];
+//     const defaultPermissions = [
+//       "view_dashboard",
+//       "manage_users",
+//       "create_user",
+//       "update_user",
+//       "delete_user",
+//       "manage_cms",
+//       "view_analytics",
+//       "manage_orders",
+//       "manage_inventory",
+//       "manage_stories",
+//       "manage_shipping",
+//       "view_crm",
+//       "manage_marketing",
+//       "manage_security",
+//       "manage_settings"
+//     ];
+
+//     // If user has no permissions, give them default admin permissions
+//     const finalPermissions = userPermissions.length > 0 ? userPermissions : defaultPermissions;
+
+//     const userRole = data.admin.role || "Admin";
+
+//     console.log("Admin Login: Setting role to:", userRole);
+//     console.log("Admin Login: Setting permissions:", finalPermissions);
+
+//     login(data.accessToken, {
+//       _id: data.admin._id,
+//       name: data.admin.name,
+//       email: data.admin.email,
+//       role: userRole,
+//       permissions: finalPermissions,
+//     });
+
+//     console.log("Admin Login: Zustand state updated");
+
+//     // Success notification
+//     console.log("Login successful - Welcome back to KZARRÈ Admin!");
+
+//     // Small delay to ensure cookies are set before redirect
+//     setTimeout(() => {
+//       console.log("Admin Login: Redirecting to dashboard");
+//       window.location.href = "/dashboard";
+//     }, 1000);
+
+//   } catch (err: any) {
+//     setError(err?.message || "Something went wrong");
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setLoading(true);
   setError("");
 
   try {
-    console.log("Admin Login: Starting login process");
     const response = await fetch(`${API_BASE}/api/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify(form),
     });
 
     const data = await response.json();
+    console.log("FULL LOGIN RESPONSE:", data);
+
     if (!response.ok) {
       throw new Error(data.message || "Invalid credentials");
     }
 
-    console.log("Admin Login: API response received", data);
+    // 🔥 FIX: read correct token field
+    const token = data.accessToken || data.token;
 
-    // Store authentication data securely using Zustand store
+    console.log("TOKEN USED:", token);
+
+    if (!token) {
+      throw new Error("No token received from backend");
+    }
+
     const userPermissions = data.admin.permissions || [];
     const defaultPermissions = [
       "view_dashboard",
@@ -59,15 +150,12 @@ export default function AdminLogin() {
       "manage_settings"
     ];
 
-    // If user has no permissions, give them default admin permissions
-    const finalPermissions = userPermissions.length > 0 ? userPermissions : defaultPermissions;
+    const finalPermissions =
+      userPermissions.length > 0 ? userPermissions : defaultPermissions;
 
     const userRole = data.admin.role || "Admin";
 
-    console.log("Admin Login: Setting role to:", userRole);
-    console.log("Admin Login: Setting permissions:", finalPermissions);
-
-    login(data.accessToken, {
+    login(token, {
       _id: data.admin._id,
       name: data.admin.name,
       email: data.admin.email,
@@ -75,16 +163,9 @@ export default function AdminLogin() {
       permissions: finalPermissions,
     });
 
-    console.log("Admin Login: Zustand state updated");
-
-    // Success notification
-    console.log("Login successful - Welcome back to KZARRÈ Admin!");
-
-    // Small delay to ensure cookies are set before redirect
     setTimeout(() => {
-      console.log("Admin Login: Redirecting to dashboard");
       window.location.href = "/dashboard";
-    }, 1000);
+    }, 500);
 
   } catch (err: any) {
     setError(err?.message || "Something went wrong");
@@ -92,7 +173,6 @@ export default function AdminLogin() {
     setLoading(false);
   }
 };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
