@@ -1,0 +1,69 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@lottiefiles/dotlottie-react": "^0.17.5",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@tiptap/extension-color": "^3.15.3",
+    "@tiptap/extension-image": "^3.14.0",
+    "@tiptap/extension-link": "^3.15.3",
+    "@tiptap/extension-placeholder": "^3.15.3",
+    "@tiptap/extension-text-align": "^3.14.0",
+    "@tiptap/extension-text-style": "^3.15.3",
+    "@tiptap/react": "^3.15.3",
+    "@tiptap/starter-kit": "^3.15.3",
+    "@vercel/speed-insights": "^1.2.0",
+    "cookie-parser": "^1.4.7",
+    "d3-geo": "^3.1.1",
+    "dompurify": "^3.3.1",
+    "js-cookie": "^3.0.5",
+    "jsbarcode": "^3.12.1",
+    "lucide-react": "^0.548.0",
+    "luxon": "^3.7.2",
+    "next": "^16.0.7",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-rnd": "^10.5.2",
+    "recharts": "^3.4.1",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "topojson-client": "^3.1.0",
+    "zustand": "^5.0.10"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhik011/kzarre-admin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abhik011/kzarre-admin/issues"
+  },
+  "homepage": "https://github.com/Abhik011/kzarre-admin#readme"
+}

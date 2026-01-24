@@ -1,0 +1,146 @@
+/* ==============================
+   ADMIN STORIES – KZARRÈ THEME
+================================ */
+
+.admin-stories { 
+  max-width: 760px;
+  padding: 0px 10px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+}
+
+.admin-stories h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 24px;
+}
+
+/* ==============================
+   FORM GROUP
+================================ */
+
+.story-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.story-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* ==============================
+   INPUTS & TEXTAREA
+================================ */
+
+.story-input,
+.story-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.story-input::placeholder,
+.story-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.story-input:focus,
+.story-textarea:focus {
+  outline: none;
+  border-color: #22c55e; /* KZARRÈ green */
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.story-textarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.6;
+}
+
+/* ==============================
+   IMAGE INPUT (URL / UPLOAD)
+================================ */
+
+.story-image-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: -4px;
+}
+
+/* ==============================
+   ACTION BUTTONS
+================================ */
+
+.story-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.story-btn-primary {
+  padding: 12px 22px;
+  background: #22c55e;
+  color: #ffffff;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.story-btn-primary:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.story-btn-primary:active {
+  transform: translateY(0);
+}
+
+.story-btn-secondary {
+  padding: 12px 22px;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.story-btn-secondary:hover {
+  background: #f9fafb;
+}
+
+/* ==============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 640px) {
+  .admin-stories {
+    padding: 22px;
+  }
+
+  .story-actions {
+    flex-direction: column;
+  }
+
+  .story-btn-primary,
+  .story-btn-secondary {
+    width: 100%;
+  }
+}
