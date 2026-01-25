@@ -30,23 +30,41 @@ export default function CMSComplete() {
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-useEffect(() => {
-  try {
-    const raw = localStorage.getItem("auth-storage");
-    if (!raw) return;
+  const getAuthToken = () => {
+    try {
+      const raw = localStorage.getItem("auth-storage");
+      if (!raw) return null;
 
-    const parsed = JSON.parse(raw);
-    const user = parsed?.state?.user;
+      const parsed = JSON.parse(raw);
 
-    if (user?.isSuperAdmin === true) {
-      setIsSuperAdmin(true);
-    } else if (typeof user?.role === "string") {
-      setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
+      return (
+        parsed?.state?.token ||
+        parsed?.state?.accessToken ||
+        parsed?.token ||
+        null
+      );
+    } catch {
+      return null;
     }
-  } catch (err) {
-    console.error("❌ Failed to read auth-storage:", err);
-  }
-}, []);
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("auth-storage");
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw);
+      const user = parsed?.state?.user;
+
+      if (user?.isSuperAdmin === true) {
+        setIsSuperAdmin(true);
+      } else if (typeof user?.role === "string") {
+        setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
+      }
+    } catch (err) {
+      console.error("❌ Failed to read auth-storage:", err);
+    }
+  }, []);
 
 
   const [isEditing, setIsEditing] = useState(false);
@@ -86,7 +104,7 @@ useEffect(() => {
   const [availableFonts, setAvailableFonts] = useState([]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/cms/fonts`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/fonts`)
       .then(res => res.json())
       .then(data => {
         setAvailableFonts(data.fonts || []);
@@ -499,7 +517,16 @@ useEffect(() => {
 
       const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, { method, body: formData, credentials: "include",});
+      const token = getAuthToken();
+console.log("TOKEN BEING SENT:", token);
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Failed to save");
@@ -543,12 +570,15 @@ useEffect(() => {
   // =============================
   const handleApprovePost = async (postId) => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/approve/${postId}`,
-        { method: "PATCH",
-            credentials: "include",
-         }
-      );
+      const token = getAuthToken();
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/approve/${postId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
 
       if (!res.ok) throw new Error("Approve failed");
 
@@ -567,15 +597,17 @@ useEffect(() => {
     if (reason === null) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/reject/${postId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reason }),
-           credentials: "include",
-        }
-      );
+      const token = getAuthToken();
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/reject/${postId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      });
+
 
       if (!res.ok) throw new Error("Reject failed");
 
@@ -593,12 +625,15 @@ useEffect(() => {
     if (!confirm("Delete this post permanently?")) return;
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/delete/${postId}`,
-        { method: "DELETE",
-           credentials: "include",
-         }
-      );
+      const token = getAuthToken();
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/delete/${postId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
 
       if (!res.ok) throw new Error("Delete failed");
 
@@ -1571,7 +1606,7 @@ useEffect(() => {
             >
               Posts
             </button>
-           
+
           </div>
 
           <div className="flex gap-3 w-full sm:w-auto">
@@ -1697,7 +1732,7 @@ useEffect(() => {
           </div>
         )}
 
-      
+
       </div>
 
       {/* Add/Edit Category Modal */}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+
 import "./globals.css";
 import NotificationProvider from "@/components/NotificationProvider";
 const nunitoSans = Nunito_Sans({
@@ -47,7 +47,7 @@ export default function RootLayout({
       <body className="antialiased bg-gray-50 font-nunito-sans">
          <NotificationProvider onClose={undefined} />
         {children}
-        <SpeedInsights />
+
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
 
 export default function Home() {
   const router = useRouter();
@@ -31,13 +31,13 @@ export default function Home() {
       <div className="relative z-10 bg-white/80 backdrop-blur-md shadow-[0_8px_40px_rgba(0,0,0,0.1)] rounded-3xl px-10 py-12 w-[90%] sm:w-[480px] text-center border border-gray-100">
         {/* Logo / Animation */}
         <div className="flex justify-center mb-6">
-          <DotLottieReact
+          {/* <DotLottieReact
             src="https://lottie.host/e7734f21-27e6-4769-9e36-eb602fe2643b/AU382x6oe3.lottie"
             loop
             autoplay
             speed={3}
             style={{ width: 220, height: 220 }}
-          />
+          /> */}
         </div>
 
         {/* Loading Animation */}

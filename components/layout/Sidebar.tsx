@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authApi } from '@/lib/auth';
+import { useAuthStore } from "@/lib/auth";
 
 import {
   LayoutDashboard,
@@ -13,10 +13,8 @@ import {
   ShoppingCart,
   Truck,
   TrendingUp,
-  DollarSign,
   Shield,
   Settings,
-  MoreVertical,
   Menu,
   Handshake,
   X,
@@ -27,59 +25,37 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const { user } = useAuthStore(); // 🔥 SINGLE SOURCE OF TRUTH
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
-const isActive = (href: string) =>
-  pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
-  const [profile, setProfile] = useState({
-    name: "User",
-    email: "user@system.com",
-    role: "Admin",
-  });
+  const profile = {
+    name: user?.name || "User",
+    email: user?.email || "user@system.com",
+    role: user?.role || "Admin",
+  };
 
-const initials =
-  profile?.name
-    ?.split(" ")
-    ?.map(n => n[0])
-    ?.join("")
-    ?.slice(0, 2)
-    ?.toUpperCase() || "U";
+  const initials =
+    profile.name
+      ?.split(" ")
+      ?.map(n => n[0])
+      ?.join("")
+      ?.slice(0, 2)
+      ?.toUpperCase() || "U";
 
+  // 🔥 PERMISSION CHECK — ONLY FROM ZUSTAND
+  const hasPermission = (permission: string): boolean => {
+    const role = user?.role?.toLowerCase();
 
-useEffect(() => {
-  console.log("Sidebar: Fetching user profile...");
-  authApi.authenticatedFetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/profile/me`)
-    .then(res => {
-      console.log("Sidebar: Profile response status:", res.status);
-      if (!res.ok) {
-        console.error("Sidebar: Failed to fetch profile");
-        return null;
-      }
-      return res.json();
-    })
-    .then(data => {
-      if (data) {
-        console.log("Sidebar: Profile data:", data);
-       const normalizedRole =
-  data.role?.toLowerCase() === "superadmin" ? "SuperAdmin" : data.role;
+    // SuperAdmin sees everything
+    if (role === "superadmin" || user?.isSuperAdmin) return true;
 
-setProfile({
-  name: data.name,
-  email: data.email,
-  role: normalizedRole,
-});
-
-console.log("Sidebar: Normalized role:", normalizedRole);
-
-      }
-    })
-    .catch(error => {
-      console.error("Sidebar: Error fetching profile:", error);
-    });
-}, []);
+    return user?.permissions?.includes(permission) || false;
+  };
 
 
   const menuItems = [
@@ -157,43 +133,6 @@ console.log("Sidebar: Normalized role:", normalizedRole);
     },
   ];
   // Load role from localStorage
-  const [role, setRole] = useState("");
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      setRole(localStorage.getItem("role") || "");
-    }
-  }, []);
-
-  // Define role-wise menu visibility
-  const [permissions, setPermissions] = useState<string[]>([]);
-
-
-  useEffect(() => {
-    const perms = localStorage.getItem("permissions");
-    setPermissions(perms ? JSON.parse(perms) : []);
-  }, []);
-
-const hasPermission = (permission: string): boolean => {
-  const role = profile.role?.toLowerCase();
-
-  // 🔥 SuperAdmin always sees everything
-  if (role === "superadmin") return true;
-
-  // Fallback to permission list
-  return permissions.includes(permission);
-};
-
-
-
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const perms = localStorage.getItem("permissions");
-      setPermissions(perms ? JSON.parse(perms) : []);
-    }
-  }, []);
-
   return (
     <>
       {/* Mobile Toggle Button */}
