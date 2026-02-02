@@ -13,6 +13,7 @@ export interface User {
 }
 
 export interface AuthState {
+  [x: string]: any;
   user: User | null;
   token: string | null;
   isLoading: boolean;
@@ -20,6 +21,7 @@ export interface AuthState {
 
   login: (token: string, user: User) => void;
   logout: () => void;
+  
   checkAuth: () => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
 }
@@ -204,7 +206,15 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => localStorage),
+     storage: createJSONStorage(() => {
+  if (typeof window === "undefined") return localStorage;
+
+  // Use sessionStorage if token was saved there
+  const hasSessionToken = sessionStorage.getItem("auth_token");
+
+  return hasSessionToken ? sessionStorage : localStorage;
+}),
+
       partialize: (state) => ({
         user: state.user,
         token: state.token,

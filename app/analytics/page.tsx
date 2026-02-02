@@ -191,7 +191,7 @@ const AnalyticsPage = () => {
       {/* COUNTRY WISE TRAFFIC */}
       <div className="mt-6">
         <ChartCard title="Country-wise Traffic">
-          <ul className="space-y-3">
+          <ul className="space-y-3 " >
             {countryTraffic.map((c, i) => (
               <li
                 key={i}
@@ -213,7 +213,7 @@ const AnalyticsPage = () => {
                   </span>
                 </div>
 
-                <span className="text-[var(--accent-green)] font-bold">
+                <span className=" font-bold">
                   {Number(c.visitors || 0).toLocaleString()} visits
 
                 </span>
@@ -229,7 +229,7 @@ const AnalyticsPage = () => {
         <ChartCard title="Daily Traffic (Visitors)">
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={traffic}>
-              <CartesianGrid stroke="var(--borderColor)" strokeDasharray="3 3" />
+              <CartesianGrid stroke="" strokeDasharray="3 3" />
               <XAxis dataKey="_id" stroke="var(--textSecondary)" />
               <YAxis stroke="var(--textSecondary)" />
               <Tooltip />
@@ -314,7 +314,7 @@ const KPICard = ({
   icon: React.ReactNode;
   value: any;
 }) => (
-  <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-5">
+  <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border rounded-xl p-5">
     <div className="flex items-center justify-between">
       <span className="text-sm text-[var(--textSecondary)]">{title}</span>
       <span className="text-[var(--textSecondary)]">{icon}</span>
@@ -335,7 +335,7 @@ const ChartCard = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-xl p-6">
+  <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border rounded-xl p-6">
     <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
       {title}
     </h3>

@@ -5,8 +5,10 @@ import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useAuthStore } from "@/lib/auth";
 // import { notifications } from "@/lib/notifications";
 
+
 export default function AdminLogin() {
   const { login } = useAuthStore();
+  const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
@@ -154,14 +156,25 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       userPermissions.length > 0 ? userPermissions : defaultPermissions;
 
     const userRole = data.admin.role || "Admin";
+    const storage = remember ? localStorage : sessionStorage;
 
-    login(token, {
-      _id: data.admin._id,
-      name: data.admin.name,
-      email: data.admin.email,
-      role: userRole,
-      permissions: finalPermissions,
-    });
+// Save token manually for persistence strategy
+storage.setItem("auth_token", token);
+storage.setItem("auth_user", JSON.stringify({
+  _id: data.admin._id,
+  name: data.admin.name,
+  email: data.admin.email,
+  role: userRole,
+  permissions: finalPermissions,
+}));
+
+ login(token, {
+  _id: data.admin._id,
+  name: data.admin.name,
+  email: data.admin.email,
+  role: userRole,
+  permissions: finalPermissions,
+});
 
     setTimeout(() => {
       window.location.href = "/dashboard";
@@ -235,7 +248,13 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           {/* Remember + Forgot */}
           <div className="flex justify-between items-center text-sm text-gray-600">
             <label className="flex items-center gap-2">
-              <input type="checkbox" className="accent-indigo-500 rounded-sm" />
+              <input
+  type="checkbox"
+  checked={remember}
+  onChange={(e) => setRemember(e.target.checked)}
+  className="accent-indigo-500 rounded-sm"
+/>
+
               Remember me
             </label>
             <a href="#" className="hover:text-indigo-600 transition-colors">

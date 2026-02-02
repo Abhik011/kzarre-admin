@@ -364,7 +364,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
   }
 
   return (
-    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
+    <div className="bg-[var(--background-card)] border  rounded-2xl p-6">
       <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-4">
         User List
       </h3>
@@ -372,7 +372,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--borderColor)]">
+            <tr className="border-b">
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Email</th>
               <th className="px-4 py-3 text-left">Role</th>
@@ -384,7 +384,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
 
           <tbody>
             {users.map(u => (
-              <tr key={u._id} className="border-b border-[var(--borderColor)]">
+              <tr key={u._id} className="border-b">
                 <td className="px-4 py-3">{u.name}</td>
                 <td className="px-4 py-3">{u.email}</td>
 
@@ -808,7 +808,7 @@ export default function UserManagement() {
           <div
             className="
               flex gap-4 sm:gap-8 
-              border-b border-[var(--borderColor)]
+              border-b 
               w-full sm:w-auto overflow-x-auto
             "
           >
@@ -817,7 +817,7 @@ export default function UserManagement() {
                 key={t}
                 onClick={() => setTab(t)}
                 className={`pb-3 text-sm font-medium ${tab === t
-                  ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
+                  ? "border-b-2 !border-[var(--accent-green)]"
                   : "text-[var(--textSecondary)]"
                   }`}
 

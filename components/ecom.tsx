@@ -1416,7 +1416,7 @@ const handleEditProduct = (product: Product) => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[var(--textSecondary)] text-sm">
               Total Products
@@ -1428,7 +1428,7 @@ const handleEditProduct = (product: Product) => {
           </div>
         </div>
 
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border ">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[var(--textSecondary)] text-sm">
               Total Stock
@@ -1440,7 +1440,7 @@ const handleEditProduct = (product: Product) => {
           </div>
         </div>
 
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border ">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[var(--textSecondary)] text-sm">Sold</span>
             <ShoppingCart className="text-gray-400" size={20} />
@@ -1450,7 +1450,7 @@ const handleEditProduct = (product: Product) => {
           </div>
         </div>
 
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border border-[var(--borderColor)]">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl p-6 border ">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[var(--textSecondary)] text-sm">Return</span>
             <RotateCcw className="text-gray-400" size={20} />
@@ -1462,8 +1462,8 @@ const handleEditProduct = (product: Product) => {
       </div>
 
       {/* Product List */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
-        <div className="p-6 border-b border-[var(--borderColor)]">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+        <div className="p-6 border-b">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
               Product List
@@ -1483,7 +1483,7 @@ const handleEditProduct = (product: Product) => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
+              <tr className="border-b  bg-[var(--background)] dark:bg-[var(--bgCard)]">
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
                   {" "}
                   Product
@@ -1556,7 +1556,7 @@ const handleEditProduct = (product: Product) => {
                   return (
                     <tr
                       key={product._id ?? product.id}
-                      className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] dark:bg-[var(--bgCard)] transition-colors"
+                      className="border-b  hover:bg-[var(--background)] dark:bg-[var(--bgCard)] transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div>
@@ -1641,7 +1641,7 @@ const handleEditProduct = (product: Product) => {
         {showProductModal && selectedProduct && (
           <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
             <div
-              className={`dark: bg-[var(--background)] border border-[var(--borderColor)] rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[92vh] transition-all duration-300`}
+              className={`dark: bg-[var(--background)] border  rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[92vh] transition-all duration-300`}
             >
               <button
                 onClick={() => setShowProductModal(false)}
@@ -1659,7 +1659,7 @@ const handleEditProduct = (product: Product) => {
                   <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-3">
                     Images
                   </h3>
-                  <div className="w-full h-72 md:h-80 rounded-xl overflow-hidden border border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--background)] flex items-center justify-center">
+                  <div className="w-full h-72 md:h-80 rounded-xl overflow-hidden border  bg-[var(--background)] dark:bg-[var(--background)] flex items-center justify-center">
                     {selectedProduct.gallery?.[0] ? (
                       <img
                         src={selectedProduct.gallery[0]}
@@ -1680,7 +1680,7 @@ const handleEditProduct = (product: Product) => {
                           (img: string, idx: number) => (
                             <div
                               key={idx}
-                              className="w-20 h-20 rounded-lg overflow-hidden border border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--background)] shadow-sm"
+                              className="w-20 h-20 rounded-lg overflow-hidden border bg-[var(--background)] dark:bg-[var(--background)] shadow-sm"
                             >
                               <img
                                 src={img}
@@ -1746,7 +1746,7 @@ const handleEditProduct = (product: Product) => {
                       Variants
                     </h3>
                     <div className="overflow-x-auto">
-                      <table className="w-full border border-[var(--borderColor)] text-sm rounded-lg">
+                      <table className="w-full border  text-sm rounded-lg">
                         <thead className="bg-[var(--background-card)]">
                           <tr>
                             <th className="py-2 px-3 text-left">Size</th>
@@ -1759,7 +1759,7 @@ const handleEditProduct = (product: Product) => {
                           {selectedProduct.variants.map((v, idx) => (
                             <tr
                               key={idx}
-                              className="border-t border-[var(--borderColor)]"
+                              className="border-t "
                             >
                               <td className="py-2 px-3">{v.size || "—"}</td>
                               <td className="py-2 px-3">{v.color || "—"}</td>
@@ -1785,10 +1785,10 @@ const handleEditProduct = (product: Product) => {
       {/* Left Column - Product Details (main) */}
       <div className="lg:col-span-2 space-y-6">
         {/* Basic Information */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gray-900 rounded-lg">
-              <FileText size={20} className="text-white" />
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <FileText size={20} className="" />
             </div>
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
               Add / Edit Product
@@ -1797,7 +1797,7 @@ const handleEditProduct = (product: Product) => {
 
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Name Product
               </label>
               <input
@@ -1806,13 +1806,13 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("name", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Enter product name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700 mb-2">
                 Description Product
               </label>
               <textarea
@@ -1820,7 +1820,7 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("description", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                className="w-full px-4 py-2.5 border dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
                 placeholder="Enter product description"
                 rows={4}
               />
@@ -1828,7 +1828,7 @@ const handleEditProduct = (product: Product) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium  dark:text-white text-gray-700 mb-2">
                   Category
                 </label>
                 <select
@@ -1836,7 +1836,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("category", e.target.value)
                   }
-                  className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2.5 border dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Select category</option>
                   <option value="Men">Men</option>
@@ -1848,7 +1848,7 @@ const handleEditProduct = (product: Product) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium dark:bg-[var(--bgCard)] dark:text-whitetext-gray-700 mb-2">
                   Gender
                 </label>
                 <div className="flex gap-4 items-center">
@@ -1917,7 +1917,7 @@ const handleEditProduct = (product: Product) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium dark:text-white  text-gray-700 mb-2">
                   Vendor
                 </label>
                 <input
@@ -1926,7 +1926,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("vendor", e.target.value)
                   }
-                  className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2.5 border  dark:bg-[var(--bgCard)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Enter vendor name"
                 />
               </div>
@@ -1935,9 +1935,9 @@ const handleEditProduct = (product: Product) => {
         </div>
 
         {/* Pricing and Stock */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gray-900 rounded-lg">
+            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
               <DollarSign size={20} className="text-white" />
             </div>
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
@@ -1955,7 +1955,7 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("basePrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
@@ -1969,7 +1969,7 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("sellPrice", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0.00"
               />
             </div>
@@ -1983,7 +1983,7 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("discount", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="0"
               />
             </div>
@@ -1996,7 +1996,7 @@ const handleEditProduct = (product: Product) => {
                 onChange={(e) =>
                   handleProductInputChange("discountType", e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="percentage">Percentage</option>
                 <option value="fixed">Fixed Amount</option>
@@ -2006,7 +2006,7 @@ const handleEditProduct = (product: Product) => {
         </div>
 
         {/* Variants (unchanged) */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border   p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
               Add Variants
@@ -2035,7 +2035,7 @@ const handleEditProduct = (product: Product) => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, size: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., M, L, XL"
                   />
                 </div>
@@ -2049,7 +2049,7 @@ const handleEditProduct = (product: Product) => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, color: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Black, Blue"
                   />
                 </div>
@@ -2063,7 +2063,7 @@ const handleEditProduct = (product: Product) => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, material: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="e.g., Wool, Cotton"
                   />
                 </div>
@@ -2080,7 +2080,7 @@ const handleEditProduct = (product: Product) => {
                         lowStockAlert: Number(e.target.value),
                       })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="21"
                   />
                 </div>
@@ -2099,7 +2099,7 @@ const handleEditProduct = (product: Product) => {
                           : undefined,
                       })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="77"
                   />
                 </div>
@@ -2113,7 +2113,7 @@ const handleEditProduct = (product: Product) => {
                     onChange={(e) =>
                       setNewVariant({ ...newVariant, barcode: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -2130,7 +2130,7 @@ const handleEditProduct = (product: Product) => {
                     onChange={(e) =>
                       handleProductInputChange("sku", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border   rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="2324kvbs-2"
                   />
                 </div>
@@ -2144,7 +2144,7 @@ const handleEditProduct = (product: Product) => {
                   </button>
                   <button
                     onClick={generateSKU}
-                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                    className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border  text-gray-700 text-sm font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
                   >
                     Generate SKU
                   </button>
@@ -2158,7 +2158,7 @@ const handleEditProduct = (product: Product) => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[var(--borderColor)]">
+                  <tr className="border-b ">
                     <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--textPrimary)]">
                       Size
                     </th>
@@ -2187,7 +2187,7 @@ const handleEditProduct = (product: Product) => {
                         variant.id ||
                         `${variant.size}-${variant.color}-${Math.random()}`
                       }
-                      className="border-b border-[var(--borderColor)]"
+                      className="border-b "
                     >
                       <td className="px-4 py-3 text-sm text-[var(--textPrimary)]">
                         {variant.size}
@@ -2224,7 +2224,7 @@ const handleEditProduct = (product: Product) => {
       {/* Right Column - Upload, Metadata, and Vertical Tabs */}
       <div className="lg:col-span-1 space-y-6">
         {/* Upload Images */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
           <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
             Upload img
           </h3>
@@ -2276,7 +2276,7 @@ const handleEditProduct = (product: Product) => {
                   onClick={() => setSelectedImage(index)}
                   className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === index
                       ? "border-green-500"
-                      : "border-[var(--borderColor)]"
+                      : ""
                     }`}
                 >
                   <img
@@ -2290,7 +2290,7 @@ const handleEditProduct = (product: Product) => {
               {/* Add new files */}
               <label
                 htmlFor="add-more-images"
-                className="w-16 h-16 border-2 border-dashed border-[var(--borderColor)] rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500"
+                className="w-16 h-16 border-2 border-dashed  rounded-lg flex items-center justify-center cursor-pointer hover:border-green-500"
               >
                 <Plus size={20} className="text-gray-400" />
                 <input
@@ -2316,9 +2316,9 @@ const handleEditProduct = (product: Product) => {
         </div>
 
         {/* Vertical Tabs + Tab Content */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-4 flex gap-4">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-4 flex gap-4">
           {/* Sidebar */}
-          <div className="w-36 border-r border-[var(--borderColor)] pr-3">
+          <div className="w-36 border-r  pr-3">
             <button
               onClick={() => setDetailsTab("details")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "details"
@@ -2387,7 +2387,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("highlights", e.target.value)
                   }
-                  className="w-full p-3 border border-[var(--borderColor)] rounded"
+                  className="w-full p-3 border  rounded"
                   rows={3}
                 />
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2399,7 +2399,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("materialDetails", e.target.value)
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
                   Care Instructions
@@ -2410,7 +2410,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("careInstructions", e.target.value)
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
               </div>
             )}
@@ -2429,7 +2429,7 @@ const handleEditProduct = (product: Product) => {
                       material: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2444,7 +2444,7 @@ const handleEditProduct = (product: Product) => {
                       fit: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2459,7 +2459,7 @@ const handleEditProduct = (product: Product) => {
                       washCare: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2474,7 +2474,7 @@ const handleEditProduct = (product: Product) => {
                       pattern: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2489,7 +2489,7 @@ const handleEditProduct = (product: Product) => {
                       origin: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border rounded"
                 />
 
                 <label className="block text-sm font-medium text-[var(--textPrimary)]">
@@ -2504,7 +2504,7 @@ const handleEditProduct = (product: Product) => {
                       others: e.target.value,
                     })
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                 />
               </div>
             )}
@@ -2523,7 +2523,7 @@ const handleEditProduct = (product: Product) => {
                             list[idx].question = e.target.value;
                             handleProductInputChange("faq", list);
                           }}
-                          className="w-full p-2 border border-[var(--borderColor)] rounded mb-2"
+                          className="w-full p-2 border  rounded mb-2"
                         />
                         <input
                           placeholder="Answer"
@@ -2533,7 +2533,7 @@ const handleEditProduct = (product: Product) => {
                             list[idx].answer = e.target.value;
                             handleProductInputChange("faq", list);
                           }}
-                          className="w-full p-2 border border-[var(--borderColor)] rounded"
+                          className="w-full p-2 border  rounded"
                         />
                       </div>
                       <button
@@ -2557,7 +2557,7 @@ const handleEditProduct = (product: Product) => {
                       { question: "", answer: "" },
                     ])
                   }
-                  className="mt-3 px-3 py-1 rounded bg-[var(--background-card)] border border-[var(--borderColor)]"
+                  className="mt-3 px-3 py-1 rounded bg-[var(--background-card)] border "
                 >
                   Add FAQ
                 </button>
@@ -2581,7 +2581,7 @@ const handleEditProduct = (product: Product) => {
                   {existingCustomerPhotos.map((url) => (
                     <div
                       key={url}
-                      className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]"
+                      className="w-20 h-20 rounded overflow-hidden relative border "
                     >
                       <img
                         src={url}
@@ -2601,7 +2601,7 @@ const handleEditProduct = (product: Product) => {
                   {customerPhotosPreview.map((p) => (
                     <div
                       key={p.id}
-                      className="w-20 h-20 rounded overflow-hidden relative border border-[var(--borderColor)]"
+                      className="w-20 h-20 rounded overflow-hidden relative border "
                     >
                       <img
                         src={typeof p.url === "string" ? p.url : ""}
@@ -2630,7 +2630,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("notes", e.target.value)
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                   rows={4}
                 />
               </div>
@@ -2646,7 +2646,7 @@ const handleEditProduct = (product: Product) => {
                   onChange={(e) =>
                     handleProductInputChange("terms", e.target.value)
                   }
-                  className="w-full p-2 border border-[var(--borderColor)] rounded"
+                  className="w-full p-2 border  rounded"
                   rows={4}
                 />
               </div>
@@ -2655,7 +2655,7 @@ const handleEditProduct = (product: Product) => {
         </div>
 
         {/* Tags & Save */}
-        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+        <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
           <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-4">
             Tag
           </h3>
@@ -2668,7 +2668,7 @@ const handleEditProduct = (product: Product) => {
                 e.target.value.split(",").map((s) => s.trim())
               )
             }
-            className="w-full px-4 py-2.5 border border-[var(--borderColor)] rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
+            className="w-full px-4 py-2.5 border  rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 mb-3"
             placeholder="Enter tags separated by comma"
           />
           <div className="flex gap-2">
@@ -2693,7 +2693,7 @@ const handleEditProduct = (product: Product) => {
               onClick={() => {
                 setCurrentView("inventory");
               }}
-              className="flex-1 px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg"
+              className="flex-1 px-4 py-2 bg-[var(--background-card)]  dark:bg-[var(--bgCard)] border text-white font-medium rounded-lg"
             >
               Cancel
             </button>
@@ -2814,7 +2814,7 @@ const handleEditProduct = (product: Product) => {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full p-2 border border-[var(--borderColor)] rounded bg-[var(--background)] dark:bg-[var(--bgCard)] text-[var(--textPrimary)]"
+            className="w-full p-2 border  rounded bg-[var(--background)] dark:bg-[var(--bgCard)] text-[var(--textPrimary)]"
           >
             {statuses.map((s) => (
               <option key={s} value={s}>
@@ -3071,7 +3071,7 @@ const handleEditProduct = (product: Product) => {
             {order.items?.map((item, idx) => (
               <div
                 key={idx}
-                className="flex gap-4 p-3 border border-[var(--borderColor)] rounded-lg mb-3"
+                className="flex gap-4 p-3 border  rounded-lg mb-3"
               >
                 {/* Product Image */}
                 <img
@@ -3162,8 +3162,8 @@ const handleEditProduct = (product: Product) => {
   };
 
   const renderOrders = () => (
-    <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
-      <div className="p-6 border-b border-[var(--borderColor)]">
+    <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+      <div className="p-6 border-b ">
         <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
           Orders Management
         </h2>
@@ -3172,7 +3172,7 @@ const handleEditProduct = (product: Product) => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
+            <tr className="border-b  bg-[var(--background)] dark:bg-[var(--bgCard)]">
               <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">
                 Order ID
               </th>
@@ -3201,7 +3201,7 @@ const handleEditProduct = (product: Product) => {
             {orders.map((order) => (
               <tr
                 key={order._id}
-                className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] transition-colors"
+                className="border-b  hover:bg-[var(--background)] transition-colors"
               >
                 {/* ORDER ID */}
                 <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
@@ -3261,7 +3261,7 @@ const handleEditProduct = (product: Product) => {
                   </button>
 
                   {openDropdown === order._id && (
-                    <div className="absolute right-6 mt-2 w-48 bg-white dark:bg-[var(--bgCard)] border border-[var(--borderColor)] rounded-lg shadow-lg z-50">
+                    <div className="absolute right-6 mt-2 w-48 bg-white dark:bg-[var(--bgCard)] border  rounded-lg shadow-lg z-50">
                       {/* VIEW DETAILS */}
                       <button
                         onClick={() => {
@@ -3358,8 +3358,8 @@ const handleEditProduct = (product: Product) => {
   const renderDiscounts = () => (
     <div className="space-y-6">
       {/* Header with Tabs */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
-        <div className="p-6 border-b border-[var(--borderColor)]">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+        <div className="p-6 border-b ">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[var(--textPrimary)]">
               Discounts & Coupons Management
@@ -3416,8 +3416,8 @@ const handleEditProduct = (product: Product) => {
       <div className="space-y-6">
         {/* Discounts List */}
         {(currentDiscountView === "discounts") && (
-          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
-            <div className="p-6 border-b border-[var(--borderColor)]">
+          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+            <div className="p-6 border-b ">
               <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
                 Automatic Discounts ({discounts.length})
               </h3>
@@ -3429,7 +3429,7 @@ const handleEditProduct = (product: Product) => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
+                  <tr className="border-b  bg-[var(--background)] dark:bg-[var(--bgCard)]">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Name</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Type</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Value</th>
@@ -3448,7 +3448,7 @@ const handleEditProduct = (product: Product) => {
                     </tr>
                   ) : (
                     discounts.map((discount) => (
-                      <tr key={discount._id} className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] transition-colors">
+                      <tr key={discount._id} className="border-b  hover:bg-[var(--background)] transition-colors">
                         <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)]">
                           {discount.name}
                         </td>
@@ -3511,8 +3511,8 @@ const handleEditProduct = (product: Product) => {
 
         {/* Coupons List */}
         {currentDiscountView === "coupons" && (
-          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)]">
-            <div className="p-6 border-b border-[var(--borderColor)]">
+          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border ">
+            <div className="p-6 border-b ">
               <h3 className="text-lg font-semibold text-[var(--textPrimary)]">
                 Coupon Codes ({coupons.length})
               </h3>
@@ -3524,7 +3524,7 @@ const handleEditProduct = (product: Product) => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-[var(--borderColor)] bg-[var(--background)] dark:bg-[var(--bgCard)]">
+                  <tr className="border-b  bg-[var(--background)] dark:bg-[var(--bgCard)]">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Code</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Name</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-[var(--textPrimary)]">Type</th>
@@ -3543,7 +3543,7 @@ const handleEditProduct = (product: Product) => {
                     </tr>
                   ) : (
                     coupons.map((coupon) => (
-                      <tr key={coupon._id} className="border-b border-[var(--borderColor)] hover:bg-[var(--background)] transition-colors">
+                      <tr key={coupon._id} className="border-b hover:bg-[var(--background)] transition-colors">
                         <td className="px-6 py-4 text-sm font-medium text-[var(--textPrimary)] font-mono">
                           {coupon.code}
                         </td>
@@ -3606,7 +3606,7 @@ const handleEditProduct = (product: Product) => {
 
         {/* Add/Edit Discount Form */}
         {(currentDiscountView === "addDiscount" || currentDiscountView === "editDiscount") && (
-          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
             <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-6">
               {currentDiscountView === "addDiscount" ? "Create Automatic Discount" : "Edit Discount"}
             </h3>
@@ -3620,7 +3620,7 @@ const handleEditProduct = (product: Product) => {
                   type="text"
                   value={discountForm.name}
                   onChange={(e) => setDiscountForm({ ...discountForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="e.g., Summer Sale Discount"
                 />
               </div>
@@ -3632,7 +3632,7 @@ const handleEditProduct = (product: Product) => {
                 <select
                   value={discountForm.type}
                   onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value as "percentage" | "fixed" })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 >
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount ($)</option>
@@ -3647,7 +3647,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={discountForm.value}
                   onChange={(e) => setDiscountForm({ ...discountForm, value: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder={discountForm.type === "percentage" ? "10" : "50"}
                 />
               </div>
@@ -3660,7 +3660,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={discountForm.minOrderAmount}
                   onChange={(e) => setDiscountForm({ ...discountForm, minOrderAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="0"
                 />
               </div>
@@ -3673,7 +3673,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={discountForm.maxDiscountAmount}
                   onChange={(e) => setDiscountForm({ ...discountForm, maxDiscountAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="No limit"
                 />
               </div>
@@ -3686,7 +3686,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={discountForm.usageLimit}
                   onChange={(e) => setDiscountForm({ ...discountForm, usageLimit: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="Unlimited"
                 />
               </div>
@@ -3699,7 +3699,7 @@ const handleEditProduct = (product: Product) => {
                   type="datetime-local"
                   value={discountForm.startDate}
                   onChange={(e) => setDiscountForm({ ...discountForm, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 />
               </div>
 
@@ -3711,7 +3711,7 @@ const handleEditProduct = (product: Product) => {
                   type="datetime-local"
                   value={discountForm.endDate}
                   onChange={(e) => setDiscountForm({ ...discountForm, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 />
               </div>
             </div>
@@ -3723,7 +3723,7 @@ const handleEditProduct = (product: Product) => {
               <textarea
                 value={discountForm.description}
                 onChange={(e) => setDiscountForm({ ...discountForm, description: e.target.value })}
-                className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 rows={3}
                 placeholder="Optional description for this discount"
               />
@@ -3775,7 +3775,7 @@ const handleEditProduct = (product: Product) => {
                     isActive: true,
                   });
                 }}
-                className="px-6 py-2 bg-[var(--background)] border border-[var(--borderColor)] text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
+                className="px-6 py-2 bg-[var(--background)] border  text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
               >
                 Cancel
               </button>
@@ -3785,7 +3785,7 @@ const handleEditProduct = (product: Product) => {
 
         {/* Add/Edit Coupon Form */}
         {(currentDiscountView === "addCoupon" || currentDiscountView === "editCoupon") && (
-          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border border-[var(--borderColor)] p-6">
+          <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] rounded-xl border  p-6">
             <h3 className="text-lg font-semibold text-[var(--textPrimary)] mb-6">
               {currentDiscountView === "addCoupon" ? "Create Coupon Code" : "Edit Coupon"}
             </h3>
@@ -3799,7 +3799,7 @@ const handleEditProduct = (product: Product) => {
                   type="text"
                   value={couponForm.code}
                   onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)] font-mono"
+                  className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)] font-mono"
                   placeholder="SUMMER2024"
                 />
               </div>
@@ -3812,7 +3812,7 @@ const handleEditProduct = (product: Product) => {
                   type="text"
                   value={couponForm.name}
                   onChange={(e) => setCouponForm({ ...couponForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="Summer Sale 2024"
                 />
               </div>
@@ -3824,7 +3824,7 @@ const handleEditProduct = (product: Product) => {
                 <select
                   value={couponForm.type}
                   onChange={(e) => setCouponForm({ ...couponForm, type: e.target.value as "percentage" | "fixed" })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 >
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount ($)</option>
@@ -3839,7 +3839,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={couponForm.value}
                   onChange={(e) => setCouponForm({ ...couponForm, value: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder={couponForm.type === "percentage" ? "10" : "50"}
                 />
               </div>
@@ -3852,7 +3852,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={couponForm.minOrderAmount}
                   onChange={(e) => setCouponForm({ ...couponForm, minOrderAmount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="0"
                 />
               </div>
@@ -3865,7 +3865,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={couponForm.usageLimit}
                   onChange={(e) => setCouponForm({ ...couponForm, usageLimit: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="Unlimited"
                 />
               </div>
@@ -3878,7 +3878,7 @@ const handleEditProduct = (product: Product) => {
                   type="number"
                   value={couponForm.usageLimitPerUser}
                   onChange={(e) => setCouponForm({ ...couponForm, usageLimitPerUser: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                   placeholder="1"
                 />
               </div>
@@ -3891,7 +3891,7 @@ const handleEditProduct = (product: Product) => {
                   type="datetime-local"
                   value={couponForm.startDate}
                   onChange={(e) => setCouponForm({ ...couponForm, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 />
               </div>
 
@@ -3903,7 +3903,7 @@ const handleEditProduct = (product: Product) => {
                   type="datetime-local"
                   value={couponForm.endDate}
                   onChange={(e) => setCouponForm({ ...couponForm, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                  className="w-full px-3 py-2 border  rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 />
               </div>
             </div>
@@ -3915,7 +3915,7 @@ const handleEditProduct = (product: Product) => {
               <textarea
                 value={couponForm.description}
                 onChange={(e) => setCouponForm({ ...couponForm, description: e.target.value })}
-                className="w-full px-3 py-2 border border-[var(--borderColor)] rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--background)] text-[var(--textPrimary)]"
                 rows={3}
                 placeholder="Optional description for this coupon"
               />
@@ -3969,7 +3969,7 @@ const handleEditProduct = (product: Product) => {
                     isActive: true,
                   });
                 }}
-                className="px-6 py-2 bg-[var(--background)] border border-[var(--borderColor)] text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
+                className="px-6 py-2 bg-[var(--background)] border  text-[var(--textPrimary)] rounded-lg hover:bg-[var(--background-card)]"
               >
                 Cancel
               </button>
@@ -3983,7 +3983,7 @@ const handleEditProduct = (product: Product) => {
   // -------------------- Main Render --------------------
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] p-1 space-y-8">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[var(--textPrimary)]">
@@ -4000,14 +4000,14 @@ const handleEditProduct = (product: Product) => {
                 className="px-4 py-2 text-black font-medium rounded-lg hover:opacity-90 flex items-center gap-2"
                 style={{ backgroundColor: "#A0EDA8" }}
               >
-                <Plus size={18} /> Add Product
+                <Plus size={18} className="dark:text-white" /> Add Product
               </button>
             )}
             {currentView === "addProduct" && (
               <>
                 <button
                   onClick={() => setCurrentView("inventory")}
-                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border border-[var(--borderColor)] text-gray-700 font-medium rounded-lg hover:bg-[var(--background)] dark:bg-[var(--bgCard)]"
+                  className="px-4 py-2 bg-[var(--background-card)] dark:bg-[var(--bgCard)] border text-gray-100 font-medium rounded-lg hover:bg-white)"
                 >
                   Cancel
                 </button>
@@ -4035,7 +4035,7 @@ const handleEditProduct = (product: Product) => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b border-[var(--borderColor)] px-6">
+      <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  px-6">
         <div className="flex gap-6">
           <button
             onClick={() => {

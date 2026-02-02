@@ -19,7 +19,7 @@ export default function Layout({ children }) {
       {/* Main Content */}
       <div
         className="
-          flex-1 flex flex-col overflow-hidden 
+          flex-1 flex flex-col
           bg-[var(--background)]
           text-[var(--text-primary)]
           transition-all duration-300

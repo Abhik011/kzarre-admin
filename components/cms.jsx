@@ -1600,7 +1600,7 @@ console.log("TOKEN BEING SENT:", token);
             <button
               onClick={() => setActiveTab("pagesAndPosts")}
               className={`pb-3 px-4 font-medium text-sm ${activeTab === "pagesAndPosts"
-                ? "text-[var(--accent-green)] border-b-2 !border-[var(--accent-green)]"
+                ? "border-b-2 !border-[var(--accent-green)]"
                 : "text-[var(--text-secondary)]"
                 }`}
             >

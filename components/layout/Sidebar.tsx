@@ -27,8 +27,13 @@ export default function Sidebar() {
 
   const { user } = useAuthStore(); // 🔥 SINGLE SOURCE OF TRUTH
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const [hoveredItem, setHoveredItem] = useState<{
+    label: string;
+    top: number;
+  } | null>(null);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -161,7 +166,8 @@ export default function Sidebar() {
           border-r border-[var(--sidebar-border)]
           text-[var(--text-primary)]
           h-screen flex flex-col transition-all duration-300
-          overflow-y-auto fixed lg:relative z-40 lg:z-auto
+         overflow-y-auto overflow-x-visible
+  fixed lg:relative z-40 lg:z-auto
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0`}
       >
@@ -194,21 +200,31 @@ export default function Sidebar() {
 
                 return (
                   <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className={`
-              w-full flex items-center gap-3 px-4 py-3 rounded-lg 
-              transition-all
-              ${active
-                          ? "bg-[var(--accent-green)] text-black font-semibold"
-                          : "hover:bg-[var(--background-card)]"
-                        }`}
-                    >
-                      <Icon size={22} />
-                      {isOpen && (
-                        <span className="text-sm font-small">{item.label}</span>
-                      )}
-                    </Link>
+                   <Link
+  href={item.href}
+  onMouseEnter={(e) => {
+    if (!isOpen) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setHoveredItem({
+        label: item.label,
+        top: rect.top + rect.height / 2,
+      });
+    }
+  }}
+  onMouseLeave={() => setHoveredItem(null)}
+  className={`
+    w-full flex items-center gap-3 px-4 py-3 rounded-lg 
+    transition-all
+    ${active
+      ? "bg-[var(--accent-green)] text-black font-semibold"
+      : "hover:bg-[var(--background-card)]"
+    }
+  `}
+>
+  <Icon size={22} />
+  {isOpen && <span className="text-sm">{item.label}</span>}
+</Link>
+
                   </li>
                 );
               })}
@@ -261,6 +277,30 @@ export default function Sidebar() {
           </button>
         </div>
       </aside>
+
+      {hoveredItem && (
+  <div
+    className="
+      fixed z-[9999]
+      px-3 py-1
+      rounded-md text-sm whitespace-nowrap
+      bg-[var(--background-card)]
+      text-[var(--text-primary)]
+      border border-[var(--sidebar-border)]
+      shadow-lg
+      pointer-events-none
+      transition-opacity duration-150
+    "
+    style={{
+      top: hoveredItem.top,
+      left: 80, // aligns just outside collapsed sidebar
+      transform: "translateY(-50%)",
+    }}
+  >
+    {hoveredItem.label}
+  </div>
+)}
+
     </>
   );
 }
