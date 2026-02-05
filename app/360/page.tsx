@@ -10,6 +10,7 @@ import {
     FileText,
     PlusCircle,
     X,
+    FilterX
 } from "lucide-react";
 
 /* =========================================================
@@ -88,6 +89,11 @@ export default function MiniCRMPage() {
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
         null
     );
+    const clearCustomerFilter = () => {
+        setCustomerFilter("all");
+    };
+
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"timeline" | "promises" | "messages">("timeline");
     const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(false);
@@ -95,10 +101,12 @@ export default function MiniCRMPage() {
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
     const [customerFilter, setCustomerFilter] = useState<CustomerFilter>("promise");
+    const [returns, setReturns] = useState<any[]>([]);
 
     const filteredCustomers = customers.filter((c) => {
         const hasPromise =
             c.lastPromiseCreatedAt || c.lastPromiseDueDate;
+
 
         if (customerFilter === "promise") {
             return hasPromise;
@@ -125,6 +133,21 @@ export default function MiniCRMPage() {
 
         return true;
     });
+  
+
+const filterCounts = {
+    all: customers.length,
+    pending: customers.filter(c => (c as any).pendingCount > 0).length,
+    breached: customers.filter(c => (c as any).breachedCount > 0).length,
+    fulfilled: customers.filter(c => (c as any).fulfilledCount > 0).length,
+};
+
+const isFilterDisabled = (key: string) =>
+    key !== "all" &&
+    filterCounts[key as keyof typeof filterCounts] === 0;
+
+const disabledBtn =
+    "opacity-50 cursor-not-allowed pointer-events-none";
 
 
 
@@ -164,6 +187,51 @@ export default function MiniCRMPage() {
     };
 
 
+    const approveReturn = async (orderId: string) => {
+        await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/orders/return/approve/${orderId}`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ orderId }),
+            }
+        );
+
+        fetchOrderDetails(orderId);
+    };
+
+    const rejectReturn = async (orderId: string) => {
+        const reason = prompt("Reason for rejecting return?");
+        if (!reason) return;
+
+        await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/orders/return/reject`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ orderId, reason }),
+            }
+        );
+
+        fetchOrderDetails(orderId);
+    };
+
+    const fetchReturns = async () => {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/crm/returns`,
+            { credentials: "include" }
+        );
+        const data = await res.json();
+        setReturns(data.returns || []);
+    };
+
+
+
+    useEffect(() => {
+        fetchReturns();
+    }, []);
 
     const fetchLatestAddress = async (email: string) => {
         try {
@@ -665,7 +733,57 @@ export default function MiniCRMPage() {
                     Customers
                 </div>
 
-                {loadingCustomers ? (
+                 {!loadingCustomers && customers.length > 0 && (
+                            <div className="flex flex-wrap gap-2 px-4 py-2 border-b bg-gray-50 text-sm items-center">
+
+                                {[
+                                    { key: "all", label: "All Customers" },
+                                    { key: "pending", label: "Pending" },
+                                    { key: "breached", label: "Breached" },
+                                    { key: "fulfilled", label: "Fulfilled" },
+                                ].map((f) => {
+                                    const active = customerFilter === f.key;
+                                    const disabled = isFilterDisabled(f.key);
+
+                                    return (
+                                        <button
+                                            key={f.key}
+                                            onClick={() => setCustomerFilter(f.key as CustomerFilter)}
+                                            disabled={disabled}
+                                            className={`
+            px-3 py-1 rounded border transition
+            ${active
+                                                    ? "bg-blue-100 text-blue-700 border-blue-300"
+                                                    : "bg-white hover:bg-gray-100"
+                                                }
+              ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+          `}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    );
+                                })}
+
+                                {/* 🔥 CLEAR FILTER (always enabled) */}
+                                <button
+                                    onClick={clearCustomerFilter}
+                                    disabled={customerFilter === "all"}
+                                    className={`
+        ml-2 p-2 rounded border transition
+        ${customerFilter !== "all"
+                                            ? "text-gray-600 hover:bg-red-50 hover:text-red-600"
+                                            : "opacity-30 cursor-not-allowed"
+                                        }
+      `}
+                                    title="Clear filter"
+                                >
+                                    <FilterX size={16} />
+                                </button>
+
+                            </div>
+                        )}
+
+                {loadingCustomers && customers.length > 0 && (
                     <div className="divide-y">
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className="flex gap-3 p-3 animate-pulse">
@@ -676,104 +794,44 @@ export default function MiniCRMPage() {
                             </div>
                         ))}
                     </div>
-                ) : filteredCustomers.length === 0 ? (
+                )}
 
-                    <div className="p-4 text-sm text-gray-500">No customers found.</div>
-                ) : (
+
+                {loadingCustomers ? (
+    <div className="p-4 text-sm text-gray-500">Loading…</div>
+  ) : filteredCustomers.length === 0 ? (
+    <div className="p-4 text-sm text-gray-500">
+      No customers found.
+    </div>
+  ) : (
                     <div className="overflow-x-auto max-h-[70vh]">
-                        <div className="flex gap-2 px-4 py-2 border-b bg-gray-50 text-sm">
-                            {/* <button
-                                onClick={() => setCustomerFilter("promise")}
-                                className={`px-3 py-1 rounded border ${customerFilter === "promise"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                Promise Customers
-                            </button>
-
-                            <button
-                                onClick={() => setCustomerFilter("all")}
-                                className={`px-3 py-1 rounded border ${customerFilter === "all"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                All Customers
-                            </button>
-
-                            <button
-                                onClick={() => setActiveTab("messages")}
-                                className={`px-3 py-1 rounded text-sm border ${activeTab === "messages"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                Messages
-                            </button> */}
-
-                            <button
-                                onClick={() => setCustomerFilter("pending")}
-                                className={`px-3 py-1 rounded border ${customerFilter === "pending"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                Pending
-                            </button>
-
-                            <button
-                                onClick={() => setCustomerFilter("breached")}
-                                className={`px-3 py-1 rounded border ${customerFilter === "breached"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                Breached
-                            </button>
-
-                            <button
-                                onClick={() => setCustomerFilter("fulfilled")}
-                                className={`px-3 py-1 rounded border ${customerFilter === "fulfilled"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-white hover:bg-gray-100"
-                                    }`}
-                            >
-                                Fulfilled
-                            </button>
-
-                        </div>
                         {/* DETAIL TABS */}
-<div className="flex gap-2 border-b mb-4">
-  {[
-    { key: "timeline", label: "Timeline" },
-    { key: "promises", label: "Promises" },
-    { key: "messages", label: "Messages" },
-  ].map((tab) => (
-    <button
-      key={tab.key}
-      onClick={() => setActiveTab(tab.key as any)}
-      className={`
+                        <div className="flex gap-2 border-b mb-4">
+                            {[
+                                { key: "timeline", label: "Timeline" },
+                                { key: "promises", label: "Promises" },
+                                { key: "messages", label: "Messages" },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key as any)}
+                                    className={`
         px-4 py-2 text-sm border-b-2 transition
         ${activeTab === tab.key
-          ? "border-blue-500 text-blue-600 font-medium"
-          : "border-transparent text-gray-500 hover:text-gray-700"
-        }
+                                            ? "border-blue-500 text-blue-600 font-medium"
+                                            : "border-transparent text-gray-500 hover:text-gray-700"
+                                        }
       `}
-    >
-      {tab.label}
-      {tab.key === "messages" && contactMessages.length > 0 && (
-        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
-          {contactMessages.length}
-        </span>
-      )}
-    </button>
-  ))}
-</div>
-
-
-
-
+                                >
+                                    {tab.label}
+                                    {tab.key === "messages" && contactMessages.length > 0 && (
+                                        <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
+                                            {contactMessages.length}
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                         <table className="w-full text-sm">
                             <thead className="bg-[var(--background-card)] border-b sticky top-0">
                                 <tr>
@@ -1225,6 +1283,103 @@ export default function MiniCRMPage() {
                                     </div>
                                 )}
                             </div>
+
+
+                            <div className="border rounded-xl p-4">
+                                <h2 className="font-semibold mb-3">Return Requests</h2>
+
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Order</th>
+                                            <th>Status</th>
+                                            <th>Reason</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {returns.map((o) => (
+                                            <tr key={o._id} className="border-t relative">
+                                                {/* ORDER */}
+                                                <td className="font-medium">{o.orderId}</td>
+
+                                                {/* STATUS */}
+                                                <td>
+                                                    <span
+                                                        className={`inline-block px-2 py-1 text-xs rounded ${o.return.status === "requested"
+                                                            ? "bg-yellow-100 text-yellow-800"
+                                                            : o.return.status === "approved"
+                                                                ? "bg-blue-100 text-blue-800"
+                                                                : o.return.status === "rejected"
+                                                                    ? "bg-red-100 text-red-800"
+                                                                    : "bg-gray-100 text-gray-600"
+                                                            }`}
+                                                    >
+                                                        {o.return.status.toUpperCase()}
+                                                    </span>
+                                                </td>
+
+                                                {/* REASON */}
+                                                <td className="max-w-xs truncate">{o.return.reason || "—"}</td>
+
+                                                {/* ACTIONS */}
+                                                <td className="relative">
+                                                    {/* ⋮ BUTTON */}
+                                                    <button
+                                                        onClick={() =>
+                                                            setOpenMenuId(openMenuId === o._id ? null : o._id)
+                                                        }
+                                                        className="px-2 py-1 rounded hover:bg-gray-100 text-lg"
+                                                    >
+                                                        ⋮
+                                                    </button>
+
+                                                    {/* DROPDOWN */}
+                                                    {openMenuId === o._id && (
+                                                        <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50">
+                                                            <button
+                                                                onClick={() => {
+                                                                    fetchOrderDetails(o.orderId);
+                                                                    setOpenMenuId(null);
+                                                                }}
+                                                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+                                                            >
+                                                                View Order
+                                                            </button>
+
+                                                            {o.return.status === "requested" && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            approveReturn(o.orderId);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 text-green-700"
+                                                                    >
+                                                                        Approve Return
+                                                                    </button>
+
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            rejectReturn(o.orderId);
+                                                                            setOpenMenuId(null);
+                                                                        }}
+                                                                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 text-red-600"
+                                                                    >
+                                                                        Reject Return
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+
+                                </table>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -1265,6 +1420,51 @@ export default function MiniCRMPage() {
                                         <div><b>Payment:</b> {selectedOrder.paymentMethod || selectedOrder.paymentStatus || "—"}</div>
 
                                     </div>
+
+                                    {selectedOrder.return && (
+                                        <div className="border rounded p-4 bg-yellow-50">
+                                            <div className="font-medium mb-2">Return Request</div>
+
+                                            <div className="text-sm space-y-1">
+                                                <div>
+                                                    <b>Status:</b>{" "}
+                                                    {selectedOrder.return.status.toUpperCase()}
+                                                </div>
+
+                                                <div>
+                                                    <b>Reason:</b>{" "}
+                                                    {selectedOrder.return.reason}
+                                                </div>
+
+                                                {selectedOrder.return.rejectionReason && (
+                                                    <div className="text-red-600">
+                                                        <b>Rejected Reason:</b>{" "}
+                                                        {selectedOrder.return.rejectionReason}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* ADMIN ACTIONS */}
+                                            {selectedOrder.return.status === "requested" && (
+                                                <div className="flex gap-2 mt-3">
+                                                    <button
+                                                        onClick={() => approveReturn(selectedOrder.orderId)}
+                                                        className="px-3 py-1 rounded bg-green-600 text-white text-sm"
+                                                    >
+                                                        Accept
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => rejectReturn(selectedOrder.orderId)}
+                                                        className="px-3 py-1 rounded bg-red-600 text-white text-sm"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
 
                                     {/* ITEMS */}
                                     <div className="border rounded">
