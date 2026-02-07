@@ -76,13 +76,21 @@ const PAGE_LIST: { key: PageKey; label: string }[] = [
 
 export default function ContentCompliancePage() {
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
- const getAuthHeaders = (): Record<string, string> => {
-  const t = Cookies.get("auth_token");
-  if (!t) return {};
+  
+const getAuthHeaders = (): Record<string, string> => {
+  const token = sessionStorage.getItem("auth_token");
+
+  if (!token) {
+    console.warn("❌ No auth_token in sessionStorage");
+    return {};
+  }
+
   return {
-    Authorization: `Bearer ${t}`,
+    Authorization: `Bearer ${token}`,
   };
 };
+
+
 
 
   const [activePage, setActivePage] = useState<PageKey>("contact");
@@ -101,7 +109,7 @@ export default function ContentCompliancePage() {
     try {
       const res = await fetch(`${API}/api/admin/pages/${key}`, {
         headers: getAuthHeaders(),
-        credentials: "include",
+      
       });
 
       const data = await res.json();
@@ -148,7 +156,7 @@ export default function ContentCompliancePage() {
         type: pageData.type,
         sections: pageData.sections,
       }),
-      credentials: "include",
+      
     });
 
     if (!res.ok) {

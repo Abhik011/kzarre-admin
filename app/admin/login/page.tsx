@@ -155,7 +155,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     const finalPermissions =
       userPermissions.length > 0 ? userPermissions : defaultPermissions;
 
-    const userRole = data.admin.role || "Admin";
+    const userRole = data?.admin?.role;
     const storage = remember ? localStorage : sessionStorage;
 
 // Save token manually for persistence strategy

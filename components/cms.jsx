@@ -20,7 +20,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-const userRole = "admin";
+
 
 export default function CMSComplete() {
   const [currentView, setCurrentView] = useState("dashboard");
@@ -32,7 +32,7 @@ export default function CMSComplete() {
 
   const getAuthToken = () => {
     try {
-      const raw = localStorage.getItem("auth-storage");
+      const raw = sessionStorage.getItem("auth-storage");
       if (!raw) return null;
 
       const parsed = JSON.parse(raw);
@@ -50,16 +50,17 @@ export default function CMSComplete() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("auth-storage");
+      const raw = sessionStorage.getItem("auth-storage");
       if (!raw) return;
 
       const parsed = JSON.parse(raw);
+   
       const user = parsed?.state?.user;
-
+  
       if (user?.isSuperAdmin === true) {
         setIsSuperAdmin(true);
       } else if (typeof user?.role === "string") {
-        setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
+       setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
       }
     } catch (err) {
       console.error("❌ Failed to read auth-storage:", err);
@@ -660,9 +661,9 @@ console.log("TOKEN BEING SENT:", token);
     }
 
     const map = {
-      Approved: "bg-[var(--accent-green)] text-white",
+      Approved: "bg-[var(--accent-green)] text-black",
       Draft: "bg-gray-500 text-white",
-      "Pending Review": "bg-yellow-500 text-black",
+      "Pending Review": "bg-yellow-500 text-white",
       Rejected: "bg-red-500 text-white",
       Scheduled: "bg-blue-500 text-white",
     };
@@ -1682,7 +1683,7 @@ console.log("TOKEN BEING SENT:", token);
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           {isSuperAdmin &&
-                            ["Pending Review", "Pending"].includes(post.status) && (
+                            ["Pending Review"].includes(post.status) && (
 
                               <>
                                 <button
