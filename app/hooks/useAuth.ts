@@ -20,7 +20,7 @@ export default function useAuth() {
 
       const data = await res.json();
       if (data?.accessToken) {
-        localStorage.setItem("admin_token", data.accessToken);
+        sessionStorage.setItem("admin_token", data.accessToken);
         setToken(data.accessToken);
         return data.accessToken;
       }
@@ -31,7 +31,7 @@ export default function useAuth() {
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem("admin_token");
+    const stored = sessionStorage.getItem("admin_token");
     if (stored) setToken(stored);
 
     refreshAccessToken().finally(() => setLoading(false));

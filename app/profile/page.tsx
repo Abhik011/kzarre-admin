@@ -42,18 +42,18 @@ export default function ProfilePage() {
 
         throw new Error("Backend failed");
       } catch {
-        // ✅ Fallback: localStorage (safe)
+        // ✅ Fallback: sessionStorage (safe)
         const name =
-          localStorage.getItem("superadmin_name") ||
-          localStorage.getItem("admin_name") ||
+          sessionStorage.getItem("superadmin_name") ||
+          sessionStorage.getItem("admin_name") ||
           "User";
 
         const email =
-          localStorage.getItem("superadmin_email") ||
-          localStorage.getItem("admin_email") ||
+          sessionStorage.getItem("superadmin_email") ||
+          sessionStorage.getItem("admin_email") ||
           "user@system.com";
 
-        const role = localStorage.getItem("role") || "Admin";
+        const role = sessionStorage.getItem("role") || "Admin";
 
         setProfile({ name, email, role });
       } finally {
@@ -66,9 +66,11 @@ export default function ProfilePage() {
 
   /* ================= LOGOUT ================= */
   const handleLogout = () => {
-    localStorage.clear();
-    router.push("/");
-  };
+  sessionStorage.clear();
+  localStorage.clear();
+  router.push("/");
+};
+
 
   /* ================= UI ================= */
   return (

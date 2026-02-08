@@ -43,8 +43,8 @@ const deleteUser = async (user) => {
   if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
 
   const token =
-    localStorage.getItem("superadmin_token") ||
-    localStorage.getItem("admin_token");
+    sessionStorage.getItem("superadmin_token") ||
+    sessionStorage.getItem("admin_token");
 
   try {
     const res = await fetch(
@@ -72,8 +72,8 @@ const toggleUserStatus = async (user) => {
   const newStatus = !user.isActive;
 
   const token =
-    localStorage.getItem("superadmin_token") ||
-    localStorage.getItem("admin_token");
+    sessionStorage.getItem("superadmin_token") ||
+    sessionStorage.getItem("admin_token");
 
   try {
     const res = await fetch(
@@ -104,7 +104,7 @@ const useMyRole = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setRole(localStorage.getItem("role") || "");
+      setRole(sessionStorage.getItem("role") || "");
     }
   }, []);
 
@@ -134,8 +134,8 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     }
 
     const token =
-      localStorage.getItem("superadmin_token") ||
-      localStorage.getItem("admin_token");
+      sessionStorage.getItem("superadmin_token") ||
+      sessionStorage.getItem("admin_token");
 
     try {
       setLoading(true);
@@ -459,8 +459,8 @@ const EditPermissionsModal = ({ user, onClose }) => {
 
   const save = async () => {
     const token =
-      localStorage.getItem("superadmin_token") ||
-      localStorage.getItem("admin_token");
+      sessionStorage.getItem("superadmin_token") ||
+      sessionStorage.getItem("admin_token");
 
     await fetch(
       `${API_BASE}/api/usersadmin/update-permissions/${user._id}`,
@@ -535,8 +535,8 @@ const CreateRoleModal = ({ isOpen, onClose, onCreated }) => {
     try {
       setSaving(true);
       const token =
-        localStorage.getItem("superadmin_token") ||
-        localStorage.getItem("admin_token");
+        sessionStorage.getItem("superadmin_token") ||
+        sessionStorage.getItem("admin_token");
 
       const res = await fetch(`${API_BASE}/api/usersadmin/roles`, {
         method: "POST",
@@ -718,8 +718,8 @@ const RolesPermissions = ({
 
 const deleteRole = async (roleId) => {
   const token =
-    localStorage.getItem("superadmin_token") ||
-    localStorage.getItem("admin_token");
+    sessionStorage.getItem("superadmin_token") ||
+    sessionStorage.getItem("admin_token");
 
   try {
     const res = await fetch(
@@ -744,7 +744,7 @@ const deleteRole = async (roleId) => {
 
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
-  const token = localStorage.getItem("superadmin_token");
+  const token = sessionStorage.getItem("superadmin_token");
 
   useEffect(() => {
     fetch(`${API_BASE}/api/activity`, {

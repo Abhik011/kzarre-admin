@@ -165,7 +165,7 @@ const ECommerceSection = () => {
       formData.append("variants", JSON.stringify(variants || []));
       realFiles.forEach((file) => formData.append("images", file));
 
-      const token = localStorage.getItem("token") || "";
+      const token = sessionStorage.getItem("token") || "";
       setUploading(true);
       setUploadProgress(0);
 

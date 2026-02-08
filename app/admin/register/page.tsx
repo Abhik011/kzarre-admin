@@ -27,7 +27,7 @@ export default function AdminRegister() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Something went wrong");
 
-      localStorage.setItem("admin_token", data.token);
+      sessionStorage.setItem("admin_token", data.token);
       window.location.href = "/dashboard";
     } catch (err: any) {
       setError(err.message);

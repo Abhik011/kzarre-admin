@@ -238,7 +238,7 @@ const [previewStory, setPreviewStory] = useState<Story | null>(null);
   useEffect(() => {
     if (!editor) return;
     const id = setInterval(() => {
-      localStorage.setItem(
+      sessionStorage.setItem(
         "story_draft",
         JSON.stringify({ title, subtitle, content })
       );
@@ -248,7 +248,7 @@ const [previewStory, setPreviewStory] = useState<Story | null>(null);
 
   useEffect(() => {
     if (!editor || editingStory) return;
-    const saved = localStorage.getItem("story_draft");
+    const saved = sessionStorage.getItem("story_draft");
     if (!saved) return;
     const d = JSON.parse(saved);
     setTitle(d.title || "");
@@ -316,7 +316,7 @@ const [previewStory, setPreviewStory] = useState<Story | null>(null);
 
   /* ================= RESET ================= */
   const resetForm = () => {
-    localStorage.removeItem("story_draft");
+    sessionStorage.removeItem("story_draft");
     setShowForm(false);
     setEditingStory(null);
     setTitle("");

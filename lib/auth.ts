@@ -95,9 +95,9 @@ export const useAuthStore = create<AuthState>()(
         };
 
         if (typeof window !== "undefined") {
-          localStorage.removeItem("auth-storage");
-          localStorage.removeItem("permissions");
-          localStorage.removeItem("role");
+          sessionStorage.removeItem("auth-storage");
+          sessionStorage.removeItem("permissions");
+          sessionStorage.removeItem("role");
         }
 
         console.log("Auth Store: Logged out");
@@ -207,12 +207,12 @@ export const useAuthStore = create<AuthState>()(
     {
       name: "auth-storage",
      storage: createJSONStorage(() => {
-  if (typeof window === "undefined") return localStorage;
+  if (typeof window === "undefined") return sessionStorage;
 
   // Use sessionStorage if token was saved there
   const hasSessionToken = sessionStorage.getItem("auth_token");
 
-  return hasSessionToken ? sessionStorage : localStorage;
+  return hasSessionToken ? sessionStorage : sessionStorage;
 }),
 
       partialize: (state) => ({

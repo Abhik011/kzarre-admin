@@ -17,7 +17,7 @@ export default function VerifySuperAdminLogin() {
 
   const email =
     typeof window !== "undefined"
-      ? localStorage.getItem("superadmin_email")
+      ? sessionStorage.getItem("superadmin_email")
       : "";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -72,7 +72,7 @@ export default function VerifySuperAdminLogin() {
       });
 
       // Clean up
-      localStorage.removeItem("superadmin_email");
+      sessionStorage.removeItem("superadmin_email");
 
       console.log("SuperAdmin Verify: Auth state updated, redirecting...");
 

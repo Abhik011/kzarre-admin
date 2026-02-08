@@ -9,7 +9,7 @@ export default function VerifySuperAdminOTP() {
   const [success, setSuccess] = useState("");
 
   const API_BASE = process.env.NEXT_PUBLIC_BACKEND_API_URL;
-  const email = typeof window !== "undefined" ? localStorage.getItem("superadmin_email") : "";
+  const email = typeof window !== "undefined" ? sessionStorage.getItem("superadmin_email") : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

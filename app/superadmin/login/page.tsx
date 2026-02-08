@@ -44,7 +44,7 @@ export default function SuperAdminLogin() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Login failed");
-      localStorage.setItem("superadmin_email", email);
+      sessionStorage.setItem("superadmin_email", email);
 
       setMessage("✅ OTP sent to your email.");
       setTimeout(() => router.push("/superadmin/verify-login"), 1000);

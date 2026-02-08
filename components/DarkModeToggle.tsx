@@ -6,7 +6,7 @@ export default function DarkModeToggle() {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
+    const saved = sessionStorage.getItem("theme");
     if (saved === "dark") {
       document.documentElement.classList.add("dark");
       setTheme("dark");
@@ -23,7 +23,7 @@ export default function DarkModeToggle() {
       document.documentElement.classList.remove("dark");
     }
 
-    localStorage.setItem("theme", newTheme);
+    sessionStorage.setItem("theme", newTheme);
   };
 
   return (

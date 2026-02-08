@@ -27,7 +27,7 @@ export default function SuperAdminRegister() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setSuccess("✅ OTP sent to your email.");
-      localStorage.setItem("superadmin_email", form.email);
+      sessionStorage.setItem("superadmin_email", form.email);
       setTimeout(() => (window.location.href = "/superadmin/verify-otp"), 1000);
     } catch (err: any) {
       setError(err.message || "Something went wrong");

@@ -527,7 +527,7 @@ const ECommerceSection: React.FC = () => {
     try {
       const token =
         typeof window !== "undefined"
-          ? localStorage.getItem("token") || ""
+          ? sessionStorage.getItem("auth_token") || ""
           : "";
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/products/${id}`,
@@ -557,7 +557,7 @@ const ECommerceSection: React.FC = () => {
 
   const handleCreateDiscount = async () => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/discounts`, {
         method: "POST",
         headers: {
@@ -616,7 +616,7 @@ const ECommerceSection: React.FC = () => {
 
   const handleUpdateDiscount = async (id: string) => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/discounts/${id}`, {
         method: "PATCH",
         headers: {
@@ -645,7 +645,7 @@ const ECommerceSection: React.FC = () => {
     if (!confirm("Are you sure you want to delete this discount?")) return;
 
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/discounts/${id}`, {
         method: "DELETE",
         headers: {
@@ -671,7 +671,7 @@ const ECommerceSection: React.FC = () => {
 
   const handleCreateCoupon = async () => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/coupons`, {
         method: "POST",
         headers: {
@@ -734,7 +734,7 @@ const ECommerceSection: React.FC = () => {
 
   const handleUpdateCoupon = async (id: string) => {
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/coupons/${id}`, {
         method: "PATCH",
         headers: {
@@ -763,7 +763,7 @@ const ECommerceSection: React.FC = () => {
     if (!confirm("Are you sure you want to delete this coupon?")) return;
 
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") || "" : "";
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/coupons/${id}`, {
         method: "DELETE",
         headers: {
@@ -1231,7 +1231,7 @@ const handleEditProduct = (product: Product) => {
 
       const token =
         typeof window !== "undefined"
-          ? localStorage.getItem("token") || ""
+          ? sessionStorage.getItem("auth_token") || ""
           : "";
 
       setUploading(true);

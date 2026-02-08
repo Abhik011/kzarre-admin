@@ -20,6 +20,23 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 
 
 export default function CMSComplete() {
@@ -47,6 +64,56 @@ export default function CMSComplete() {
       return null;
     }
   };
+
+//   function SortableImageItem({
+//   media,
+//   id,
+//   onRemove,
+// }: {
+//   media: any;
+//   id: string;
+//   onRemove: () => void;
+// }) {
+//   const { attributes, listeners, setNodeRef, transform, transition } =
+//     useSortable({ id });
+
+//   const style = {
+//     transform: CSS.Transform.toString(transform),
+//     transition,
+//   };
+
+//   return (
+//     <div
+//       ref={setNodeRef}
+//       style={style}
+//       {...attributes}
+//       className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)] bg-[var(--background)]"
+//     >
+//       <img
+//         src={media.url}
+//         alt={media.name}
+//         className="w-full h-40 object-cover"
+//       />
+
+//       {/* Drag Handle */}
+//       <div
+//         {...listeners}
+//         className="absolute bottom-2 left-2 px-2 py-1 text-xs rounded bg-black/60 text-white cursor-grab"
+//       >
+//         Drag
+//       </div>
+
+//       {/* Remove */}
+//       <button
+//         onClick={onRemove}
+//         className="absolute top-1 right-1 p-1 bg-[var(--background-card)] rounded-full"
+//       >
+//         <X size={14} />
+//       </button>
+//     </div>
+//   );
+// }
+
 
   useEffect(() => {
     try {

@@ -137,7 +137,7 @@ export default function Sidebar() {
       permission: "manage_settings",
     },
   ];
-  // Load role from localStorage
+  // Load role from sessionStorage
   return (
     <>
       {/* Mobile Toggle Button */}

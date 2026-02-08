@@ -13,7 +13,7 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
   // ✅ Load from storage
   useEffect(() => {
     const stored = JSON.parse(
-      localStorage.getItem("admin_notifications") || "[]"
+      sessionStorage.getItem("admin_notifications") || "[]"
     );
     setNotifications(stored);
     audioRef.current = new Audio("/notification.mp3");
@@ -32,7 +32,7 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
 
       setNotifications((prev) => {
         const updated = [item, ...prev];
-        localStorage.setItem("admin_notifications", JSON.stringify(updated));
+        sessionStorage.setItem("admin_notifications", JSON.stringify(updated));
         return updated;
       });
 
@@ -54,7 +54,7 @@ export default function NotificationProvider({ isOpen = false, onClose }) {
   // ✅ Clear all
   const clearAll = () => {
     setNotifications([]);
-    localStorage.removeItem("admin_notifications");
+    sessionStorage.removeItem("admin_notifications");
   };
 
   // ✅ Show when either:

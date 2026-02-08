@@ -71,7 +71,7 @@ export default function Dashboard() {
   const [topOrders, setTopOrders] = useState([]);
 
   useEffect(() => {
-    setRole(localStorage.getItem("role"));
+    setRole(sessionStorage.getItem("role"));
 
     const fetchAnalytics = async () => {
       try {
