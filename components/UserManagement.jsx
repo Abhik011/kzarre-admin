@@ -898,10 +898,10 @@ const ActivityLog = () => {
   }, []);
 
   return (
-    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
+    <div className="bg-[var(--background-card)] border rounded-2xl p-6">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-[var(--borderColor)]">
+          <tr className="border-b ">
             <th className="px-4 py-3 text-left">User</th>
             <th className="px-4 py-3 text-left">Action</th>
             <th className="px-4 py-3 text-left">IP</th>
@@ -910,7 +910,7 @@ const ActivityLog = () => {
         </thead>
         <tbody>
           {logs.map((l, i) => (
-            <tr key={i} className="border-b border-[var(--borderColor)]">
+            <tr key={i} className="border-b">
               <td className="px-4 py-3">{l.userName}</td>
               <td className="px-4 py-3">{l.action}</td>
               <td className="px-4 py-3">{l.ip}</td>

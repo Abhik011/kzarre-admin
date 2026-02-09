@@ -78,10 +78,10 @@ export default function ContentCompliancePage() {
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
   
 const getAuthHeaders = (): Record<string, string> => {
-  const token = sessionStorage.getItem("auth_token");
+  const token = sessionStorage.getItem("access_token");
 
   if (!token) {
-    console.warn("❌ No auth_token in sessionStorage");
+    console.warn("❌ No access_token in sessionStorage");
     return {};
   }
 

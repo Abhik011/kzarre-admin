@@ -32,7 +32,7 @@ export default function MarketingCenter() {
   const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;
 
  const getAuthHeaders = (): Record<string, string> => {
-  const t = Cookies.get("auth_token");
+  const t = Cookies.get("access_token");
   if (!t) return {};
   return {
     Authorization: `Bearer ${t}`,

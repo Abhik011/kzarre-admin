@@ -210,7 +210,7 @@ export const useAuthStore = create<AuthState>()(
   if (typeof window === "undefined") return sessionStorage;
 
   // Use sessionStorage if token was saved there
-  const hasSessionToken = sessionStorage.getItem("auth_token");
+  const hasSessionToken = sessionStorage.getItem("access_token");
 
   return hasSessionToken ? sessionStorage : sessionStorage;
 }),
