@@ -39,7 +39,7 @@ const useRoles = () => {
 };
 
 
-const deleteUser = async (user) => {
+const deleteUser = async (user, refresh) => {
   if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
 
   const token =
@@ -62,7 +62,8 @@ const deleteUser = async (user) => {
 
     alert("✅ User deleted successfully");
     // refresh list
-    window.location.reload();
+    setRefreshKey(k => k + 1);
+
   } catch (err) {
     alert("❌ " + err.message);
   }
@@ -92,7 +93,8 @@ const toggleUserStatus = async (user) => {
     if (!res.ok) throw new Error(data.message || "Status update failed");
 
     alert(`✅ User ${newStatus ? "activated" : "deactivated"}`);
-    window.location.reload();
+    setRefreshKey(k => k + 1);
+
   } catch (err) {
     alert("❌ " + err.message);
   }
@@ -425,7 +427,7 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
 
                     {/* DELETE USER */}
                     <button
-                      onClick={() => deleteUser(u)}
+                      onClick={() => deleteUser(u, () => setRefreshKey(k => k + 1))}
                       className="text-red-500 text-xs flex items-center gap-1"
                     >
                       <Trash2 size={14} />
@@ -443,12 +445,12 @@ const UserList = ({ refreshKey, onEditPermissions }) => {
   );
 };
 
-
-
-
 const EditPermissionsModal = ({ user, onClose }) => {
   const permissions = usePermissions();
-  const [selected, setSelected] = useState(user.permissions || []);
+  const [selected, setSelected] = useState(
+    user.roleId?.permissions || []
+  );
+
 
   const toggle = key =>
     setSelected(prev =>
@@ -622,15 +624,13 @@ const RolesPermissions = ({
   const roles = useRoles();
 
   return (
-    <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-2xl p-6">
-      <h3 className="text-lg font-bold text-[var(--textPrimary)] mb-4">
-        Roles & Permissions
-      </h3>
+    <div className="bg-[var(--background-card)] border border-b rounded-2xl p-6">
+
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--borderColor)]">
+            <tr className="border-b border-b">
               <th className="px-4 py-3 text-left">Role</th>
               <th className="px-4 py-3 text-left">Permissions</th>
               <th className="px-4 py-3 text-right">Actions</th>
@@ -653,7 +653,7 @@ const RolesPermissions = ({
                 <tr
                   key={r._id}
                   className="
-                    border-b border-[var(--borderColor)]
+                    border-b 
                     hover:bg-black/5 dark:hover:bg-white/5 transition
                   "
                 >
@@ -680,7 +680,7 @@ const RolesPermissions = ({
                           flex items-center gap-1 text-xs
                         "
                       >
-                        <Eye size={14} /> View
+                        <Eye size={14} />
                       </button>
 
                       {/* EDIT */}
@@ -691,7 +691,7 @@ const RolesPermissions = ({
                           flex items-center gap-1 text-xs
                         "
                       >
-                        <Pencil size={14} /> Edit
+                        <Pencil size={14} />
                       </button>
 
                       {/* DELETE */}
@@ -702,7 +702,7 @@ const RolesPermissions = ({
                           flex items-center gap-1 text-xs
                         "
                       >
-                        <Trash2 size={14} /> Delete
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -716,31 +716,174 @@ const RolesPermissions = ({
   );
 };
 
-const deleteRole = async (roleId) => {
-  const token =
-    sessionStorage.getItem("superadmin_token") ||
-    sessionStorage.getItem("admin_token");
+const ViewRoleModal = ({ role, onClose }) => {
+  if (!role) return null;
 
-  try {
-    const res = await fetch(
-      `${API_BASE}/api/usersadmin/roles/${roleId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-xl w-full max-w-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-[var(--textPrimary)]">
+            Role Details
+          </h3>
+          <button onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <p className="text-sm text-[var(--textSecondary)]">Role Name</p>
+          <p className="font-medium">{role.name}</p>
+        </div>
+
+        <div>
+          <p className="text-sm text-[var(--textSecondary)] mb-2">
+            Permissions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {role.permissions?.length ? (
+              role.permissions.map((p) => (
+                <span
+                  key={p}
+                  className="text-xs px-2 py-1 rounded bg-black/5"
+                >
+                  {p}
+                </span>
+              ))
+            ) : (
+              <span className="text-xs text-[var(--textSecondary)]">—</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditRoleModal = ({ role, onClose, onUpdated }) => {
+  const permissions = usePermissions();
+  const [name, setName] = useState(role.name);
+  const [selected, setSelected] = useState(role.permissions || []);
+  const [saving, setSaving] = useState(false);
+
+  const toggle = (key) =>
+    setSelected((prev) =>
+      prev.includes(key)
+        ? prev.filter((x) => x !== key)
+        : [...prev, key]
     );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Delete failed");
+  const save = async () => {
+    try {
+      setSaving(true);
+      const token =
+        sessionStorage.getItem("superadmin_token") ||
+        sessionStorage.getItem("admin_token");
 
-    alert("✅ Role deleted successfully");
-    setRefreshKey((k) => k + 1); // refresh list
-  } catch (err) {
-    alert("❌ " + err.message);
-  }
+      const res = await fetch(
+        `${API_BASE}/api/usersadmin/roles/${role._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name,
+            permissions: selected,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      alert("✅ Role updated");
+      onUpdated?.();
+      onClose();
+    } catch (e) {
+      alert("❌ " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--background-card)] border border-[var(--borderColor)] rounded-xl w-full max-w-lg p-6">
+        <div className="flex justify-between mb-4">
+          <h3 className="text-lg font-bold text-[var(--textPrimary)]">
+            Edit Role
+          </h3>
+          <button onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full mb-4 px-3 py-2 border rounded bg-transparent"
+          placeholder="Role name"
+        />
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {permissions.map((p) => (
+            <label key={p.key} className="flex gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selected.includes(p.key)}
+                onChange={() => toggle(p.key)}
+              />
+              {p.label}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border rounded-lg"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="px-4 py-2 bg-[var(--accent-green)] rounded-lg"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
+
+
+const deleteRole = async (roleId) => {
+  const token = sessionStorage.getItem("access_token");
+
+  if (!token) {
+    alert("Session expired. Please login again.");
+    return;
+  }
+
+  const res = await fetch(
+    `${API_BASE}/api/usersadmin/roles/${roleId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+};
+
+
 
 const ActivityLog = () => {
   const [logs, setLogs] = useState([]);
@@ -792,7 +935,7 @@ export default function UserManagement() {
   const [editRole, setEditRole] = useState(null);
 
   return (
-    <ProtectedRoute permissions={["manage_users "]}>
+    <ProtectedRoute permissions={["manage_users"]}>
       <div className="min-h-screen p-1 space-y-8">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--textPrimary)]">
@@ -861,7 +1004,8 @@ export default function UserManagement() {
               </h2>
               <button
                 onClick={() => setShowCreateRole(true)}
-                className="px-4 py-2 bg-[var(--accent-green)] rounded-lg text-sm flex items-center gap-2"
+                className="px-4 py-2  bg-green-400 text-black rounded-lg 
+                hover:bg-green-500 active:scale-95 rounded-lg text-sm flex items-center gap-2"
               >
                 <Plus size={16} /> Create Role
               </button>
@@ -869,10 +1013,17 @@ export default function UserManagement() {
             <RolesPermissions
               onViewRole={(role) => setViewRole(role)}
               onEditRole={(role) => setEditRole(role)}
-              onDeleteRole={(role) => {
+              onDeleteRole={async (role) => {
                 if (!confirm(`Delete role "${role.name}"?`)) return;
-                deleteRole(role._id);
+                try {
+                  await deleteRole(role._id);
+                  alert("✅ Role deleted");
+                  setRefreshKey((k) => k + 1);
+                } catch (e) {
+                  alert("❌ " + e.message);
+                }
               }}
+
             />
 
           </>
@@ -898,6 +1049,21 @@ export default function UserManagement() {
           onCreated={() => setRefreshKey(k => k + 1)}
         />
       </div>
+      {viewRole && (
+        <ViewRoleModal
+          role={viewRole}
+          onClose={() => setViewRole(null)}
+        />
+      )}
+
+      {editRole && (
+        <EditRoleModal
+          role={editRole}
+          onClose={() => setEditRole(null)}
+          onUpdated={() => setRefreshKey((k) => k + 1)}
+        />
+      )}
+
     </ProtectedRoute>
   );
 }

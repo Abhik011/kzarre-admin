@@ -228,24 +228,81 @@ export const useAuthStore = create<AuthState>()(
 // AUTH API HELPERS
 // =====================
 export const authApi = {
-  authenticatedFetch: async (url: string, options: RequestInit = {}) => {
-    const token = useAuthStore.getState().token;
+  authenticatedFetch: async (
+    url: string,
+    options: RequestInit = {}
+  ) => {
+    const getAccessToken = () =>
+      sessionStorage.getItem("access_token");
 
-    console.log(`authenticatedFetch: ${url}, token present =`, !!token);
+    const refreshToken = () =>
+      sessionStorage.getItem("refresh_token");
 
-    const response = await fetch(url, {
+    let accessToken = getAccessToken();
+
+    // 🔹 1️⃣ First attempt with current access token
+    let response = await fetch(url, {
       ...options,
       headers: {
-        Authorization: token ? `Bearer ${token}` : "",
+        Authorization: accessToken
+          ? `Bearer ${accessToken}`
+          : "",
         "Cache-Control": "no-cache",
         ...options.headers,
       },
     });
 
-    console.log(`authenticatedFetch: response status ${response.status}`);
+    // 🔁 2️⃣ If token expired → try refresh ONCE
+    if (response.status === 401 && refreshToken()) {
+      console.warn("Access token expired → refreshing...");
 
+      const refreshRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/auth/refresh`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken()}`,
+          },
+        }
+      );
+
+      if (!refreshRes.ok) {
+        console.error("Refresh failed → logout");
+
+        sessionStorage.clear();
+        useAuthStore.getState().logout();
+        throw new Error("Session expired");
+      }
+
+      const refreshData = await refreshRes.json();
+      const newAccessToken = refreshData.accessToken;
+
+      if (!newAccessToken) {
+        sessionStorage.clear();
+        useAuthStore.getState().logout();
+        throw new Error("Invalid refresh response");
+      }
+
+      // 🔐 Save new access token
+      sessionStorage.setItem("access_token", newAccessToken);
+      useAuthStore.setState({ token: newAccessToken });
+
+      console.log("Access token refreshed");
+
+      // 🔁 3️⃣ Retry original request with new token
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          Authorization: `Bearer ${newAccessToken}`,
+          "Cache-Control": "no-cache",
+          ...options.headers,
+        },
+      });
+    }
+
+    // ❌ Still unauthorized after retry → logout
     if (response.status === 401) {
-      console.log("authenticatedFetch: 401 received, logging out");
+      sessionStorage.clear();
       useAuthStore.getState().logout();
       throw new Error("Authentication expired");
     }
@@ -253,3 +310,4 @@ export const authApi = {
     return response;
   },
 };
+

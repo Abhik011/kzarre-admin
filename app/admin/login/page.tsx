@@ -124,15 +124,18 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       throw new Error(data.message || "Invalid credentials");
     }
 
-    // 🔥 FIX: read correct token field
-    const token = data.accessToken || data.token;
+    // ✅ REQUIRED TOKENS
+    const accessToken = data.accessToken;
+    const refreshToken = data.refreshToken;
 
-    console.log("TOKEN USED:", token);
-
-    if (!token) {
-      throw new Error("No token received from backend");
+    if (!accessToken || !refreshToken) {
+      throw new Error("Access or refresh token missing from backend");
     }
 
+    console.log("ACCESS TOKEN:", accessToken);
+    console.log("REFRESH TOKEN:", refreshToken);
+
+    // ✅ PERMISSIONS
     const userPermissions = data.admin.permissions || [];
     const defaultPermissions = [
       "view_dashboard",
@@ -149,44 +152,50 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       "view_crm",
       "manage_marketing",
       "manage_security",
-      "manage_settings"
+      "manage_settings",
     ];
 
     const finalPermissions =
       userPermissions.length > 0 ? userPermissions : defaultPermissions;
 
-    const userRole = data?.admin?.role;
-    const storage = sessionStorage;
+    const userRole = data.admin.role;
 
+    // 🔐 STORE TOKENS (SESSION ONLY — CORRECT)
+    sessionStorage.setItem("access_token", accessToken);
+    sessionStorage.setItem("refresh_token", refreshToken);
 
-// Save token manually for persistence strategy
-storage.setItem("auth_token", token);
-storage.setItem("auth_user", JSON.stringify({
-  _id: data.admin._id,
-  name: data.admin.name,
-  email: data.admin.email,
-  role: userRole,
-  permissions: finalPermissions,
-}));
+    // 🔐 OPTIONAL USER SNAPSHOT
+    sessionStorage.setItem(
+      "auth_user",
+      JSON.stringify({
+        _id: data.admin._id,
+        name: data.admin.name,
+        email: data.admin.email,
+        role: userRole,
+        permissions: finalPermissions,
+      })
+    );
 
- login(token, {
-  _id: data.admin._id,
-  name: data.admin.name,
-  email: data.admin.email,
-  role: userRole,
-  permissions: finalPermissions,
-});
+    // ✅ UPDATE ZUSTAND (ACCESS TOKEN ONLY)
+    login(accessToken, {
+      _id: data.admin._id,
+      name: data.admin.name,
+      email: data.admin.email,
+      role: userRole,
+      permissions: finalPermissions,
+    });
 
+    // 🚀 REDIRECT
     setTimeout(() => {
       window.location.href = "/dashboard";
-    }, 500);
-
+    }, 300);
   } catch (err: any) {
     setError(err?.message || "Something went wrong");
   } finally {
     setLoading(false);
   }
 };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
