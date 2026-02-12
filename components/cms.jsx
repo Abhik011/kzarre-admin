@@ -37,11 +37,90 @@ import {
 
 import { CSS } from "@dnd-kit/utilities";
 
+function SortableImageItem({
+  media,
+  id,
+  index,
+  onRemove,
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)] bg-[var(--background)]"
+    >
+      <img
+        src={media.url}
+        alt={`Image ${index}`}
+        className="w-full h-40 object-cover"
+      />
+
+      {/* Drag Handle */}
+      <div
+        {...listeners}
+        className="absolute bottom-2 left-2 px-2 py-1 text-xs rounded bg-black/60 text-white cursor-grab"
+      >
+        Drag
+      </div>
+
+      {/* Position Badge */}
+      <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+        #{index + 1}
+      </div>
+
+      {/* Remove */}
+      <button
+        onClick={onRemove}
+        className="absolute top-1 right-1 p-1 bg-[var(--background-card)] rounded-full"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
 
 
 export default function CMSComplete() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("pagesAndPosts");
+  const sensors = useSensors(
+    useSensor(PointerSensor)
+  );
+const handleDragEnd = (event) => {
+  const { active, over } = event;
+
+  if (!over || active.id === over.id) return;
+
+  const oldIndex = uploadedMediaList.findIndex(
+    (item) => item.id === active.id
+  );
+
+  const newIndex = uploadedMediaList.findIndex(
+    (item) => item.id === over.id
+  );
+
+  const reordered = arrayMove(uploadedMediaList, oldIndex, newIndex);
+  setUploadedMediaList(reordered);
+
+  // 🔥 Move metadata arrays too
+  setImageTitles(arrayMove(imageTitles, oldIndex, newIndex));
+  setImageDescriptions(arrayMove(imageDescriptions, oldIndex, newIndex));
+  setImageMetaTags(arrayMove(imageMetaTags, oldIndex, newIndex));
+  setImageMetaDescriptions(arrayMove(imageMetaDescriptions, oldIndex, newIndex));
+  setImageKeywords(arrayMove(imageKeywords, oldIndex, newIndex));
+};
+
+
 
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -65,54 +144,7 @@ export default function CMSComplete() {
     }
   };
 
-//   function SortableImageItem({
-//   media,
-//   id,
-//   onRemove,
-// }: {
-//   media: any;
-//   id: string;
-//   onRemove: () => void;
-// }) {
-//   const { attributes, listeners, setNodeRef, transform, transition } =
-//     useSortable({ id });
 
-//   const style = {
-//     transform: CSS.Transform.toString(transform),
-//     transition,
-//   };
-
-//   return (
-//     <div
-//       ref={setNodeRef}
-//       style={style}
-//       {...attributes}
-//       className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)] bg-[var(--background)]"
-//     >
-//       <img
-//         src={media.url}
-//         alt={media.name}
-//         className="w-full h-40 object-cover"
-//       />
-
-//       {/* Drag Handle */}
-//       <div
-//         {...listeners}
-//         className="absolute bottom-2 left-2 px-2 py-1 text-xs rounded bg-black/60 text-white cursor-grab"
-//       >
-//         Drag
-//       </div>
-
-//       {/* Remove */}
-//       <button
-//         onClick={onRemove}
-//         className="absolute top-1 right-1 p-1 bg-[var(--background-card)] rounded-full"
-//       >
-//         <X size={14} />
-//       </button>
-//     </div>
-//   );
-// }
 
 
   useEffect(() => {
@@ -121,13 +153,13 @@ export default function CMSComplete() {
       if (!raw) return;
 
       const parsed = JSON.parse(raw);
-   
+
       const user = parsed?.state?.user;
-  
+
       if (user?.isSuperAdmin === true) {
         setIsSuperAdmin(true);
       } else if (typeof user?.role === "string") {
-       setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
+        setIsSuperAdmin(user.role.toLowerCase() === "superadmin");
       }
     } catch (err) {
       console.error("❌ Failed to read auth-storage:", err);
@@ -365,7 +397,10 @@ export default function CMSComplete() {
               new Promise((resolve) => {
                 const r = new FileReader();
                 r.onload = (e) =>
-                  resolve({ url: e.target.result, rawFile: file });
+                  resolve({ 
+                    id: crypto.randomUUID(),   
+                    url: e.target.result, 
+                    rawFile: file });
                 r.readAsDataURL(file);
               })
           )
@@ -392,6 +427,7 @@ export default function CMSComplete() {
               const reader = new FileReader();
               reader.onload = (e) =>
                 resolve({
+                   id: crypto.randomUUID(),   
                   url: e.target.result,
                   rawFile: file,
                 });
@@ -586,7 +622,7 @@ export default function CMSComplete() {
       const method = isEditing ? "PUT" : "POST";
 
       const token = getAuthToken();
-console.log("TOKEN BEING SENT:", token);
+      console.log("TOKEN BEING SENT:", token);
       const res = await fetch(url, {
         method,
         headers: {
@@ -834,6 +870,7 @@ console.log("TOKEN BEING SENT:", token);
       if (Array.isArray(data.mediaGroup)) {
         setUploadedMediaList(
           data.mediaGroup.map((img) => ({
+                id: crypto.randomUUID(),  
             url: img.imageUrl,
             uploadedUrl: img.imageUrl,
             rawFile: null,
@@ -1102,27 +1139,29 @@ console.log("TOKEN BEING SENT:", token);
                       {/* Multi previews (grid/carousel) */}
                       {uploadedMediaList.length > 0 && (
                         <div className="space-y-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            {uploadedMediaList.map((m, idx) => (
-                              <div
-                                key={idx}
-                                className="relative rounded-lg overflow-hidden border border-[var(--sidebar-border)]"
-                              >
-                                <img
-                                  src={m.url}
-                                  alt={m.name}
-                                  className="w-full h-40 object-cover"
-                                />
-                                <button
-                                  onClick={() => removeMediaAt(idx)}
-                                  className="absolute top-1 right-1 p-1 bg-[var(--background-card)] rounded-full"
-                                  title="Remove"
-                                >
-                                  <X size={14} />
-                                </button>
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <SortableContext
+                                items={uploadedMediaList.map((item) => item.id)}
+                              strategy={rectSortingStrategy}
+                            >
+                              <div className="grid grid-cols-2 gap-3">
+                                {uploadedMediaList.map((m, idx) => (
+                                  <SortableImageItem
+                                    key={m.id}
+                                    id={m.id}
+                                    index={idx}
+                                    media={m}
+                                    onRemove={() => removeMediaAt(idx)}
+                                  />
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            </SortableContext>
+                          </DndContext>
+
 
                           {/* Per-image meta inputs */}
                           <div className="grid grid-cols-1 gap-2">
