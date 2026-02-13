@@ -56,12 +56,12 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
+              {/* <button
                 onClick={() => handleLogin('superadmin')}
                 className="px-6 py-3 w-full sm:w-auto bg-black badge-text-white rounded-xl shadow-md hover:shadow-lg hover:bg-gray-800 transition-all duration-300 font-medium"
               >
                 Super Admin
-              </button>
+              </button> */}
               <button
                 onClick={() => handleLogin('admin')}
                 className="px-6 py-3 w-full sm:w-auto bg-[#A0EDA8] text-black rounded-xl shadow-md hover:shadow-lg hover:bg-[var(--accent-green)] hover:text-white transition-all duration-300 font-medium"

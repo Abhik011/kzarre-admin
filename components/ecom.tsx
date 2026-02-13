@@ -31,6 +31,24 @@ import {
   List,
 } from "lucide-react";
 
+
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  useSortable,
+  horizontalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 // -------------------- Types --------------------
 interface Variant {
   _id?: string;
@@ -164,6 +182,45 @@ const ECommerceSection: React.FC = () => {
     "inventory" | "addProduct" | "orders" | "discounts"
   >("inventory");
   const [activeTab, setActiveTab] = useState("product");
+
+  const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 5,
+    },
+  })
+);
+
+const handleDragEnd = (event: any) => {
+  const { active, over } = event;
+
+  if (!over || active.id === over.id) return;
+
+  setImagePreviews((items) => {
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+
+    const newItems = arrayMove(items, oldIndex, newIndex);
+
+    // Fix selected image index
+    if (selectedImage === oldIndex) {
+      setSelectedImage(newIndex);
+    } else if (
+      selectedImage > oldIndex &&
+      selectedImage <= newIndex
+    ) {
+      setSelectedImage(selectedImage - 1);
+    } else if (
+      selectedImage < oldIndex &&
+      selectedImage >= newIndex
+    ) {
+      setSelectedImage(selectedImage + 1);
+    }
+
+    return newItems;
+  });
+};
+
 
   // Product management states
   const [error, setError] = useState<string | null>(null);
@@ -1206,7 +1263,13 @@ const handleEditProduct = (product: Product) => {
       formData.append("faq", JSON.stringify(productForm.faq || []));
 
       // IMPORTANT: include existing image URLs so backend can keep them (no reupload)
-      formData.append("existingGallery", JSON.stringify(existingImages || []));
+      // Extract ordered URLs from imagePreviews
+const orderedGallery = imagePreviews
+  .filter((p) => typeof p.url === "string")
+  .map((p) => p.url);
+
+formData.append("existingGallery", JSON.stringify(orderedGallery));
+
       formData.append(
         "existingCustomerPhotos",
         JSON.stringify(existingCustomerPhotos || [])
@@ -1779,6 +1842,40 @@ const handleEditProduct = (product: Product) => {
     </div>
   );
 
+  function SortableImage({
+  img,
+  index,
+  selectedImage,
+  setSelectedImage,
+}: any) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: img.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => setSelectedImage(index)}
+      className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${
+        selectedImage === index ? "border-green-500" : ""
+      }`}
+    >
+      <img
+        src={String(img.url)}
+        alt={img.name}
+        className="w-full h-full object-cover"
+      />
+    </button>
+  );
+}
+
   // -------------------- Render Add Product (with vertical tabs) --------------------
   const renderAddProduct = () => (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2270,22 +2367,32 @@ const handleEditProduct = (product: Product) => {
 
             {/* Thumbnails */}
             <div className="flex gap-2 items-center">
-              {imagePreviews.map((img, index) => (
-                <button
-                  key={img.id}
-                  onClick={() => setSelectedImage(index)}
-                  className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === index
-                      ? "border-green-500"
-                      : ""
-                    }`}
-                >
-                  <img
-                    src={String(img.url)}
-                    alt={img.name}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+             <DndContext
+  sensors={sensors}
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
+>
+  <SortableContext
+    items={imagePreviews.map((i) => i.id)}
+    strategy={horizontalListSortingStrategy}
+  >
+    <div className="flex gap-2 items-center">
+      {imagePreviews.map((img, index) => (
+        <SortableImage
+          key={img.id}
+          img={img}
+          index={index}
+          selectedImage={selectedImage}
+          setSelectedImage={setSelectedImage}
+        />
+      ))}
+
+      {/* Add More Button */}
+   
+    </div>
+  </SortableContext>
+</DndContext>
+
 
               {/* Add new files */}
               <label
