@@ -184,42 +184,42 @@ const ECommerceSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState("product");
 
   const sensors = useSensors(
-  useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 5,
-    },
-  })
-);
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
 
-const handleDragEnd = (event: any) => {
-  const { active, over } = event;
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
 
-  if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) return;
 
-  setImagePreviews((items) => {
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
+    setImagePreviews((items) => {
+      const oldIndex = items.findIndex((i) => i.id === active.id);
+      const newIndex = items.findIndex((i) => i.id === over.id);
 
-    const newItems = arrayMove(items, oldIndex, newIndex);
+      const newItems = arrayMove(items, oldIndex, newIndex);
 
-    // Fix selected image index
-    if (selectedImage === oldIndex) {
-      setSelectedImage(newIndex);
-    } else if (
-      selectedImage > oldIndex &&
-      selectedImage <= newIndex
-    ) {
-      setSelectedImage(selectedImage - 1);
-    } else if (
-      selectedImage < oldIndex &&
-      selectedImage >= newIndex
-    ) {
-      setSelectedImage(selectedImage + 1);
-    }
+      // Fix selected image index
+      if (selectedImage === oldIndex) {
+        setSelectedImage(newIndex);
+      } else if (
+        selectedImage > oldIndex &&
+        selectedImage <= newIndex
+      ) {
+        setSelectedImage(selectedImage - 1);
+      } else if (
+        selectedImage < oldIndex &&
+        selectedImage >= newIndex
+      ) {
+        setSelectedImage(selectedImage + 1);
+      }
 
-    return newItems;
-  });
-};
+      return newItems;
+    });
+  };
 
 
   // Product management states
@@ -843,29 +843,29 @@ const handleDragEnd = (event: any) => {
   };
 
   // Stats
-const stats = {
-  totalProducts: products.length,
+  const stats = {
+    totalProducts: products.length,
 
-  totalStock: products.reduce(
-    (sum, p) => sum + (Number(p.stockQuantity ?? p.stock ?? 0) || 0),
-    0
-  ),
+    totalStock: products.reduce(
+      (sum, p) => sum + (Number(p.stockQuantity ?? p.stock ?? 0) || 0),
+      0
+    ),
 
-  sold: orders.reduce((sum, order) => {
-    if (order.status !== "paid" && order.status !== "delivered") return sum;
+    sold: orders.reduce((sum, order) => {
+      if (order.status !== "paid" && order.status !== "delivered") return sum;
 
-    return (
-      sum +
-      (order.items?.reduce(
-        (itemSum, item) => itemSum + (Number(item.qty) || 0),
-        0
-      ) || 0)
-    );
-  }, 0),
+      return (
+        sum +
+        (order.items?.reduce(
+          (itemSum, item) => itemSum + (Number(item.qty) || 0),
+          0
+        ) || 0)
+      );
+    }, 0),
 
 
-  returns: orders.filter((o) => o.status === "cancelled").length,
-};
+    returns: orders.filter((o) => o.status === "cancelled").length,
+  };
 
 
   // -------------------- Product Form (extended) --------------------
@@ -1160,64 +1160,64 @@ const stats = {
     Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("");
 
 
-const handleEditProduct = (product: Product) => {
-  setProductForm((prev) => ({
-    ...prev,
-    name: product.name || "",
-    description: product.description || "",
-    tags: product.tags || [],
-    gender: product.gender || [],
-    sku: product.sku || prev.sku,
-    vendor: product.vendor || prev.vendor,
-    category: product.category || prev.category,
-    sellPrice: String(product.price ?? prev.sellPrice),
-    basePrice: String(product.purchase ?? prev.basePrice),
+  const handleEditProduct = (product: Product) => {
+    setProductForm((prev) => ({
+      ...prev,
+      name: product.name || "",
+      description: product.description || "",
+      tags: product.tags || [],
+      gender: product.gender || [],
+      sku: product.sku || prev.sku,
+      vendor: product.vendor || prev.vendor,
+      category: product.category || prev.category,
+      sellPrice: String(product.price ?? prev.sellPrice),
+      basePrice: String(product.purchase ?? prev.basePrice),
 
-    // extras
-    highlights: product.highlights || "",
-    materialDetails: product.materialDetails || "",
-    careInstructions: product.careInstructions || "",
-    notes: product.notes || "",
-    terms: product.terms || "",
-    specifications: {
-      material: product.specifications?.material || "",
-      fit: product.specifications?.fit || "",
-      washCare: product.specifications?.washCare || "",
-      pattern: product.specifications?.pattern || "",
-      origin: product.specifications?.origin || "",
-      brand: product.specifications?.brand || "",
-      others: product.specifications?.others || "",
-    },
-    faq: product.faq?.length
-      ? product.faq.map((f) => ({
+      // extras
+      highlights: product.highlights || "",
+      materialDetails: product.materialDetails || "",
+      careInstructions: product.careInstructions || "",
+      notes: product.notes || "",
+      terms: product.terms || "",
+      specifications: {
+        material: product.specifications?.material || "",
+        fit: product.specifications?.fit || "",
+        washCare: product.specifications?.washCare || "",
+        pattern: product.specifications?.pattern || "",
+        origin: product.specifications?.origin || "",
+        brand: product.specifications?.brand || "",
+        others: product.specifications?.others || "",
+      },
+      faq: product.faq?.length
+        ? product.faq.map((f) => ({
           question: f.question || "",
           answer: f.answer || "",
         }))
-      : [],
-  }));
+        : [],
+    }));
 
-  setVariants(product.variants || []);
-  setExistingImages(product.gallery || []);
-  setImagePreviews(
-    (product.gallery || []).map((g) => ({
-      id: Date.now() + Math.random(),
-      url: g,
-      name: g.split("/").slice(-1)[0] || g,
-    }))
-  );
+    setVariants(product.variants || []);
+    setExistingImages(product.gallery || []);
+    setImagePreviews(
+      (product.gallery || []).map((g) => ({
+        id: Date.now() + Math.random(),
+        url: g,
+        name: g.split("/").slice(-1)[0] || g,
+      }))
+    );
 
-  setExistingCustomerPhotos(product.customerPhotos || []);
-  setCustomerPhotosPreview(
-    (product.customerPhotos || []).map((g) => ({
-      id: Date.now() + Math.random(),
-      url: g,
-      name: g.split("/").slice(-1)[0] || g,
-    }))
-  );
+    setExistingCustomerPhotos(product.customerPhotos || []);
+    setCustomerPhotosPreview(
+      (product.customerPhotos || []).map((g) => ({
+        id: Date.now() + Math.random(),
+        url: g,
+        name: g.split("/").slice(-1)[0] || g,
+      }))
+    );
 
-  setEditingProductId(String(product._id)); // ✅ THIS FIXES UPDATE VS CREATE
-  setCurrentView("addProduct");
-};
+    setEditingProductId(String(product._id)); // ✅ THIS FIXES UPDATE VS CREATE
+    setCurrentView("addProduct");
+  };
 
 
 
@@ -1264,11 +1264,16 @@ const handleEditProduct = (product: Product) => {
 
       // IMPORTANT: include existing image URLs so backend can keep them (no reupload)
       // Extract ordered URLs from imagePreviews
-const orderedGallery = imagePreviews
-  .filter((p) => typeof p.url === "string")
-  .map((p) => p.url);
+      const orderedGallery: string[] = imagePreviews
+        .map((p) => (typeof p.url === "string" ? p.url : null))
+        .filter((url): url is string => typeof url === "string");
 
-formData.append("existingGallery", JSON.stringify(orderedGallery));
+      orderedGallery.forEach((url) => {
+        formData.append("existingGallery[]", url);
+      });
+
+
+
 
       formData.append(
         "existingCustomerPhotos",
@@ -1791,8 +1796,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
                       <strong>Status:</strong>{" "}
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${selectedProduct.inStock
-                            ? "bg-[var(--accent-green)] text-white"
-                            : "bg-red-600 text-white"
+                          ? "bg-[var(--accent-green)] text-white"
+                          : "bg-red-600 text-white"
                           }`}
                       >
                         {selectedProduct.inStock ? "In Stock" : "Out of Stock"}
@@ -1843,38 +1848,37 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
   );
 
   function SortableImage({
-  img,
-  index,
-  selectedImage,
-  setSelectedImage,
-}: any) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: img.id });
+    img,
+    index,
+    selectedImage,
+    setSelectedImage,
+  }: any) {
+    const { attributes, listeners, setNodeRef, transform, transition } =
+      useSortable({ id: img.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
 
-  return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={() => setSelectedImage(index)}
-      className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${
-        selectedImage === index ? "border-green-500" : ""
-      }`}
-    >
-      <img
-        src={String(img.url)}
-        alt={img.name}
-        className="w-full h-full object-cover"
-      />
-    </button>
-  );
-}
+    return (
+      <button
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        onClick={() => setSelectedImage(index)}
+        className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-green-500" : ""
+          }`}
+      >
+        <img
+          src={String(img.url)}
+          alt={img.name}
+          className="w-full h-full object-cover"
+        />
+      </button>
+    );
+  }
 
   // -------------------- Render Add Product (with vertical tabs) --------------------
   const renderAddProduct = () => (
@@ -2367,31 +2371,31 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
 
             {/* Thumbnails */}
             <div className="flex gap-2 items-center">
-             <DndContext
-  sensors={sensors}
-  collisionDetection={closestCenter}
-  onDragEnd={handleDragEnd}
->
-  <SortableContext
-    items={imagePreviews.map((i) => i.id)}
-    strategy={horizontalListSortingStrategy}
-  >
-    <div className="flex gap-2 items-center">
-      {imagePreviews.map((img, index) => (
-        <SortableImage
-          key={img.id}
-          img={img}
-          index={index}
-          selectedImage={selectedImage}
-          setSelectedImage={setSelectedImage}
-        />
-      ))}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={imagePreviews.map((i) => i.id)}
+                  strategy={horizontalListSortingStrategy}
+                >
+                  <div className="flex gap-2 items-center">
+                    {imagePreviews.map((img, index) => (
+                      <SortableImage
+                        key={img.id}
+                        img={img}
+                        index={index}
+                        selectedImage={selectedImage}
+                        setSelectedImage={setSelectedImage}
+                      />
+                    ))}
 
-      {/* Add More Button */}
-   
-    </div>
-  </SortableContext>
-</DndContext>
+                    {/* Add More Button */}
+
+                  </div>
+                </SortableContext>
+              </DndContext>
 
 
               {/* Add new files */}
@@ -2429,8 +2433,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("details")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "details"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               Details
@@ -2438,8 +2442,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("specs")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "specs"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               Specifications
@@ -2447,8 +2451,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("faq")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "faq"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               FAQ
@@ -2456,8 +2460,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("customer")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "customer"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               Customer Photos
@@ -2465,8 +2469,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("notes")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "notes"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               Notes
@@ -2474,8 +2478,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setDetailsTab("terms")}
               className={`w-full text-left py-2 px-2 rounded ${detailsTab === "terms"
-                  ? "bg-[var(--accent-green)]"
-                  : "hover:bg-[var(--background)]"
+                ? "bg-[var(--accent-green)]"
+                : "hover:bg-[var(--background)]"
                 }`}
             >
               Terms
@@ -3218,10 +3222,10 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
               <strong>Status:</strong>{" "}
               <span
                 className={`px-2 py-1 rounded text-xs ${order.status === "paid"
-                    ? "bg-[var(--accent-green)]text-green-800"
-                    : order.status === "failed"
-                      ? "bg-red-200 text-red-800"
-                      : "bg-yellow-200 text-yellow-800"
+                  ? "bg-[var(--accent-green)]text-green-800"
+                  : order.status === "failed"
+                    ? "bg-red-200 text-red-800"
+                    : "bg-yellow-200 text-yellow-800"
                   }`}
               >
                 {order.status}
@@ -3500,8 +3504,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setCurrentDiscountView("discounts")}
               className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${currentDiscountView === "discounts" || currentDiscountView === "addDiscount" || currentDiscountView === "editDiscount"
-                  ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                  : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
                 }`}
             >
               Automatic Discounts
@@ -3509,8 +3513,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
             <button
               onClick={() => setCurrentDiscountView("coupons")}
               className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${currentDiscountView === "coupons" || currentDiscountView === "addCoupon" || currentDiscountView === "editCoupon"
-                  ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                  : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
                 }`}
             >
               Coupon Codes
@@ -3561,8 +3565,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
                         </td>
                         <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                           <span className={`px-2 py-1 rounded-full text-xs ${discount.type === "percentage"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                             }`}>
                             {discount.type}
                           </span>
@@ -3579,8 +3583,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs ${discount.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}>
                             {discount.isActive ? "Active" : "Inactive"}
                           </span>
@@ -3659,8 +3663,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
                         </td>
                         <td className="px-6 py-4 text-sm text-[var(--textSecondary)]">
                           <span className={`px-2 py-1 rounded-full text-xs ${coupon.type === "percentage"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-green-100 text-green-800"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                             }`}>
                             {coupon.type}
                           </span>
@@ -3674,8 +3678,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs ${coupon.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}>
                             {coupon.isActive ? "Active" : "Inactive"}
                           </span>
@@ -4150,8 +4154,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
               setCurrentView("inventory");
             }}
             className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "inventory"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
               }`}
           >
             Inventory
@@ -4162,8 +4166,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
               setCurrentView("orders");
             }}
             className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "order"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
               }`}
           >
             Order
@@ -4171,8 +4175,8 @@ formData.append("existingGallery", JSON.stringify(orderedGallery));
           <button
             onClick={() => setActiveTab("discounts")}
             className={`py-3 px-1 font-medium text-sm border-b-2 transition-colors ${activeTab === "discounts"
-                ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
-                : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
+              ? "text-[var(--accent-green)] !border-[var(--accent-green)]"
+              : "text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]"
               }`}
           >
             Discounts & Coupons
