@@ -96,29 +96,29 @@ export default function CMSComplete() {
   const sensors = useSensors(
     useSensor(PointerSensor)
   );
-const handleDragEnd = (event) => {
-  const { active, over } = event;
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
 
-  if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) return;
 
-  const oldIndex = uploadedMediaList.findIndex(
-    (item) => item.id === active.id
-  );
+    const oldIndex = uploadedMediaList.findIndex(
+      (item) => item.id === active.id
+    );
 
-  const newIndex = uploadedMediaList.findIndex(
-    (item) => item.id === over.id
-  );
+    const newIndex = uploadedMediaList.findIndex(
+      (item) => item.id === over.id
+    );
 
-  const reordered = arrayMove(uploadedMediaList, oldIndex, newIndex);
-  setUploadedMediaList(reordered);
+    const reordered = arrayMove(uploadedMediaList, oldIndex, newIndex);
+    setUploadedMediaList(reordered);
 
-  // 🔥 Move metadata arrays too
-  setImageTitles(arrayMove(imageTitles, oldIndex, newIndex));
-  setImageDescriptions(arrayMove(imageDescriptions, oldIndex, newIndex));
-  setImageMetaTags(arrayMove(imageMetaTags, oldIndex, newIndex));
-  setImageMetaDescriptions(arrayMove(imageMetaDescriptions, oldIndex, newIndex));
-  setImageKeywords(arrayMove(imageKeywords, oldIndex, newIndex));
-};
+    // 🔥 Move metadata arrays too
+    setImageTitles(arrayMove(imageTitles, oldIndex, newIndex));
+    setImageDescriptions(arrayMove(imageDescriptions, oldIndex, newIndex));
+    setImageMetaTags(arrayMove(imageMetaTags, oldIndex, newIndex));
+    setImageMetaDescriptions(arrayMove(imageMetaDescriptions, oldIndex, newIndex));
+    setImageKeywords(arrayMove(imageKeywords, oldIndex, newIndex));
+  };
 
 
 
@@ -397,10 +397,11 @@ const handleDragEnd = (event) => {
               new Promise((resolve) => {
                 const r = new FileReader();
                 r.onload = (e) =>
-                  resolve({ 
-                    id: crypto.randomUUID(),   
-                    url: e.target.result, 
-                    rawFile: file });
+                  resolve({
+                    id: crypto.randomUUID(),
+                    url: e.target.result,
+                    rawFile: file
+                  });
                 r.readAsDataURL(file);
               })
           )
@@ -427,7 +428,7 @@ const handleDragEnd = (event) => {
               const reader = new FileReader();
               reader.onload = (e) =>
                 resolve({
-                   id: crypto.randomUUID(),   
+                  id: crypto.randomUUID(),
                   url: e.target.result,
                   rawFile: file,
                 });
@@ -550,7 +551,7 @@ const handleDragEnd = (event) => {
           },
 
           // ✅ Grid text only (images come from uploaded files)
-          grid: uploadedMediaList.map((_, idx) => ({
+          grid: uploadedMediaList.map((m, idx) => ({
             text: imageDescriptions[idx] || "",
           })),
 
@@ -596,13 +597,17 @@ const handleDragEnd = (event) => {
 
       // 3️⃣ GRID / CAROUSEL
       else {
-        uploadedMediaList.forEach((m) => {
+        uploadedMediaList.forEach((m, index) => {
           if (m.rawFile) {
             formData.append("files", m.rawFile);
           } else {
             formData.append("existingFiles", m.uploadedUrl || m.url);
           }
+
+          // ✅ Correct order
+          formData.append("orders", String(index + 1));
         });
+
 
         formData.append("titles", JSON.stringify(imageTitles));
         formData.append("descriptions", JSON.stringify(imageDescriptions));
@@ -868,21 +873,32 @@ const handleDragEnd = (event) => {
 
       // Multi image (grid or carousel)
       if (Array.isArray(data.mediaGroup)) {
-        setUploadedMediaList(
-          data.mediaGroup.map((img) => ({
-                id: crypto.randomUUID(),  
-            url: img.imageUrl,
-            uploadedUrl: img.imageUrl,
-            rawFile: null,
-          }))
-        );
+        const sorted = [...data.mediaGroup].sort((a, b) => a.order - b.order);
 
-        setImageTitles(data.mediaGroup.map((i) => i.title || ""));
-        setImageDescriptions(data.mediaGroup.map((i) => i.description || ""));
-        setImageMetaTags(data.mediaGroup.map((i) => i.metaTag || ""));
-        setImageMetaDescriptions(data.mediaGroup.map((i) => i.metaDescription || ""));
-        setImageKeywords(data.mediaGroup.map((i) => i.keywords || ""));
+        // First prepare arrays
+        const mediaList = sorted.map((img) => ({
+          id: crypto.randomUUID(),
+          url: img.imageUrl,
+          uploadedUrl: img.imageUrl,
+          rawFile: null,
+        }));
+
+        const titles = sorted.map((i) => i.title || "");
+        const descriptions = sorted.map((i) => i.description || "");
+        const metaTags = sorted.map((i) => i.metaTag || "");
+        const metaDescriptions = sorted.map((i) => i.metaDescription || "");
+        const keywords = sorted.map((i) => i.keywords || "");
+
+        // Then set everything together
+        setUploadedMediaList(mediaList);
+        setImageTitles(titles);
+        setImageDescriptions(descriptions);
+        setImageMetaTags(metaTags);
+        setImageMetaDescriptions(metaDescriptions);
+        setImageKeywords(keywords);
       }
+
+
 
       // Switch view → open editor
       setEditingId(postId);
@@ -1145,7 +1161,7 @@ const handleDragEnd = (event) => {
                             onDragEnd={handleDragEnd}
                           >
                             <SortableContext
-                                items={uploadedMediaList.map((item) => item.id)}
+                              items={uploadedMediaList.map((item) => item.id)}
                               strategy={rectSortingStrategy}
                             >
                               <div className="grid grid-cols-2 gap-3">
@@ -1176,7 +1192,11 @@ const handleDragEnd = (event) => {
                                 <input
                                   type="text"
                                   placeholder="Title (optional)"
-                                  value={imageTitles[idx] || ""}
+                                  value={
+  imageTitles.length === uploadedMediaList.length
+    ? imageTitles[idx] || ""
+    : ""
+}
                                   onChange={(e) => {
                                     const copy = [...imageTitles];
                                     copy[idx] = e.target.value;
@@ -1187,7 +1207,12 @@ const handleDragEnd = (event) => {
 
                                 <textarea
                                   placeholder="Description (optional)"
-                                  value={imageDescriptions[idx] || ""}
+                                value={
+  imageDescriptions.length === uploadedMediaList.length
+    ? imageDescriptions[idx] || ""
+    : ""
+}
+
                                   onChange={(e) => {
                                     const copy = [...imageDescriptions];
                                     copy[idx] = e.target.value;
