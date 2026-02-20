@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
 
+   basePath: "/admin",
+  assetPrefix: "/admin/",
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
