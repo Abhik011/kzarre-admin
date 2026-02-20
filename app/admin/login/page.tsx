@@ -90,7 +90,7 @@ export default function AdminLogin() {
 //     console.log("Admin Login: Zustand state updated");
 
 //     // Success notification
-//     console.log("Login successful - Welcome back to KZARRÈ Admin!");
+//     console.log("Login successful - Welcome back to KZARRĒ Admin!");
 
 //     // Small delay to ensure cookies are set before redirect
 //     setTimeout(() => {

@@ -50,7 +50,7 @@ export default function Home() {
           </div>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to KZARRÈ Admin Portal</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to KZARRĒ Admin Portal</h1>
             <p className="text-gray-600 mb-6 text-sm">
               Choose your login type to continue
             </p>

@@ -10,25 +10,25 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "KZARRÈ Admin",
+  title: "KZARRĒ Admin",
   description: "Admin Dashboard Platform",
   icons: {
     icon: "/logo.png",
   },
-  keywords: ["Admin Dashboard", "KZARRÈ", "Management", "Next.js"],
+  keywords: ["Admin Dashboard", "KZARRĒ", "Management", "Next.js"],
   authors: [{ name: "Creonox Technologies", url: "https://www.creonox.in" }],
   openGraph: {
-    title: "KZARRÈ Admin",
+    title: "KZARRĒ Admin",
     description: "Admin Dashboard Platform",
     url: "https://www.creonox.in",
-    siteName: "KZARRÈ",
+    siteName: "KZARRĒ",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "KZARRÈ Admin",
+    title: "KZARRĒ Admin",
     description: "Admin Dashboard Platform",
     images: ["/og-image.png"],
     site: "@creonox",

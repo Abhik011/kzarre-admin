@@ -77,7 +77,7 @@ export default function SuperAdminLogin() {
             SuperAdmin Login
           </h2>
           <p className="text-white/70 text-sm mt-1">
-            Secure access to KZARRÈ Control Center
+            Secure access to KZARRĒ Control Center
           </p>
         </div>
 
