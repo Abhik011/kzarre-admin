@@ -621,8 +621,8 @@ export default function CMSComplete() {
       // SAVE / UPDATE
       // -----------------------------
       const url = isEditing
-        ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/update/${editingId}`
-        : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/save`;
+        ? `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/cms-content/update/${editingId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/cms-content/save`;
 
       const method = isEditing ? "PUT" : "POST";
 
