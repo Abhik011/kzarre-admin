@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import React, { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   Users,
   ShoppingCart,

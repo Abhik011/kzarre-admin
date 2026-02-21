@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Mail, User, Lock } from "lucide-react";
 import Link from "next/link";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 export default function AdminRegister() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

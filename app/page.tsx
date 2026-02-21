@@ -64,9 +64,9 @@ export default function Home() {
               </button> */}
               <button
                 onClick={() => handleLogin('admin')}
-                className="px-6 py-3 w-full sm:w-auto bg-[#A0EDA8] text-black rounded-xl shadow-md hover:shadow-lg hover:bg-[var(--accent-green)] hover:text-white transition-all duration-300 font-medium"
+                className="px-9 py-3 w-full sm:w-auto bg-[#A0EDA8] text-black rounded-xl shadow-md hover:shadow-lg hover:bg-[var(--accent-green)] hover:text-white transition-all duration-300 font-medium"
               >
-              Admin
+              Login
               </button>
             </div>
           </>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   Plus,
   Trash2,

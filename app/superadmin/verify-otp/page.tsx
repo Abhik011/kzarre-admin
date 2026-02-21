@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { KeyRound, Loader2 } from "lucide-react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 export default function VerifySuperAdminOTP() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);

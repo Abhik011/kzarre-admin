@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 export default function RegionTraffic() {
   const [regions, setRegions] = useState<any[]>([]);
 

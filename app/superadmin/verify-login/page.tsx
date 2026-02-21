@@ -4,6 +4,7 @@ import { useState } from "react";
 import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function VerifySuperAdminLogin() {
   const router = useRouter();

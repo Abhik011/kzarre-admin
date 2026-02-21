@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 const API = process.env.NEXT_PUBLIC_BACKEND_API_URL || "";
 
 export default function useAuth() {

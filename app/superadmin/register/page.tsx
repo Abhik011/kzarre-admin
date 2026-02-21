@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Mail, User, Loader2 } from "lucide-react";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function SuperAdminRegister() {
   const [form, setForm] = useState({ name: "", email: "" });

@@ -31,7 +31,9 @@ import {
   List,
 } from "lucide-react";
 
-
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   DndContext,
   closestCenter,
@@ -310,7 +312,7 @@ const ECommerceSection: React.FC = () => {
       const data = await res.json();
 
       if (!data.success) {
-        alert(`Failed: ${data.message}`);
+        toast.error(`Failed: ${data.message}`);
         return;
       }
 
@@ -319,12 +321,12 @@ const ECommerceSection: React.FC = () => {
         prev.map((o) => (o._id === statusOrderId ? { ...o, status } : o))
       );
 
-      alert("Status updated successfully!");
+      toast.success("Status updated successfully!");
 
       setShowStatusModal(false);
     } catch (error) {
       console.error("UPDATE STATUS ERROR:", error);
-      alert("Something went wrong while updating status.");
+      toast.error("Something went wrong");
     }
   };
 
@@ -510,19 +512,23 @@ const ECommerceSection: React.FC = () => {
   };
 
   // Fetch once when component mounts
-  useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-    fetchDiscounts();
-    fetchCoupons();
-    const interval = setInterval(() => {
-      fetchProducts();
-      fetchOrders();
+useEffect(() => {
+  fetchProducts();
+  fetchOrders();
+  fetchDiscounts();
+  fetchCoupons();
+
+  const interval = setInterval(() => {
+    if (currentView === "inventory") fetchProducts();
+    if (currentView === "orders") fetchOrders();
+    if (currentView === "discounts") {
       fetchDiscounts();
       fetchCoupons();
-    }, 30000); // refresh every 30 sec
-    return () => clearInterval(interval);
-  }, []);
+    }
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, [currentView]);
 
   // Selected product modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -576,7 +582,7 @@ const ECommerceSection: React.FC = () => {
 
   // DELETE
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     const prev = products;
     setProducts((p) => p.filter((x) => (x._id ?? x.id) !== id));
@@ -602,10 +608,10 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Delete failed with ${res.status}`);
       }
 
-      alert("Product deleted successfully");
+      toast.success("Product deleted successfully");
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Something went wrong while deleting the product");
+      toast.error("Something went wrong");
       setProducts(prev);
     }
   };
@@ -629,7 +635,7 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Create failed with ${res.status}`);
       }
 
-      alert("Discount created successfully!");
+     toast.success("Discount created successfully!");
       setCurrentDiscountView("discounts");
       setDiscountForm({
         name: "",
@@ -650,7 +656,7 @@ const ECommerceSection: React.FC = () => {
     } catch (err) {
       console.error("Create discount error:", err);
       // For demo purposes, simulate success since backend doesn't exist
-      alert("✅ Demo: Discount created successfully! (Backend API not implemented yet)");
+      toast.success("✅ Demo: Discount created successfully! (Backend API not implemented yet)");
       setCurrentDiscountView("discounts");
       setDiscountForm({
         name: "",
@@ -688,18 +694,18 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Update failed with ${res.status}`);
       }
 
-      alert("Discount updated successfully!");
+      toast.success("Discount updated successfully!");
       setCurrentDiscountView("discounts");
       setSelectedDiscount(null);
       await fetchDiscounts();
     } catch (err) {
       console.error("Update discount error:", err);
-      alert("Something went wrong while updating the discount");
+      toast.error("Something went wrong");
     }
   };
 
   const handleDeleteDiscount = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this discount?")) return;
+    if (!window.confirm("Are you sure you want to delete this discount?")) return;
 
     try {
       const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") || "" : "";
@@ -716,11 +722,11 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Delete failed with ${res.status}`);
       }
 
-      alert("Discount deleted successfully!");
+      toast.success("Discount deleted successfully!");
       await fetchDiscounts();
     } catch (err) {
       console.error("Delete discount error:", err);
-      alert("Something went wrong while deleting the discount");
+     toast.error("Something went wrong");
     }
   };
 
@@ -743,7 +749,7 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Create failed with ${res.status}`);
       }
 
-      alert("Coupon created successfully!");
+      toast.success("Coupon created successfully!");
       setCurrentDiscountView("coupons");
       setCouponForm({
         code: "",
@@ -766,7 +772,7 @@ const ECommerceSection: React.FC = () => {
     } catch (err) {
       console.error("Create coupon error:", err);
       // For demo purposes, simulate success since backend doesn't exist
-      alert("✅ Demo: Coupon created successfully! (Backend API not implemented yet)");
+      toast.success("✅ Demo: Coupon created successfully! (Backend API not implemented yet)");
       setCurrentDiscountView("coupons");
       setCouponForm({
         code: "",
@@ -806,18 +812,18 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Update failed with ${res.status}`);
       }
 
-      alert("Coupon updated successfully!");
+      toast.success("Coupon updated successfully!");
       setCurrentDiscountView("coupons");
       setSelectedCoupon(null);
       await fetchCoupons();
     } catch (err) {
       console.error("Update coupon error:", err);
-      alert("Something went wrong while updating the coupon");
+      toast.error("Something went wrong");
     }
   };
 
   const handleDeleteCoupon = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this coupon?")) return;
+    if (!window.confirm("Are you sure you want to delete this coupon?")) return;
 
     try {
       const token = typeof window !== "undefined" ? sessionStorage.getItem("access_token") || "" : "";
@@ -834,11 +840,11 @@ const ECommerceSection: React.FC = () => {
         throw new Error(data.message || `Delete failed with ${res.status}`);
       }
 
-      alert("Coupon deleted successfully!");
+      toast.success("Coupon deleted successfully!");
       await fetchCoupons();
     } catch (err) {
       console.error("Delete coupon error:", err);
-      alert("Something went wrong while deleting the coupon");
+      toast.error("Something went wrong");
     }
   };
 
@@ -1226,13 +1232,13 @@ const ECommerceSection: React.FC = () => {
   const handleSaveProduct = async () => {
     try {
       if (!productForm.name || !productForm.category) {
-        alert("Please fill in product name and category.");
+        toast.error("Please fill in product name and category.");
         return;
       }
 
       // if creating new product and no existingImages and no newImages -> require at least one image
       if (existingImages.length === 0 && newImages.length === 0) {
-        alert(
+        toast.error(
           'Please upload at least one valid image using "Browse Files" or drag and drop.'
         );
         return;
@@ -1368,7 +1374,7 @@ const ECommerceSection: React.FC = () => {
                 setProducts((prev) => [newProduct, ...prev]);
               }
 
-              await fetchProducts();
+              // await fetchProducts();
 
               // reset form
               setProductForm({
@@ -1422,7 +1428,7 @@ const ECommerceSection: React.FC = () => {
             }
           } else {
             console.error("❌ Upload failed:", xhr.status, xhr.responseText);
-            alert(`Upload failed (${xhr.status}) — ${xhr.statusText}`);
+            toast.error(`Upload failed (${xhr.status}) — ${xhr.statusText}`);
             reject(new Error("Upload failed"));
           }
         };
@@ -1430,7 +1436,7 @@ const ECommerceSection: React.FC = () => {
         xhr.onerror = () => {
           setUploading(false);
           console.error("Network error during upload");
-          alert("Network error during upload");
+         toast.error("Network error during upload");
           reject(new Error("Network error"));
         };
 
@@ -1438,7 +1444,7 @@ const ECommerceSection: React.FC = () => {
       });
     } catch (err) {
       console.error("Upload error:", err);
-      alert("An unexpected error occurred while uploading the product.");
+      toast.error("An unexpected error occurred while uploading the product.");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -2814,7 +2820,7 @@ const ECommerceSection: React.FC = () => {
     </div>
   );
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm("Are you sure you want to cancel this order?")) return;
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
 
     try {
       const res = await fetch(
@@ -2831,10 +2837,10 @@ const ECommerceSection: React.FC = () => {
 
       if (!res.ok) throw new Error("Cancel failed");
 
-      alert("Order cancelled");
+      toast.success("Order cancelled");
       fetchOrders();
     } catch (err) {
-      alert("Cancel order error");
+      toast.error("Cancel order error");
       console.error(err);
     }
   };
@@ -3410,7 +3416,7 @@ const ECommerceSection: React.FC = () => {
 
                       {/* PRINT LABEL */}
                       <button
-                        onClick={() => alert("Print Label Coming Soon")}
+                        onClick={() => toast("Print Label Coming Soon")}
                         className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         Print Shipping Label
@@ -3418,7 +3424,7 @@ const ECommerceSection: React.FC = () => {
 
                       {/* INVOICE */}
                       <button
-                        onClick={() => alert("Invoice Download Coming Soon")}
+                        onClick={() => toast("Invoice Download Coming Soon")}
                         className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         Download Invoice
@@ -4093,7 +4099,9 @@ const ECommerceSection: React.FC = () => {
 
   // -------------------- Main Render --------------------
   return (
+    
     <div className="min-h-screen bg-[var(--background)] text-[var(--textPrimary)] transition-colors duration-300">
+        <Toaster position="top-right" />
       <div className="bg-[var(--background-card)] dark:bg-[var(--bgCard)] border-b  p-1 space-y-8">
         <div className="flex items-center justify-between">
           <div>
@@ -4189,7 +4197,7 @@ const ECommerceSection: React.FC = () => {
         {currentView === "inventory" && renderInventory()}
         {currentView === "addProduct" && renderAddProduct()}
         {currentView === "orders" && renderOrders()}
-        {activeTab === "discounts" && renderDiscounts()}
+        {currentView === "discounts" && renderDiscounts()}
       </div>
     </div>
   );

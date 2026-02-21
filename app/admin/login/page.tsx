@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useAuthStore } from "@/lib/auth";
-// import { notifications } from "@/lib/notifications";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 
 export default function AdminLogin() {
@@ -20,181 +20,97 @@ export default function AdminLogin() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-//  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-//   e.preventDefault();
-//   setLoading(true);
-//   setError("");
 
-//   try {
-//     console.log("Admin Login: Starting login process");
-//     // const response = await fetch(`${API_BASE}/api/admin/login`, {
-//     //   method: "POST",
-//     //   headers: { "Content-Type": "application/json" },
-//     //   credentials: "include",
-//     //   body: JSON.stringify(form),
-//     // });
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-//     const response = await fetch(`${API_BASE}/api/admin/login`, {
-      
-//   method: "POST",
-//   headers: { "Content-Type": "application/json" },
-//   body: JSON.stringify(form),
-// });
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-//     const data = await response.json();
-//     console.log("FULL LOGIN RESPONSE:", data);
+      const data = await response.json();
+      console.log("FULL LOGIN RESPONSE:", data);
 
-//     if (!response.ok) {
-//       throw new Error(data.message || "Invalid credentials");
-//     }
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
 
-//     console.log("Admin Login: API response received", data);
-    
+      // ✅ REQUIRED TOKENS
+      const accessToken = data.accessToken;
+      const refreshToken = data.refreshToken;
 
-//     // Store authentication data securely using Zustand store
-//     const userPermissions = data.admin.permissions || [];
-//     const defaultPermissions = [
-//       "view_dashboard",
-//       "manage_users",
-//       "create_user",
-//       "update_user",
-//       "delete_user",
-//       "manage_cms",
-//       "view_analytics",
-//       "manage_orders",
-//       "manage_inventory",
-//       "manage_stories",
-//       "manage_shipping",
-//       "view_crm",
-//       "manage_marketing",
-//       "manage_security",
-//       "manage_settings"
-//     ];
+      if (!accessToken || !refreshToken) {
+        throw new Error("Access or refresh token missing from backend");
+      }
 
-//     // If user has no permissions, give them default admin permissions
-//     const finalPermissions = userPermissions.length > 0 ? userPermissions : defaultPermissions;
+      console.log("ACCESS TOKEN:", accessToken);
+      console.log("REFRESH TOKEN:", refreshToken);
 
-//     const userRole = data.admin.role || "Admin";
+      // ✅ PERMISSIONS
+      const userPermissions = data.admin.permissions || [];
+      const defaultPermissions = [
+        "view_dashboard",
+        "manage_users",
+        "create_user",
+        "update_user",
+        "delete_user",
+        "manage_cms",
+        "view_analytics",
+        "manage_orders",
+        "manage_inventory",
+        "manage_stories",
+        "manage_shipping",
+        "view_crm",
+        "manage_marketing",
+        "manage_security",
+        "manage_settings",
+      ];
 
-//     console.log("Admin Login: Setting role to:", userRole);
-//     console.log("Admin Login: Setting permissions:", finalPermissions);
+      const finalPermissions =
+        userPermissions.length > 0 ? userPermissions : defaultPermissions;
 
-//     login(data.accessToken, {
-//       _id: data.admin._id,
-//       name: data.admin.name,
-//       email: data.admin.email,
-//       role: userRole,
-//       permissions: finalPermissions,
-//     });
+      const userRole = data.admin.role;
 
-//     console.log("Admin Login: Zustand state updated");
+      // 🔐 STORE TOKENS (SESSION ONLY — CORRECT)
+      sessionStorage.setItem("access_token", accessToken);
+      sessionStorage.setItem("refresh_token", refreshToken);
 
-//     // Success notification
-//     console.log("Login successful - Welcome back to KZARRĒ Admin!");
+      // 🔐 OPTIONAL USER SNAPSHOT
+      sessionStorage.setItem(
+        "auth_user",
+        JSON.stringify({
+          _id: data.admin._id,
+          name: data.admin.name,
+          email: data.admin.email,
+          role: userRole,
+          permissions: finalPermissions,
+        })
+      );
 
-//     // Small delay to ensure cookies are set before redirect
-//     setTimeout(() => {
-//       console.log("Admin Login: Redirecting to dashboard");
-//       window.location.href = "/dashboard";
-//     }, 1000);
-
-//   } catch (err: any) {
-//     setError(err?.message || "Something went wrong");
-//   } finally {
-//     setLoading(false);
-//   }
-// };
-
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
-
-  try {
-    const response = await fetch(`${API_BASE}/api/admin/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-
-    const data = await response.json();
-    console.log("FULL LOGIN RESPONSE:", data);
-
-    if (!response.ok) {
-      throw new Error(data.message || "Invalid credentials");
-    }
-
-    // ✅ REQUIRED TOKENS
-    const accessToken = data.accessToken;
-    const refreshToken = data.refreshToken;
-
-    if (!accessToken || !refreshToken) {
-      throw new Error("Access or refresh token missing from backend");
-    }
-
-    console.log("ACCESS TOKEN:", accessToken);
-    console.log("REFRESH TOKEN:", refreshToken);
-
-    // ✅ PERMISSIONS
-    const userPermissions = data.admin.permissions || [];
-    const defaultPermissions = [
-      "view_dashboard",
-      "manage_users",
-      "create_user",
-      "update_user",
-      "delete_user",
-      "manage_cms",
-      "view_analytics",
-      "manage_orders",
-      "manage_inventory",
-      "manage_stories",
-      "manage_shipping",
-      "view_crm",
-      "manage_marketing",
-      "manage_security",
-      "manage_settings",
-    ];
-
-    const finalPermissions =
-      userPermissions.length > 0 ? userPermissions : defaultPermissions;
-
-    const userRole = data.admin.role;
-
-    // 🔐 STORE TOKENS (SESSION ONLY — CORRECT)
-    sessionStorage.setItem("access_token", accessToken);
-    sessionStorage.setItem("refresh_token", refreshToken);
-
-    // 🔐 OPTIONAL USER SNAPSHOT
-    sessionStorage.setItem(
-      "auth_user",
-      JSON.stringify({
+      // ✅ UPDATE ZUSTAND (ACCESS TOKEN ONLY)
+      login(accessToken, {
         _id: data.admin._id,
         name: data.admin.name,
         email: data.admin.email,
         role: userRole,
         permissions: finalPermissions,
-      })
-    );
+      });
 
-    // ✅ UPDATE ZUSTAND (ACCESS TOKEN ONLY)
-    login(accessToken, {
-      _id: data.admin._id,
-      name: data.admin.name,
-      email: data.admin.email,
-      role: userRole,
-      permissions: finalPermissions,
-    });
-
-    // 🚀 REDIRECT
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 300);
-  } catch (err: any) {
-    setError(err?.message || "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+      // 🚀 REDIRECT
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 300);
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -259,11 +175,11 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
           <div className="flex justify-between items-center text-sm text-gray-600">
             <label className="flex items-center gap-2">
               <input
-  type="checkbox"
-  checked={remember}
-  onChange={(e) => setRemember(e.target.checked)}
-  className="accent-indigo-500 rounded-sm"
-/>
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="accent-indigo-500 rounded-sm"
+              />
 
               Remember me
             </label>

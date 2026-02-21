@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   LineChart,
   Line,

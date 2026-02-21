@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/auth";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 /* ================= TYPES ================= */
 interface Profile {
@@ -25,41 +26,34 @@ export default function ProfilePage() {
 
   /* ================= LOAD PROFILE ================= */
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        // ✅ Primary source: backend
-        const res = await authApi.authenticatedFetch(`${API}/api/profile/me`);
+ const loadProfile = async () => {
+  try {
+    const res = await fetchWithAuth(
+      `${API}/api/profile/me`
+    );
 
-        if (res.ok) {
-          const data = await res.json();
-          setProfile({
-            name: data.name,
-            email: data.email,
-            role: data.role,
-          });
-          return;
-        }
+  if (!res || !res.ok) {
+      throw new Error("Failed to fetch profile");
+    }
 
-        throw new Error("Backend failed");
-      } catch {
-        // ✅ Fallback: sessionStorage (safe)
-        const name =
-          sessionStorage.getItem("superadmin_name") ||
-          sessionStorage.getItem("admin_name") ||
-          "User";
+    const data = await res.json();
 
-        const email =
-          sessionStorage.getItem("superadmin_email") ||
-          sessionStorage.getItem("admin_email") ||
-          "user@system.com";
+    // 🔥 Important: Adjust to backend structure
+    const user = data.user || data;
 
-        const role = sessionStorage.getItem("role") || "Admin";
+    setProfile({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
 
-        setProfile({ name, email, role });
-      } finally {
-        setLoading(false);
-      }
-    };
+  } catch (error) {
+    console.error("Profile load error:", error);
+    router.push("/admin/login");
+  } finally {
+    setLoading(false);
+  }
+};
 
     loadProfile();
   }, [API]);

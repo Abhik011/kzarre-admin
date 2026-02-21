@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 type CountryDatum = { _id: string; visits: number };
 
 const WIDTH = 4000;

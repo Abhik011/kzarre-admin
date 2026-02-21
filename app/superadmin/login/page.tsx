@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Mail, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export default function SuperAdminLogin() {
   const router = useRouter();

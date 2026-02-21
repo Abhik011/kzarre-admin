@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";

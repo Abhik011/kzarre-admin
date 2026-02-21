@@ -12,7 +12,7 @@ import {
     X,
     FilterX
 } from "lucide-react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 /* =========================================================
    TYPES
 ========================================================= */

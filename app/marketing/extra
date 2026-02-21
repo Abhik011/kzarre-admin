@@ -11,7 +11,7 @@
     const [templateId, setTemplateId] = useState<string>("");
 
     useEffect(() => {
-      fetch(`${API}/api/admin/email-templates`, {
+      fetchWithAuth(`${API}/api/admin/email-templates`, {
         credentials: "include",
       })
         .then(res => res.json())
@@ -38,7 +38,7 @@
           ? { subject, content, status }
           : { subject, templateId, status };
 
-      const res = await fetch(`${API}/api/admin/campaign/newsletter`, {
+      const res = await fetchWithAuth(`${API}/api/admin/campaign/newsletter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -172,7 +172,7 @@ function TemplateEditor({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    await fetch(`${API}/api/admin/email-templates`, {
+    await fetchWithAuth(`${API}/api/admin/email-templates`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

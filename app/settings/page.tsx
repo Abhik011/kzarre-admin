@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 type TabType = "general" | "maintenance";
 
 const API = process.env.NEXT_PUBLIC_BACKEND_API_URL!;

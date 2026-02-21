@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export interface User {
   _id: string;
@@ -106,89 +107,72 @@ export const useAuthStore = create<AuthState>()(
       // =====================
       // CHECK AUTH (🔥 CORE FIX)
       // =====================
-      checkAuth: async () => {
-        const now = Date.now();
-        const token = get().token;
+   checkAuth: async () => {
+  const now = Date.now();
+  const token = sessionStorage.getItem("access_token");
 
-        console.log("checkAuth: token used =", token);
+  if (!token) {
+    set({ isAuthenticated: false, user: null });
+    return false;
+  }
 
-        if (!token) {
-          set({ isAuthenticated: false, user: null });
-          return false;
-        }
+  if (
+    authVerificationCache.result !== null &&
+    now - authVerificationCache.timestamp < authVerificationCache.ttl
+  ) {
+    return authVerificationCache.result;
+  }
 
-        // Use cache to avoid spamming backend
-        if (
-          authVerificationCache.result !== null &&
-          now - authVerificationCache.timestamp < authVerificationCache.ttl
-        ) {
-          console.log("checkAuth: Using cached result =", authVerificationCache.result);
-          return authVerificationCache.result;
-        }
+  try {
+    set({ isLoading: true });
 
-        try {
-          set({ isLoading: true });
+    const response = await fetchWithAuth(
+      `${API_BASE}/api/auth/verify`,
+      {
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      }
+    );
 
-          const response = await fetch(`${API_BASE}/api/auth/verify`, {
-            headers: {
-              Authorization: `Bearer ${token}`,   // 🔥 THIS IS THE KEY FIX
-              "Cache-Control": "no-cache",
-            },
-          });
+    const isAuthenticated = response.ok;
 
-          console.log("checkAuth: verify status =", response.status);
+    authVerificationCache = {
+      result: isAuthenticated,
+      timestamp: now,
+      ttl: isAuthenticated ? 30000 : 5000,
+    };
 
-          const isAuthenticated = response.ok;
+    if (!isAuthenticated) {
+      set({ isAuthenticated: false, user: null, token: null });
+      return false;
+    }
 
-          authVerificationCache = {
-            result: isAuthenticated,
-            timestamp: now,
-            ttl: isAuthenticated ? 30000 : 5000,
-          };
+    const data = await response.json();
 
-          if (!isAuthenticated) {
-            console.log("checkAuth: Verification failed, logging out");
-            set({ isAuthenticated: false, user: null, token: null });
-            return false;
-          }
+    const normalizedUser: User = {
+      _id: data.user._id,
+      name: data.user.name,
+      email: data.user.email,
+      role: normalizeRole(data.user.role),
+      permissions: data.user.permissions || [],
+      isSuperAdmin: data.user.isSuperAdmin ?? false,
+    };
 
-          const data = await response.json();
+    set({
+      user: normalizedUser,
+      isAuthenticated: true,
+      isLoading: false,
+    });
 
-          const prevUser = get().user;
-
-          const normalizedUser: User = {
-            _id: data.user._id,
-            name: data.user.name,
-            email: data.user.email,
-            role: normalizeRole(data.user.role || prevUser?.role),
-            permissions: data.user.permissions || prevUser?.permissions || [],
-            isSuperAdmin: data.user.isSuperAdmin ?? prevUser?.isSuperAdmin ?? false,
-          };
-
-          set({
-            user: normalizedUser,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-
-          console.log("checkAuth: Verification success");
-
-          return true;
-        } catch (error) {
-          console.error("checkAuth: Error during verify", error);
-
-          authVerificationCache = {
-            result: false,
-            timestamp: now,
-            ttl: 5000,
-          };
-
-          set({ isAuthenticated: false, user: null, token: null });
-          return false;
-        } finally {
-          set({ isLoading: false });
-        }
-      },
+    return true;
+  } catch (error) {
+    set({ isAuthenticated: false, user: null, token: null });
+    return false;
+  } finally {
+    set({ isLoading: false });
+  }
+},
 
       // =====================
       // PERMISSIONS

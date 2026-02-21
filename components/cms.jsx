@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ArrowLeft,
 } from "lucide-react";
-
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import {
   DndContext,
   closestCenter,
@@ -93,6 +94,8 @@ function SortableImageItem({
 export default function CMSComplete() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("pagesAndPosts");
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const sensors = useSensors(
     useSensor(PointerSensor)
   );
@@ -499,18 +502,19 @@ export default function CMSComplete() {
   // SAVE POST (FORM + FILE)
   // =============================
   const handleSavePost = async () => {
+    if (isSaving) return; // 🔒 Prevent duplicate clicks
+    setIsSaving(true); // 🔥 THIS WAS MISSING
     try {
       if (!postData.title.trim()) {
         alert("Please enter a title.");
+        setIsSaving(false);
         return;
       }
-
       // Validation for grids
       if (isGrid && uploadedMediaList.length !== expectedGridCount) {
         alert(`Please upload exactly ${expectedGridCount} images for this grid.`);
         return;
       }
-
       if (
         postData.displayTo === "home-landing-video" &&
         !uploadedMedia?.rawFile &&
@@ -519,19 +523,15 @@ export default function CMSComplete() {
         alert("Please upload a landing video.");
         return;
       }
-
       const formData = new FormData();
-
       // -----------------------------
       // BASIC FIELDS
       // -----------------------------
       Object.entries(postData).forEach(([key, value]) => {
         formData.append(key, value ?? "");
       });
-
       // Banner styling
       formData.append("bannerStyle", JSON.stringify(bannerStyle));
-
       // -----------------------------
       // ✅ ABOUT PAGE DATA (UPDATED & CORRECT)
       // -----------------------------
@@ -563,12 +563,9 @@ export default function CMSComplete() {
 
         formData.append("aboutData", JSON.stringify(aboutData));
       }
-
-
       // -----------------------------
       // MEDIA UPLOAD (FINAL & SAFE)
       // -----------------------------
-
       if (isGrid) {
         formData.append("gridCount", String(expectedGridCount));
       }
@@ -628,20 +625,92 @@ export default function CMSComplete() {
 
       const token = getAuthToken();
       console.log("TOKEN BEING SENT:", token);
-      const res = await fetch(url, {
-        method,
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.open(method, url);
+
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+        // 🔥 Upload progress
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round(
+              (event.loaded / event.total) * 100
+            );
+            setUploadProgress(percent);
+          }
+        };
+xhr.onload = async () => {
+  if (xhr.status === 401) {
+    const refreshToken = sessionStorage.getItem("refresh_token");
+
+    const refreshRes = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/admin/refresh`,
+      {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${refreshToken}`,
         },
-        body: formData,
+      }
+    );
+
+    if (!refreshRes.ok) {
+      sessionStorage.clear();
+      window.location.href = "/admin-login";
+      return;
+    }
+
+    const data = await refreshRes.json();
+    sessionStorage.setItem("access_token", data.accessToken);
+
+    // 🔁 Retry upload
+    handleSavePost();
+    return;
+  }
+
+  if (xhr.status >= 200 && xhr.status < 300) {
+    resolve(JSON.parse(xhr.responseText));
+  } else {
+    reject(new Error("Upload failed"));
+  }
+};
+
+        xhr.onerror = () => reject(new Error("Network error"));
+
+        xhr.send(formData);
       });
 
-      const data = await res.json();
+      const formattedPost = {
+        _id: data._id,
+        title: data.title || postData.title,
+        type: data.displayTo || postData.displayTo,
+        author: data.author || "You",
+        status: data.status || "Pending Review",
+        visibleAt: data.visibleAt,
+        lastModified: new Date().toLocaleDateString(),
+        url:
+          data.heroVideoUrl ||
+          data?.banners?.[0]?.imageUrl ||
+          "",
+      };
 
-      if (!res.ok) throw new Error(data.error || "Failed to save");
-
-      alert("✅ Saved successfully!");
+      if (isEditing) {
+        // 🔄 Update existing post
+        setPostsData((prev) =>
+          prev.map((p) =>
+            p._id === editingId ? formattedPost : p
+          )
+        );
+      } else {
+        // ➕ Add new post at top
+        setPostsData((prev) => [formattedPost, ...prev]);
+      }
+      toast.success("Saved successfully!");
       setCurrentView("dashboard");
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
 
       setIsEditing(false);
       setEditingId(null);
@@ -654,7 +723,12 @@ export default function CMSComplete() {
       setImageMetaDescriptions([]);
       setImageKeywords([]);
     } catch (err) {
-      alert("❌ " + err.message);
+ toast.error(err.message);
+    }
+    finally {
+      setIsSaving(false); // 🔓 Always release
+      setUploadProgress(0);
+
     }
   };
 
@@ -695,9 +769,9 @@ export default function CMSComplete() {
         prev.map((p) => (p._id === postId ? { ...p, status: "Approved" } : p))
       );
 
-      alert("Approved!");
+     toast.success("Approved!");
     } catch (err) {
-      alert("❌" + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -724,9 +798,9 @@ export default function CMSComplete() {
         prev.map((p) => (p._id === postId ? { ...p, status: "Rejected" } : p))
       );
 
-      alert("Rejected!");
+      toast.success("Rejected!");
     } catch (err) {
-      alert("❌ " + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -748,9 +822,9 @@ export default function CMSComplete() {
 
       setPostsData((prev) => prev.filter((p) => p._id !== postId));
 
-      alert("🗑️ Deleted successfully");
+     toast.success("Deleted successfully");
     } catch (err) {
-      alert("❌ " + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -799,7 +873,28 @@ export default function CMSComplete() {
           </div>
         </div>
 
-        <div className="flex gap-3 items-center">{children}</div>
+        <div className="flex flex-col items-end">
+          <div className="flex gap-3 items-center">
+            {children}
+          </div>
+
+          {isSaving && (
+            <div className="w-40 mt-2">
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${uploadProgress}%`,
+                    backgroundColor: "var(--accent-green)",
+                  }}
+                />
+              </div>
+              <p className="text-xs mt-1 text-[var(--text-secondary)] text-right">
+                {uploadProgress}%
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -905,7 +1000,7 @@ export default function CMSComplete() {
       setIsEditing(true);
       setCurrentView("createPost");
     } catch (err) {
-      alert("❌ " + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -924,14 +1019,27 @@ export default function CMSComplete() {
             </span>
           </>
         }
+
       >
+
         <button
           onClick={handleSavePost}
-          className="px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm"
+          disabled={isSaving}
+          className={`px-4 py-2 text-sm rounded-lg font-medium flex items-center gap-2 shadow-sm transition-all ${isSaving ? "opacity-60 cursor-not-allowed" : ""
+            }`}
           style={{ backgroundColor: "var(--accent-green)" }}
         >
-          <Save size={16} />
-          Save
+          {isSaving ? (
+            <>
+              <span className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full"></span>
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Save size={16} />
+              Save
+            </>
+          )}
         </button>
 
         <button
@@ -1193,10 +1301,10 @@ export default function CMSComplete() {
                                   type="text"
                                   placeholder="Title (optional)"
                                   value={
-  imageTitles.length === uploadedMediaList.length
-    ? imageTitles[idx] || ""
-    : ""
-}
+                                    imageTitles.length === uploadedMediaList.length
+                                      ? imageTitles[idx] || ""
+                                      : ""
+                                  }
                                   onChange={(e) => {
                                     const copy = [...imageTitles];
                                     copy[idx] = e.target.value;
@@ -1207,11 +1315,11 @@ export default function CMSComplete() {
 
                                 <textarea
                                   placeholder="Description (optional)"
-                                value={
-  imageDescriptions.length === uploadedMediaList.length
-    ? imageDescriptions[idx] || ""
-    : ""
-}
+                                  value={
+                                    imageDescriptions.length === uploadedMediaList.length
+                                      ? imageDescriptions[idx] || ""
+                                      : ""
+                                  }
 
                                   onChange={(e) => {
                                     const copy = [...imageDescriptions];
@@ -1940,5 +2048,12 @@ export default function CMSComplete() {
   );
 
   // ---------- final return ----------
-  return currentView === "createPost" ? renderCreatePost() : renderDashboard();
+ return (
+  <>
+    <Toaster position="top-right" />
+    {currentView === "createPost"
+      ? renderCreatePost()
+      : renderDashboard()}
+  </>
+);
 }
