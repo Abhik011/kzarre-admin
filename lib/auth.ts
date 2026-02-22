@@ -30,6 +30,48 @@ export interface AuthState {
 const API_BASE =
   process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5500";
 
+// Silent refresh every 10 min (access token expires in 15 min)
+const SILENT_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
+
+async function refreshAccessTokenSilent(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const refreshToken = sessionStorage.getItem("refresh_token");
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/refresh`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${refreshToken}` },
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    const newAccessToken = data?.accessToken;
+    if (!newAccessToken) return false;
+    sessionStorage.setItem("access_token", newAccessToken);
+    useAuthStore.setState({ token: newAccessToken });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function startSilentRefreshInterval(): void {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+    refreshIntervalId = null;
+  }
+  if (typeof window === "undefined") return;
+  if (!sessionStorage.getItem("refresh_token")) return;
+  refreshIntervalId = setInterval(refreshAccessTokenSilent, SILENT_REFRESH_INTERVAL_MS);
+}
+
+export function stopSilentRefreshInterval(): void {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+    refreshIntervalId = null;
+  }
+}
+
 // 🔥 ROLE NORMALIZER
 const normalizeRole = (role?: string) => {
   if (!role) return "Admin";
@@ -75,6 +117,7 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false,
         });
 
+        startSilentRefreshInterval();
         console.log("Auth Store: Login successful, state updated");
       },
 
@@ -82,6 +125,7 @@ export const useAuthStore = create<AuthState>()(
       // LOGOUT
       // =====================
       logout: () => {
+        stopSilentRefreshInterval();
         set({
           token: null,
           user: null,

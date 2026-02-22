@@ -3,6 +3,7 @@ import { Nunito_Sans } from "next/font/google";
 
 import "./globals.css";
 import NotificationProvider from "@/components/NotificationProvider";
+import SilentRefresh from "@/components/SilentRefresh";
 const nunitoSans = Nunito_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
@@ -45,7 +46,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunitoSans.variable} font-nunito-sans`}>
       <body className="antialiased bg-gray-50 font-nunito-sans">
-         <NotificationProvider onClose={undefined} />
+        <SilentRefresh />
+        <NotificationProvider onClose={undefined} />
         {children}
 
       </body>

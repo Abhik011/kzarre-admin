@@ -73,8 +73,7 @@ useEffect(() => {
     .catch(error => {
       console.error("Sidebar: Error fetching profile:", error);
     });
-    .catch(() => {});
-}, []);
+  }, []);
 
 
   const menuItems = [
