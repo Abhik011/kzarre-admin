@@ -267,11 +267,13 @@ export default function CMSComplete() {
   useEffect(() => {
     const fetchCMSPosts = async () => {
       try {
+        console.log("🚀 Fetching CMS posts...");
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content`
         );
+         console.log("Response status:", res.status);
         const data = await res.json();
-
+   console.log("CMS DATA:", data);
         if (Array.isArray(data)) {
           const formatted = data.map((item) => ({
             _id: item._id,
@@ -291,45 +293,50 @@ export default function CMSComplete() {
       } catch (err) {
         console.error("Failed to load CMS content:", err);
       }
-        fetchCMSPosts();
+     
     };
 
-
+   fetchCMSPosts();
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const updating = postsData.filter(
-        p => p.status === "Uploading" || p.status === "Processing"
-      );
+useEffect(() => {
+  const interval = setInterval(async () => {
+    setPostsData(prev => {
+      prev.forEach(async (post) => {
+        if (
+          post.status === "Uploading" ||
+          post.status === "Processing"
+        ) {
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
+            );
 
-      for (let post of updating) {
-        try {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/cms-content/status/${post._id}`
-          );
+            if (!res.ok) return;
 
-          if (!res.ok) continue;
+            const data = await res.json();
 
-          const data = await res.json();
+            setPostsData(current =>
+              current.map(p =>
+                p._id === post._id
+                  ? {
+                      ...p,
+                      status: data.status,
+                      uploadProgress: data.progress ?? p.uploadProgress,
+                    }
+                  : p
+              )
+            );
+          } catch {}
+        }
+      });
 
-          setPostsData(prev =>
-            prev.map(p =>
-              p._id === post._id
-                ? {
-                  ...p,
-                  status: data.status,
-                  uploadProgress: data.progress ?? p.uploadProgress,
-                }
-                : p
-            )
-          );
-        } catch { }
-      }
-    }, 2000);
+      return prev;
+    });
+  }, 2000);
 
-    return () => clearInterval(interval);
-  }, [postsData]);
+  return () => clearInterval(interval);
+}, []);
   // =============================
   // DRAG & DROP HANDLERS
   // =============================
@@ -543,15 +550,16 @@ export default function CMSComplete() {
     uploadCompleteToastShown.current = false;
     setIsSaving(true);
     // 🚀 Instantly add placeholder row
-    const tempPost = {
-      _id: "uploading-temp",
-      title: postData.title,
-      type: postData.displayTo,
-      author: "You",
-      status: "Uploading",
-      uploadProgress: 0,
-      lastModified: new Date().toLocaleDateString(),
-    };
+    const tempId = `temp-${Date.now()}`;
+   const tempPost = {
+  _id: tempId,
+  title: postData.title,
+  type: postData.displayTo,
+  author: "You",
+  status: "Uploading",
+  uploadProgress: 0,
+  lastModified: new Date().toLocaleDateString(),
+};
 
     setPostsData(prev => [tempPost, ...prev]);
 
@@ -698,7 +706,7 @@ export default function CMSComplete() {
           // 🔥 Update dashboard row progress
           setPostsData(prev =>
             prev.map(p =>
-              p._id === "uploading-temp"
+             p._id === tempId
                 ? { ...p, uploadProgress: percent }
                 : p
             )
@@ -738,26 +746,28 @@ export default function CMSComplete() {
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseData = JSON.parse(xhr.responseText);
 
-            setPostsData(prev =>
-              prev.map(p =>
-                p._id === "uploading-temp"
-                  ? {
-                    _id: responseData._id, // 🔥 real id now
-                    title: responseData.title || postData.title,
-                    type: responseData.displayTo || postData.displayTo,
-                    author: responseData.author || "You",
-                    status: "Processing",
-                    uploadProgress: 100,
-                    visibleAt: responseData.visibleAt,
-                    lastModified: new Date().toLocaleDateString(),
-                    url:
-                      responseData.heroVideoUrl ||
-                      responseData?.banners?.[0]?.imageUrl ||
-                      "",
-                  }
-                  : p
-              )
-            );
+          setPostsData(prev => {
+  // 1️⃣ Remove ALL temp uploading rows
+  const filtered = prev.filter(p => !String(p._id).startsWith("temp-"));
+
+  // 2️⃣ Add the real backend post at top
+  const realPost = {
+    _id: responseData._id,
+    title: responseData.title || postData.title,
+    type: responseData.displayTo || postData.displayTo,
+    author: responseData.author || "You",
+    status: responseData.status || "Pending Review",
+    uploadProgress: 100,
+    visibleAt: responseData.visibleAt,
+    lastModified: new Date().toLocaleDateString(),
+    url:
+      responseData.heroVideoUrl ||
+      responseData?.banners?.[0]?.imageUrl ||
+      "",
+  };
+
+  return [realPost, ...filtered];
+});
 
             resolve(responseData);
           } else {
@@ -1954,7 +1964,7 @@ export default function CMSComplete() {
                 <tbody>
                   {postsData.map((post) => (
                     <tr
-                      key={post._id || post.id || Math.random()}
+                      key={post._id}
                       className="border-b border-[var(--sidebar-border)] hover:bg-[var(--background-card)] transition-colors"
                     >
                       <td className="px-6 py-4 text-sm font-medium text-[var(--text-primary)]">
