@@ -761,17 +761,23 @@ export default function CMSComplete() {
         xhr.send(formData);
       });
 
-      const formattedPost = {
-        _id: data._id,
-        title: data.title || postData.title,
-        type: data.displayTo || postData.displayTo,
-        author: data.author || "You",
-        status: "Uploading",
-        uploadProgress: 0,
-        visibleAt: data.visibleAt,
-        lastModified: new Date().toLocaleDateString(),
-        url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
-      };
+    setPostsData(prev =>
+  prev.map(p =>
+    p._id === data._id || p._id === "uploading-temp"
+      ? {
+          _id: data._id,
+          title: data.title || postData.title,
+          type: data.displayTo || postData.displayTo,
+          author: data.author || "You",
+          status: "Processing",
+          uploadProgress: 100,
+          visibleAt: data.visibleAt,
+          lastModified: new Date().toLocaleDateString(),
+          url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
+        }
+      : p
+  )
+);
 
       if (isEditing) {
         // 🔄 Update existing post
