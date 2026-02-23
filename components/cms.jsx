@@ -779,17 +779,7 @@ export default function CMSComplete() {
         )
       );
 
-      if (isEditing) {
-        // 🔄 Update existing post
-        setPostsData((prev) =>
-          prev.map((p) =>
-            p._id === editingId ? formattedPost : p
-          )
-        );
-      } else {
-        // ➕ Add new post at top
-        setPostsData((prev) => [formattedPost, ...prev]);
-      }
+     
       toast.success("Saved!", { id: "cms-upload-status" });
       setCurrentView("dashboard");
 
