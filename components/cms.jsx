@@ -291,9 +291,10 @@ export default function CMSComplete() {
       } catch (err) {
         console.error("Failed to load CMS content:", err);
       }
+        fetchCMSPosts();
     };
 
-    fetchCMSPosts();
+
   }, []);
 
   useEffect(() => {
@@ -328,7 +329,7 @@ export default function CMSComplete() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [postsData]);
   // =============================
   // DRAG & DROP HANDLERS
   // =============================
@@ -737,19 +738,27 @@ export default function CMSComplete() {
           if (xhr.status >= 200 && xhr.status < 300) {
             const responseData = JSON.parse(xhr.responseText);
 
-            // mark as processing
             setPostsData(prev =>
               prev.map(p =>
                 p._id === "uploading-temp"
                   ? {
-                    ...p,
-                    _id: responseData._id,
+                    _id: responseData._id, // 🔥 real id now
+                    title: responseData.title || postData.title,
+                    type: responseData.displayTo || postData.displayTo,
+                    author: responseData.author || "You",
                     status: "Processing",
-                    uploadProgress: 100
+                    uploadProgress: 100,
+                    visibleAt: responseData.visibleAt,
+                    lastModified: new Date().toLocaleDateString(),
+                    url:
+                      responseData.heroVideoUrl ||
+                      responseData?.banners?.[0]?.imageUrl ||
+                      "",
                   }
                   : p
               )
             );
+
             resolve(responseData);
           } else {
             reject(new Error("Upload failed"));
@@ -761,25 +770,8 @@ export default function CMSComplete() {
         xhr.send(formData);
       });
 
-      setPostsData(prev =>
-        prev.map(p =>
-          p._id === data._id || p._id === "uploading-temp"
-            ? {
-              _id: data._id,
-              title: data.title || postData.title,
-              type: data.displayTo || postData.displayTo,
-              author: data.author || "You",
-              status: "Processing",
-              uploadProgress: 100,
-              visibleAt: data.visibleAt,
-              lastModified: new Date().toLocaleDateString(),
-              url: data.heroVideoUrl || data?.banners?.[0]?.imageUrl || "",
-            }
-            : p
-        )
-      );
+      
 
-     
       toast.success("Saved!", { id: "cms-upload-status" });
       setCurrentView("dashboard");
 
@@ -1995,7 +1987,7 @@ export default function CMSComplete() {
                           {/* Compact Progress Bar */}
                           {(post.status === "Uploading" ||
                             post.status === "Processing") && (
-                              <div className="flex items-center gap-2 w-40">
+                              <div className="flex items-center gap-2 w-20">
                                 <div className="relative h-2 w-full rounded-full bg-gray-200 overflow-hidden">
                                   <div
                                     className="h-full transition-all duration-300"
