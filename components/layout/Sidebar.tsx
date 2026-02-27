@@ -22,17 +22,17 @@ import {
   X,
   Newspaper,
 } from 'lucide-react';
-
+import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-const isActive = (href: string) =>
-  pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
   const [profile, setProfile] = useState({
     name: "User",
@@ -40,39 +40,39 @@ const isActive = (href: string) =>
     role: "Admin",
   });
 
-const initials =
-  profile?.name
-    ?.split(" ")
-    ?.map(n => n[0])
-    ?.join("")
-    ?.slice(0, 2)
-    ?.toUpperCase() || "U";
+  const initials =
+    profile?.name
+      ?.split(" ")
+      ?.map(n => n[0])
+      ?.join("")
+      ?.slice(0, 2)
+      ?.toUpperCase() || "U";
 
 
-useEffect(() => {
-  console.log("Sidebar: Fetching user profile...");
-  authApi.authenticatedFetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/profile/me`)
-    .then(res => {
-      console.log("Sidebar: Profile response status:", res.status);
-      if (!res.ok) {
-        console.error("Sidebar: Failed to fetch profile");
-        return null;
-      }
-      return res.json();
-    })
-    .then(data => {
-      if (data) {
-        console.log("Sidebar: Profile data:", data);
-        setProfile({
-          name: data.name,
-          email: data.email,
-          role: data.role,
-        });
-      }
-    })
-    .catch(error => {
-      console.error("Sidebar: Error fetching profile:", error);
-    });
+  useEffect(() => {
+    console.log("Sidebar: Fetching user profile...");
+    authApi.authenticatedFetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/profile/me`)
+      .then(res => {
+        console.log("Sidebar: Profile response status:", res.status);
+        if (!res.ok) {
+          console.error("Sidebar: Failed to fetch profile");
+          return null;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data) {
+          console.log("Sidebar: Profile data:", data);
+          setProfile({
+            name: data.name,
+            email: data.email,
+            role: data.role,
+          });
+        }
+      })
+      .catch(error => {
+        console.error("Sidebar: Error fetching profile:", error);
+      });
   }, []);
 
 
@@ -163,27 +163,27 @@ useEffect(() => {
   const [permissions, setPermissions] = useState<string[]>([]);
 
 
-useEffect(() => {
-  const storedUser = sessionStorage.getItem("auth_user");
-  if (storedUser) {
-    const parsed = JSON.parse(storedUser);
-    setPermissions(parsed.permissions || []);
-  }
-}, []);
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("auth_user");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setPermissions(parsed.permissions || []);
+    }
+  }, []);
 
-const hasPermission = (permission: string): boolean => {
-  if (profile.role === "SuperAdmin") return true;
-  return permissions.includes(permission);
-};
+  const hasPermission = (permission: string): boolean => {
+    if (profile.role === "SuperAdmin") return true;
+    return permissions.includes(permission);
+  };
 
 
-useEffect(() => {
-  const storedUser = sessionStorage.getItem("auth_user");
-  if (storedUser) {
-    const parsed = JSON.parse(storedUser);
-    setPermissions(parsed.permissions || []);
-  }
-}, []);
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("auth_user");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setPermissions(parsed.permissions || []);
+    }
+  }, []);
 
   return (
     <>
@@ -208,7 +208,7 @@ useEffect(() => {
 
       {/* Sidebar */}
       <aside
-        className={`${isOpen ? 'w-64' : 'w-22'}
+        className={`${isOpen ? 'w-64' : 'w-20'}
           bg-[var(--sidebar-bg)]
           border-r border-[var(--sidebar-border)]
           text-[var(--text-primary)]
@@ -238,6 +238,7 @@ useEffect(() => {
         {/* Menu Items */}
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
+
             {menuItems
               .filter(item => hasPermission(item.permission))
               .map(item => {
@@ -245,22 +246,43 @@ useEffect(() => {
                 const active = isActive(item.href);
 
                 return (
-                  <li key={item.label}>
+                  <li key={item.label} className="relative group">
                     <Link
                       href={item.href}
                       className={`
-              w-full flex items-center gap-3 px-4 py-3 rounded-lg 
-              transition-all
-              ${active
+            flex items-center gap-3 px-4 py-3 rounded-lg 
+            transition-all duration-200
+            ${active
                           ? "bg-[var(--accent-green)] text-black font-semibold"
                           : "hover:bg-[var(--background-card)]"
-                        }`}
+                        }
+          `}
                     >
                       <Icon size={22} />
+
+                      {/* Show text if expanded */}
                       {isOpen && (
-                        <span className="text-sm font-small">{item.label}</span>
+                        <span className="text-sm whitespace-nowrap">
+                          {item.label}
+                        </span>
                       )}
                     </Link>
+
+                    {/* Tooltip when collapsed */}
+                    {!isOpen && (
+                      <span
+                        className="
+              absolute left-full top-1/2 -translate-y-1/2
+              ml-3 px-3 py-1 rounded-md text-xs
+              bg-black text-white whitespace-nowrap
+              opacity-0 group-hover:opacity-100
+              pointer-events-none transition-all duration-200
+              shadow-lg
+            "
+                      >
+                        {item.label}
+                      </span>
+                    )}
                   </li>
                 );
               })}
@@ -304,12 +326,17 @@ useEffect(() => {
         <div className="p-4 border-t border-[var(--sidebar-border)] hidden lg:block">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full flex items-center justify-center p-2 
-                       hover:bg-[var(--background-card)] rounded-lg transition"
+            className="
+    w-full flex items-center justify-center p-2
+    hover:bg-[var(--background-card)] 
+    rounded-lg transition-all duration-200
+  "
           >
-            <span className="font-bold text-[var(--text-primary)]">
-              {isOpen ? '←' : '→'}
-            </span>
+            {isOpen ? (
+              <ChevronLeft size={20} />
+            ) : (
+              <ChevronRight size={20} />
+            )}
           </button>
         </div>
       </aside>
