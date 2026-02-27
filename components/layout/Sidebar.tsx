@@ -208,7 +208,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`${isOpen ? 'w-64' : 'w-20'}
+        className={`${isOpen ? 'w-64' : 'w-22'}
           bg-[var(--sidebar-bg)]
           border-r border-[var(--sidebar-border)]
           text-[var(--text-primary)]
